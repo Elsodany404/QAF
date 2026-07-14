@@ -1,3 +1,4 @@
+import styles from './OrderSuccess.module.css';
 import { CheckCircle, ArrowRight, Package, Truck, Mail } from 'lucide-react';
 
 interface OrderSuccessProps {

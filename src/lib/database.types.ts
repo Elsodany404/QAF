@@ -9,8 +9,8 @@ export interface Product {
   id: string;
   name: string;
   price: number;
-  image_url: string;
-  in_stock: boolean;
+  imageUrl: string;
+  inStock: boolean;
   featured: boolean;
   description: string;
 }
@@ -18,37 +18,37 @@ export interface Product {
 export interface Order {
   id: string;
   created_at: string;
-  customer_name: string;
-  customer_email: string;
-  customer_phone: string;
-  shipping_address: string;
-  orderItems: OrderItem[];
-  total_amount: number;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  shippingAddress: string;
+  totalAmount: number;
   status: OrderStatus;
-  paymob_order_id: string | null;
-  paymob_transaction_id: string | null;
+  paymobOrderID: string | null;
+  paymobTransactionID: string | null;
 }
 
 export interface OrderItem {
   id: string;
-  created_at: string;
-  product_id: string;
-  product_name: string;
+  createdAt: string;
+  orderID: string;
+  productID: string;
+  productName: string;
   quantity: number;
-  unit_price: number;
-  options: { option: Product_Option; value: Product_Option_Value }[];
+  unitPrice: number;
+  options: { option: ProductOption; value: ProductOptionValue }[];
 }
-export interface Product_Option {
+export interface ProductOption {
   id: string;
   productID: string;
   optionName: string;
 } // (1)size [50,100,250,500,1000] , (2)roasting [plain,blended], (3) percentage arabica [70%,80%,100%], (4)type of blend [QAF blend, Gold Blend, Colombian Blend]
 
-export interface Product_Option_Value {
+export interface ProductOptionValue {
   id: string;
   optionID: string;
   valueName: string;
-  price_modifier: number; 
+  priceModifier: number;
 }
 
 export interface Database {

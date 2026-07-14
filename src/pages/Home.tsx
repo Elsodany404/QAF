@@ -1,3 +1,4 @@
+import styles from './Home.module.css';
 import { useEffect, useState } from 'react';
 import { ArrowRight, Award, Leaf, Globe, ChevronRight, Zap } from 'lucide-react';
 import Hero from '../components/Hero';

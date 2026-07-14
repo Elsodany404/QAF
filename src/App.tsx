@@ -8,6 +8,7 @@ import Menu from './pages/Menu';
 import Checkout from './pages/Checkout';
 import OrderSuccess from './pages/OrderSuccess';
 import About from './pages/About';
+import { supabase } from './utils/supabase'
 
 type Page = 'home' | 'menu' | 'checkout' | 'success' | 'about';
 

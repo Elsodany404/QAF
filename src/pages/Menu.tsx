@@ -1,3 +1,4 @@
+import styles from './Menu.module.css';
 import { useEffect, useState } from 'react';
 import { Search, SlidersHorizontal, X, Filter } from 'lucide-react';
 import ProductCard from '../components/ProductCard';

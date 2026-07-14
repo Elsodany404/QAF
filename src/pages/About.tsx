@@ -1,3 +1,4 @@
+import styles from './About.module.css';
 import { Leaf, Globe, Award, Heart, ArrowRight } from 'lucide-react';
 
 interface AboutProps {

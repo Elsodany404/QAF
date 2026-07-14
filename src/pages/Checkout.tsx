@@ -1,3 +1,4 @@
+import styles from './Checkout.module.css';
 import { useState, FormEvent } from 'react';
 import { ShoppingBag, ArrowLeft, Lock, CreditCard, CheckCircle2 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
