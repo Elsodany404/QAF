@@ -1,48 +1,54 @@
-export type ProductCategory = 'turkish_coffee' | 'espresso' | 'flavored_coffee';
-export type ProductSubcategory = 'qaf_blend' | 'colombian_blend' | 'golden_blend';
-export type OrderStatus = 'pending' | 'paid' | 'shipped' | 'delivered' | 'cancelled';
-
-export interface WeightOption {
-  label: string;
-  price_modifier: number;
-}
+export type OrderStatus =
+  | "pending"
+  | "paid"
+  | "shipped"
+  | "delivered"
+  | "cancelled";
 
 export interface Product {
   id: string;
   name: string;
-  description: string;
   price: number;
-  category: ProductCategory;
-  subcategory: ProductSubcategory | null;
   image_url: string;
-  weight_options: WeightOption[];
   in_stock: boolean;
   featured: boolean;
-  sort_order: number;
-  created_at: string;
+  description: string;
 }
 
 export interface Order {
   id: string;
+  created_at: string;
   customer_name: string;
   customer_email: string;
   customer_phone: string;
   shipping_address: string;
+  orderItems: OrderItem[];
   total_amount: number;
   status: OrderStatus;
   paymob_order_id: string | null;
   paymob_transaction_id: string | null;
-  created_at: string;
 }
 
 export interface OrderItem {
   id: string;
-  order_id: string;
-  product_id: string | null;
+  created_at: string;
+  product_id: string;
   product_name: string;
   quantity: number;
   unit_price: number;
-  weight_option: string | null;
+  options: { option: Product_Option; value: Product_Option_Value }[];
+}
+export interface Product_Option {
+  id: string;
+  productID: string;
+  optionName: string;
+} // (1)size [50,100,250,500,1000] , (2)roasting [plain,blended], (3) percentage arabica [70%,80%,100%], (4)type of blend [QAF blend, Gold Blend, Colombian Blend]
+
+export interface Product_Option_Value {
+  id: string;
+  optionID: string;
+  valueName: string;
+  price_modifier: number; 
 }
 
 export interface Database {
@@ -50,18 +56,18 @@ export interface Database {
     Tables: {
       products: {
         Row: Product;
-        Insert: Omit<Product, 'id' | 'created_at'>;
-        Update: Partial<Omit<Product, 'id' | 'created_at'>>;
+        Insert: Omit<Product, "id" | "created_at">;
+        Update: Partial<Omit<Product, "id" | "created_at">>;
       };
       orders: {
         Row: Order;
-        Insert: Omit<Order, 'id' | 'created_at'>;
-        Update: Partial<Omit<Order, 'id' | 'created_at'>>;
+        Insert: Omit<Order, "id" | "created_at">;
+        Update: Partial<Omit<Order, "id" | "created_at">>;
       };
       order_items: {
         Row: OrderItem;
-        Insert: Omit<OrderItem, 'id'>;
-        Update: Partial<Omit<OrderItem, 'id'>>;
+        Insert: Omit<OrderItem, "id">;
+        Update: Partial<Omit<OrderItem, "id">>;
       };
     };
   };
