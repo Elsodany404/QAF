@@ -4,6 +4,7 @@
   display: flex;
   align-items: center;
   overflow: hidden;
+  padding-top: 0.5rem;
 }
 
 .background {
@@ -24,9 +25,10 @@
   inset: 0;
   background: linear-gradient(
     90deg,
-    rgba(17, 16, 31, 0.85),
-    rgba(17, 16, 31, 0.75),
-    rgba(17, 16, 31, 0.5)
+    rgba(183, 139, 95, 0.9),
+    rgba(183, 139, 95, 0.85),
+    rgba(183, 139, 95, 0.5),
+    rgba(183, 139, 95, 0.1)
   );
 }
 
@@ -106,6 +108,7 @@
 .headingAccent {
   display: block;
   color: transparent;
+  text-shadow: 3px 0 5px rgba(0, 0, 0, 0.1);
   background: linear-gradient(90deg, var(--espresso-700), var(--mocha-600));
   -webkit-background-clip: text;
   background-clip: text;
@@ -167,7 +170,7 @@
 
 .secondaryButton {
   background: transparent;
-  color: var(--espresso-600);
+  color: var(--espresso-100);
   border: 2px solid var(--espresso-600);
 }
 
