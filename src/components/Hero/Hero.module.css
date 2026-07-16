@@ -1,0 +1,263 @@
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.background {
+  position: absolute;
+  inset: 0;
+}
+
+.image {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(17, 16, 31, 0.85),
+    rgba(17, 16, 31, 0.75),
+    rgba(17, 16, 31, 0.5)
+  );
+}
+
+.overlayBottom {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(17, 16, 31, 0.9), transparent);
+}
+
+.glow {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 24rem;
+  height: 24rem;
+  border-radius: 9999px;
+  background: rgba(218, 144, 14, 0.1);
+  filter: blur(48px);
+}
+
+.content {
+  position: relative;
+  width: 100%;
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 8rem 1rem 8rem;
+}
+
+@media (min-width: 640px) {
+  .content {
+    padding: 8rem 1.5rem 8rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .content {
+    padding: 8rem 2rem 8rem;
+  }
+}
+
+.copy {
+  max-width: 48rem;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+  animation: fadeIn 0.4s ease both;
+}
+
+.badgeLine {
+  width: 3rem;
+  height: 1px;
+  background: linear-gradient(90deg, var(--gold-400), transparent);
+}
+
+.badgeText {
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold-400);
+}
+
+.heading {
+  margin-bottom: 1.5rem;
+  font-family: "Playfair Display", serif;
+  font-size: clamp(3rem, 6vw, 5.5rem);
+  font-weight: 700;
+  line-height: 0.95;
+  color: white;
+  animation: slideUp 0.7s ease-out both;
+}
+
+.headingAccent {
+  display: block;
+  color: transparent;
+  background: linear-gradient(90deg, var(--espresso-700), var(--mocha-600));
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.subheading {
+  max-width: 40rem;
+  margin-bottom: 3rem;
+  font-size: 1.125rem;
+  line-height: 1.8;
+  color: rgba(248, 239, 224, 0.95);
+  animation: slideUp 0.7s ease-out both;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 4rem;
+  animation: slideUp 0.7s ease-out both;
+}
+
+@media (min-width: 640px) {
+  .actions {
+    flex-direction: row;
+  }
+}
+
+.primaryButton,
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.9rem 1.4rem;
+  border: none;
+  border-radius: 0.9rem;
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.primaryButton {
+  color: #fff;
+  background: linear-gradient(90deg, var(--espresso-600), var(--mocha-600));
+  box-shadow: var(--shadow-soft-lg);
+}
+
+.primaryButton:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-soft-xl);
+}
+
+.secondaryButton {
+  background: transparent;
+  color: var(--espresso-600);
+  border: 2px solid var(--espresso-600);
+}
+
+.secondaryButton:hover {
+  background: rgba(239, 230, 227, 0.16);
+}
+
+.buttonContent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+}
+
+.stats {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  animation: slideUp 0.7s ease-out both;
+}
+
+@media (min-width: 640px) {
+  .stats {
+    flex-direction: row;
+  }
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.statLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold-400);
+}
+
+.statValue {
+  font-family: "Playfair Display", serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: white;
+}
+
+.scrollIndicator {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  animation: float 2.2s ease-in-out infinite;
+}
+
+.scrollText {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold-400);
+}
+
+.scrollWheel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 2.5rem;
+  border: 2px solid rgba(218, 144, 14, 0.5);
+  border-radius: 9999px;
+}
+
+.scrollDot {
+  width: 0.35rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: var(--gold-400);
+  animation: bounce 0.8s ease-in-out infinite;
+}

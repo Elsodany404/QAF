@@ -1,0 +1,67 @@
+:root {
+  --font-display: "Playfair Display", serif;
+  --font-body:
+    "Outfit", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+
+  --charcoal-50: #f4f4f7;
+  --charcoal-100: #e6e8ef;
+  --charcoal-200: #c9c9d7;
+  --charcoal-300: #a6a5bf;
+  --charcoal-400: #7e7c9d;
+  --charcoal-500: #5b5876;
+  --charcoal-600: #3c3a56;
+  --charcoal-700: #2d2b42;
+  --charcoal-800: #1f1d2f;
+  --charcoal-900: #11101f;
+  --charcoal-950: #0c0b16;
+
+  --cream-50: #fff9f0;
+  --cream-100: #f8efe0;
+  --cream-200: #f1e0ca;
+  --cream-300: #e8d2b2;
+  --cream-400: #dfc39a;
+  --cream-500: #d4ad7e;
+  --cream-600: #b78b5f;
+  --cream-700: #8d6a4c;
+  --cream-800: #6c4f39;
+  --cream-900: #4a3a2a;
+
+  --espresso-50: #efe6e3;
+  --espresso-100: #dcc6c0;
+  --espresso-200: #c0a099;
+  --espresso-300: #a37c71;
+  --espresso-400: #8b5f55;
+  --espresso-500: #72443d;
+  --espresso-600: #59322e;
+  --espresso-700: #40261f;
+  --espresso-800: #2f1c16;
+  --espresso-900: #1f130f;
+  --espresso-950: #160d0b;
+
+  --mocha-50: #f3eee9;
+  --mocha-100: #e4d9d0;
+  --mocha-200: #d2beb0;
+  --mocha-300: #bfa292;
+  --mocha-400: #a58170;
+  --mocha-500: #89644f;
+  --mocha-600: #6c4f3f;
+  --mocha-700: #523d31;
+  --mocha-800: #3e2c25;
+  --mocha-900: #2d211c;
+
+  --gold-50: #fff8e1;
+  --gold-100: #feefb8;
+  --gold-200: #f8dc81;
+  --gold-300: #f1c940;
+  --gold-400: #eab22d;
+  --gold-500: #da900e;
+  --gold-600: #b3740a;
+  --gold-700: #8c5609;
+  --gold-800: #69420a;
+  --gold-900: #462f05;
+
+  --shadow-soft: 0 20px 40px rgba(17, 16, 31, 0.05);
+  --shadow-soft-lg: 0 25px 60px rgba(17, 16, 31, 0.1);
+  --shadow-soft-xl: 0 35px 80px rgba(17, 16, 31, 0.12);
+}

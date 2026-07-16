@@ -1,0 +1,550 @@
+.page {
+  background: var(--cream-50);
+}
+
+.section {
+  position: relative;
+  padding: 6rem 0;
+  background: white;
+}
+
+.sectionAlt {
+  position: relative;
+  padding: 7rem 0;
+  background: linear-gradient(180deg, var(--cream-50), white, var(--cream-50));
+}
+
+.sectionDark {
+  position: relative;
+  padding: 6rem 0;
+  background: linear-gradient(
+    90deg,
+    var(--charcoal-900),
+    var(--espresso-950),
+    var(--charcoal-950)
+  );
+  color: white;
+  overflow: hidden;
+}
+
+.glow {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 24rem;
+  height: 24rem;
+  border-radius: 9999px;
+  background: rgba(218, 144, 14, 0.05);
+  filter: blur(48px);
+  z-index: 0;
+}
+
+.glowLeft {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 24rem;
+  height: 24rem;
+  border-radius: 9999px;
+  background: rgba(114, 68, 61, 0.05);
+  filter: blur(48px);
+  z-index: 0;
+}
+
+.glowDark {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 24rem;
+  height: 24rem;
+  border-radius: 9999px;
+  background: rgba(218, 144, 14, 0.1);
+  filter: blur(48px);
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding: 0 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding: 0 2rem;
+  }
+}
+
+.intro {
+  text-align: center;
+  margin-bottom: 4rem;
+  animation: slideUp 0.7s ease-out both;
+}
+
+.badge {
+  display: inline-block;
+  margin-bottom: 1rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 9999px;
+  background: rgba(218, 144, 14, 0.1);
+  border: 1px solid rgba(218, 144, 14, 0.2);
+}
+
+.badgeText {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold-600);
+}
+
+.title {
+  font-family: "Playfair Display", serif;
+  font-size: clamp(2.2rem, 4vw, 3.4rem);
+  font-weight: 700;
+  color: var(--charcoal-950);
+  line-height: 1.15;
+}
+
+.titleAccent {
+  color: transparent;
+  background: linear-gradient(90deg, var(--espresso-700), var(--mocha-600));
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.categoryGrid {
+  display: grid;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .categoryGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.categoryCard {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 1.5rem;
+  aspect-ratio: 3 / 4;
+  text-align: left;
+  box-shadow: var(--shadow-soft);
+  transition: all 0.3s ease;
+}
+
+.categoryCard:hover {
+  box-shadow: var(--shadow-soft-xl);
+}
+
+.categoryImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.7s ease;
+}
+
+.categoryCard:hover .categoryImage {
+  transform: scale(1.1);
+}
+
+.categoryOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(17, 16, 31, 0.95),
+    rgba(17, 16, 31, 0.5),
+    transparent
+  );
+}
+
+.categoryContent {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  padding: 1.5rem;
+}
+
+.categorySubtitle {
+  margin-bottom: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold-400);
+}
+
+.categoryTitle {
+  margin-bottom: 0.75rem;
+  font-family: "Playfair Display", serif;
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: white;
+}
+
+.categoryDescription {
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--cream-100);
+}
+
+.blendWrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.blendTag {
+  padding: 0.32rem 0.6rem;
+  border-radius: 9999px;
+  background: rgba(218, 144, 14, 0.2);
+  color: var(--gold-100);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.exploreRow {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--gold-400);
+  font-weight: 600;
+}
+
+.featuredHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 4rem;
+}
+
+.featuredTitle {
+  font-family: "Playfair Display", serif;
+  font-size: clamp(2rem, 3.5vw, 2.8rem);
+  font-weight: 700;
+  color: var(--charcoal-950);
+}
+
+.viewAllButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.85rem;
+  color: white;
+  background: linear-gradient(90deg, var(--espresso-600), var(--mocha-600));
+  font-weight: 600;
+}
+
+.productGrid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .productGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .productGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.skeletonCard {
+  overflow: hidden;
+  border-radius: 1.5rem;
+  background: white;
+  box-shadow: var(--shadow-soft);
+}
+
+.skeletonImage {
+  aspect-ratio: 4 / 3;
+  background: linear-gradient(135deg, var(--mocha-100), var(--cream-100));
+}
+
+.skeletonBody {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.5rem;
+}
+
+.skeletonLine {
+  height: 0.8rem;
+  border-radius: 999px;
+  background: var(--cream-200);
+}
+
+.skeletonLineShort {
+  width: 70%;
+}
+
+.mobileButton {
+  margin-top: 3rem;
+  text-align: center;
+}
+
+.mobileButtonInner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1rem;
+  border-radius: 0.85rem;
+  color: white;
+  background: linear-gradient(90deg, var(--espresso-600), var(--mocha-600));
+  font-weight: 600;
+}
+
+.valuesGrid {
+  display: grid;
+  gap: 2.5rem;
+}
+
+@media (min-width: 640px) {
+  .valuesGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.valueCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.valueIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: 1.5rem;
+  border-radius: 9999px;
+  background: rgba(218, 144, 14, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.valueCard:hover .valueIcon {
+  transform: scale(1.1);
+}
+
+.valueIcon svg {
+  width: 1.75rem;
+  height: 1.75rem;
+  color: var(--gold-400);
+}
+
+.valueTitle {
+  margin-bottom: 0.75rem;
+  font-family: "Playfair Display", serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.valueDesc {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--cream-200);
+}
+
+.signatureGrid {
+  display: grid;
+  gap: 4rem;
+  align-items: center;
+}
+
+@media (min-width: 1024px) {
+  .signatureGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.signatureCopy {
+  animation: slideUp 0.7s ease-out both;
+}
+
+.signatureBadge {
+  display: inline-block;
+  margin-bottom: 1rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 9999px;
+  background: rgba(218, 144, 14, 0.1);
+  border: 1px solid rgba(218, 144, 14, 0.2);
+}
+
+.signatureBadgeText {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold-600);
+}
+
+.signatureTitle {
+  margin-bottom: 1.5rem;
+  font-family: "Playfair Display", serif;
+  font-size: clamp(2rem, 3.5vw, 3rem);
+  font-weight: 700;
+  color: var(--charcoal-950);
+  line-height: 1.15;
+}
+
+.signatureText {
+  margin-bottom: 2.5rem;
+  font-size: 1.05rem;
+  line-height: 1.8;
+  color: var(--charcoal-600);
+}
+
+.blendList {
+  display: grid;
+  gap: 1.25rem;
+  margin-bottom: 2.5rem;
+}
+
+.blendItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.blendIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  margin-top: 0.2rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, var(--gold-400), var(--espresso-600));
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.blendName {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--charcoal-950);
+}
+
+.blendDesc {
+  margin-top: 0.2rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--charcoal-600);
+}
+
+.imageStack {
+  position: relative;
+  animation: fadeScale 0.7s ease both;
+}
+
+.imageMain,
+.imageSecondary {
+  width: 100%;
+  object-fit: cover;
+  border-radius: 1.5rem;
+  box-shadow: var(--shadow-soft-xl);
+}
+
+.imageMain {
+  aspect-ratio: 1 / 1;
+}
+
+.imageSecondary {
+  position: absolute;
+  bottom: -2rem;
+  left: -2rem;
+  width: 14rem;
+  height: 14rem;
+  border: 8px solid white;
+}
+
+.ctaSection {
+  position: relative;
+  padding: 8rem 0;
+  overflow: hidden;
+}
+
+.ctaBackground {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.ctaOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(17, 16, 31, 0.9),
+    rgba(114, 68, 61, 0.82)
+  );
+}
+
+.ctaOverlaySoft {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(17, 16, 31, 0.4), transparent);
+}
+
+.ctaContent {
+  position: relative;
+  z-index: 1;
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 0 1rem;
+  text-align: center;
+  color: white;
+  animation: slideUp 0.7s ease-out both;
+}
+
+.ctaTitle {
+  margin-bottom: 1.5rem;
+  font-family: "Playfair Display", serif;
+  font-size: clamp(2.2rem, 4vw, 3.2rem);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.ctaText {
+  margin-bottom: 2.5rem;
+  font-size: 1.15rem;
+  line-height: 1.8;
+  color: var(--cream-100);
+}
+
+.ctaButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  border-radius: 0.9rem;
+  background: linear-gradient(90deg, var(--gold-400), var(--gold-600));
+  color: var(--charcoal-950);
+  font-weight: 700;
+  box-shadow: var(--shadow-soft-xl);
+}

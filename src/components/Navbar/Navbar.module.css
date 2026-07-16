@@ -1,0 +1,217 @@
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  transition: all 0.3s ease;
+}
+
+.navTransparent {
+  background: transparent;
+}
+
+.navScrolled {
+  background: rgba(255, 249, 240, 0.8);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-soft-lg);
+  border-bottom: 1px solid rgba(17, 16, 31, 0.06);
+}
+
+.container {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding: 0 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding: 0 2rem;
+  }
+}
+
+.navInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 5rem;
+}
+
+.logoButton {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: left;
+}
+
+.logoMark {
+  position: relative;
+  width: 3rem;
+  height: 3rem;
+}
+
+.logoMarkInner {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, var(--espresso-600), var(--mocha-600));
+  box-shadow: var(--shadow-soft);
+  transition: box-shadow 0.2s ease;
+}
+
+.logoButton:hover .logoMarkInner {
+  box-shadow: var(--shadow-soft-lg);
+}
+
+.logoIcon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cream-50);
+}
+
+.logoTitle {
+  font-family: "Playfair Display", serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--charcoal-900);
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+}
+
+.logoSubtitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--espresso-600);
+  line-height: 1.1;
+}
+
+.desktopNav {
+  display: none;
+  align-items: center;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .desktopNav {
+    display: flex;
+  }
+}
+
+.navLink {
+  position: relative;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--charcoal-700);
+  transition: color 0.2s ease;
+}
+
+.navLink:hover {
+  color: var(--espresso-600);
+}
+
+.navLinkActive {
+  color: var(--espresso-700);
+}
+
+.navLink::after,
+.navLinkActive::after {
+  content: "";
+  position: absolute;
+  bottom: -0.25rem;
+  left: 0;
+  width: 0;
+  height: 0.125rem;
+  background: linear-gradient(90deg, var(--gold-400), var(--gold-600));
+  transition: width 0.3s ease;
+}
+
+.navLink:hover::after,
+.navLinkActive::after {
+  width: 100%;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.cartButton,
+.menuButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.625rem;
+  border-radius: 0.75rem;
+  color: var(--charcoal-700);
+  transition: all 0.2s ease;
+}
+
+.cartButton:hover,
+.menuButton:hover {
+  background: var(--cream-100);
+}
+
+.cartBadge {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, var(--gold-400), var(--gold-600));
+  color: var(--charcoal-900);
+  font-size: 0.7rem;
+  font-weight: 700;
+  animation: bounce 0.7s ease-in-out infinite alternate;
+}
+
+.mobileMenu {
+  border-top: 1px solid var(--cream-200);
+  animation: fadeIn 0.2s ease;
+}
+
+.mobileMenuInner {
+  display: grid;
+  gap: 0.25rem;
+  padding: 1rem;
+}
+
+.mobileLink {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.mobileLinkActive {
+  background: linear-gradient(90deg, var(--espresso-600), var(--mocha-600));
+  color: white;
+}
+
+.mobileLinkDefault {
+  color: var(--charcoal-700);
+}
+
+.mobileLinkDefault:hover {
+  background: var(--cream-100);
+}
