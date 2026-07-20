@@ -1,7 +1,7 @@
 .card {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  /* height: 100%; */
   overflow: hidden;
   border: 1px solid var(--cream-100);
   border-radius: 1.5rem;
@@ -11,7 +11,8 @@
 }
 
 .card:hover {
-  box-shadow: var(--shadow-soft-lg);
+  box-shadow: var(--shadow-soft-xl);
+  transform: scale(1.05);
 }
 
 .imageWrap {
@@ -28,9 +29,9 @@
   transition: transform 0.7s ease;
 }
 
-.card:hover .image {
+/* .card:hover .image {
   transform: scale(1.1);
-}
+} */
 
 .overlay {
   position: absolute;
@@ -156,6 +157,7 @@
   margin-bottom: 1.25rem;
 }
 
+
 .weightButton {
   padding: 0.4rem 0.7rem;
   border: 2px solid var(--cream-300);
@@ -217,6 +219,7 @@
   border-radius: 0.85rem;
   font-weight: 600;
   color: white;
+
   background: linear-gradient(90deg, var(--espresso-600), var(--mocha-600));
   transition: all 0.2s ease;
 }
@@ -233,6 +236,6 @@
 }
 
 .addButtonAdded {
-  background: #16a34a;
+  background: var(--espresso-600);
   transform: scale(0.95);
 }

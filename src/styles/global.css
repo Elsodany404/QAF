@@ -1,4 +1,4 @@
-:root {
+/* :root {
   color-scheme: light;
 }
 
@@ -45,7 +45,7 @@
 
 .premium-button-primary {
   color: white;
-  background: linear-gradient(90deg, var(--espresso-600), var(--mocha-600));
+  background: linear-gradient(90deg, var(--cream-600), var(--mocha-600));
   box-shadow: var(--shadow-soft);
 }
 
@@ -132,4 +132,26 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 4;
   overflow: hidden;
+} */
+
+::-webkit-scrollbar {
+  width: 15px;
+  height: 15px;
+}
+::-webkit-scrollbar-track {
+  background-color: #2d211c;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #bfa292;
+  border-radius: 20px;
+  border: 3px solid #2d211c;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #e4d9d0;
+}
+
+* {
+  scrollbar-color: -#e4d9d0 var(#2d211c);
 }

@@ -10,11 +10,6 @@ import { useCart } from "../../context/CartContext";
 import { supabase } from "../../lib/supabase";
 import styles from "./Checkout.module.css";
 
-interface CheckoutProps {
-  onBack: () => void;
-  onSuccess: (orderId: string) => void;
-}
-
 interface FormData {
   name: string;
   email: string;
@@ -24,7 +19,7 @@ interface FormData {
   country: string;
 }
 
-export default function Checkout({ onBack, onSuccess }: CheckoutProps) {
+export default function Checkout() {
   const { items, totalPrice, clearCart } = useCart();
   const [form, setForm] = useState<FormData>({
     name: "",
@@ -114,19 +109,19 @@ export default function Checkout({ onBack, onSuccess }: CheckoutProps) {
 
       const paymobData = await paymobRes.json();
 
-      if (paymobData.payment_key) {
-        const iframeUrl = `https://accept.paymob.com/api/acceptance/iframes/${paymobData.iframe_id}?payment_token=${paymobData.payment_key}`;
-        clearCart();
-        window.open(iframeUrl, "_blank");
-        onSuccess(order.id);
-      } else if (paymobData.error) {
-        clearCart();
-        onSuccess(order.id);
-      } else {
-        clearCart();
-        onSuccess(order.id);
-      }
-    } catch (err) {
+      //   if (paymobData.payment_key) {
+      //     const iframeUrl = `https://accept.paymob.com/api/acceptance/iframes/${paymobData.iframe_id}?payment_token=${paymobData.payment_key}`;
+      //     clearCart();
+      //     window.open(iframeUrl, "_blank");
+      //     onSuccess(order.id);
+      //   } else if (paymobData.error) {
+      //     clearCart();
+      //     onSuccess(order.id);
+      //   } else {
+      //     clearCart();
+      //     onSuccess(order.id);
+      //   }
+      // } catch (err) {
       setPayError(
         err instanceof Error
           ? err.message
@@ -172,9 +167,7 @@ export default function Checkout({ onBack, onSuccess }: CheckoutProps) {
         <p className={styles.emptyText}>
           Add some premium coffee before checking out.
         </p>
-        <button onClick={onBack} className={styles.emptyButton}>
-          Browse Products
-        </button>
+        <button className={styles.emptyButton}>Browse Products</button>
       </div>
     );
   }
@@ -182,7 +175,7 @@ export default function Checkout({ onBack, onSuccess }: CheckoutProps) {
   return (
     <div className={styles.page}>
       <div className={styles.container}>
-        <button onClick={onBack} className={styles.backButton}>
+        <button className={styles.backButton}>
           <ArrowLeft className="w-5 h-5" />
           Back to Shopping
         </button>
@@ -268,7 +261,7 @@ export default function Checkout({ onBack, onSuccess }: CheckoutProps) {
                   return (
                     <div key={key} className={styles.summaryItem}>
                       <img
-                        src={item.product.image_url}
+                        src={item.product.imageUrl}
                         alt={item.product.name}
                         className={styles.summaryImage}
                       />

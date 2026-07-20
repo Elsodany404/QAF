@@ -2,11 +2,7 @@ import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 import styles from "./CartDrawer.module.css";
 
-interface CartDrawerProps {
-  onCheckout: () => void;
-}
-
-export default function CartDrawer({ onCheckout }: CartDrawerProps) {
+export default function CartDrawer() {
   const {
     items,
     isOpen,
@@ -62,7 +58,7 @@ export default function CartDrawer({ onCheckout }: CartDrawerProps) {
                 <div key={key} className={styles.itemCard}>
                   <div className={styles.itemRow}>
                     <img
-                      src={item.product.image_url}
+                      src={item.product.imageUrl}
                       alt={item.product.name}
                       className={styles.itemImage}
                     />
@@ -135,7 +131,6 @@ export default function CartDrawer({ onCheckout }: CartDrawerProps) {
             <button
               onClick={() => {
                 closeCart();
-                onCheckout();
               }}
               className={styles.checkoutButton}
             >

@@ -2,17 +2,20 @@ import { useState, useEffect } from "react";
 import { ShoppingCart, Menu, X, Coffee } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 import styles from "./Navbar.module.css";
+import { useLocation, useNavigate } from "react-router-dom";
 
-interface NavbarProps {
-  currentPage: string;
-  onNavigate: (page: string) => void;
-}
+// interface NavbarProps {
+// }
 
-export default function Navbar({ currentPage, onNavigate }: NavbarProps) {
+export default function Navbar() {
+  const location = useLocation();
   const { totalItems, openCart } = useCart();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-
+  const navigate = useNavigate();
+  // console.log(location.pathname); // /about
+  // console.log(location.search);   // ?id=1
+  // console.log(location.hash);     // #section
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", handler);
@@ -20,25 +23,27 @@ export default function Navbar({ currentPage, onNavigate }: NavbarProps) {
   }, []);
 
   const navLinks = [
-    { id: "home", label: "Home" },
-    { id: "menu", label: "Shop" },
-    { id: "about", label: "Our Story" },
+    { id: "Home", label: "home" },
+    { id: "Shop", label: "menu" },
+    { id: "Our Story", label: "about" },
   ];
+  const transparentNavBar = location.pathname === "/home";
 
+  const navbarClass = `${styles.nav} ${
+    scrolled || mobileOpen ? styles.navScrolled : styles.navTransparent
+  } ${!transparentNavBar ? styles["contrast-navbar"] : ""}`;
   return (
-    <nav
-      className={`${styles.nav} ${scrolled || mobileOpen ? styles.navScrolled : styles.navTransparent}`}
-    >
+    <nav className={navbarClass}>
       <div className={styles.container}>
         <div className={styles.navInner}>
           <button
-            onClick={() => onNavigate("home")}
+            onClick={() => navigate("/home")}
             className={styles.logoButton}
           >
             <div className={styles.logoMark}>
               <div className={styles.logoMarkInner} />
               <div className={styles.logoIcon}>
-                <Coffee className="w-6 h-6" />
+                <Coffee />
               </div>
             </div>
             <div className="text-left">
@@ -51,10 +56,10 @@ export default function Navbar({ currentPage, onNavigate }: NavbarProps) {
             {navLinks.map((link) => (
               <button
                 key={link.id}
-                onClick={() => onNavigate(link.id)}
-                className={`${styles.navLink} ${currentPage === link.id ? styles.navLinkActive : ""}`}
+                onClick={() => navigate(`/${link.label}`)}
+                className={`${styles.navLink} ${location.pathname === `/${link.label}` ? styles.navLinkActive : ""}`}
               >
-                {link.label}
+                {link.id}
               </button>
             ))}
           </div>
@@ -65,8 +70,12 @@ export default function Navbar({ currentPage, onNavigate }: NavbarProps) {
               className={styles.cartButton}
               aria-label="Open cart"
             >
-              <div style={{ position: "relative" }}>
-                <ShoppingCart className="w-6 h-6" />
+              <div
+                style={{
+                  position: "relative",
+                }}
+              >
+                <ShoppingCart />
                 {totalItems > 0 && (
                   <span className={styles.cartBadge}>
                     {totalItems > 9 ? "9+" : totalItems}
@@ -96,10 +105,10 @@ export default function Navbar({ currentPage, onNavigate }: NavbarProps) {
               <button
                 key={link.id}
                 onClick={() => {
-                  onNavigate(link.id);
+                  navigate(`/${link.label}`);
                   setMobileOpen(false);
                 }}
-                className={`${styles.mobileLink} ${currentPage === link.id ? styles.mobileLinkActive : styles.mobileLinkDefault}`}
+                className={`${styles.mobileLink} ${location.pathname === `/${link.label}` ? styles.mobileLinkActive : styles.mobileLinkDefault}`}
               >
                 {link.label}
               </button>

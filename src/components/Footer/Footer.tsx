@@ -1,20 +1,9 @@
-import {
-  Coffee,
-  Instagram,
-  Facebook,
-  Twitter,
-  Mail,
-  Phone,
-  MapPin,
-  ArrowRight,
-} from "lucide-react";
+import { Coffee, Mail, Phone, MapPin, ArrowRight } from "lucide-react";
 import styles from "./Footer.module.css";
-
-interface FooterProps {
-  onNavigate: (page: string) => void;
-}
-
-export default function Footer({ onNavigate }: FooterProps) {
+import { SiInstagram, SiFacebook, SiX } from "@icons-pack/react-simple-icons";
+import { useNavigate } from "react-router-dom";
+export default function Footer() {
+  const navigate = useNavigate();;
   return (
     <footer className={styles.footer}>
       <div className={styles.newsletterSection}>
@@ -57,9 +46,9 @@ export default function Footer({ onNavigate }: FooterProps) {
             </p>
             <div className={styles.socials}>
               {[
-                { Icon: Instagram, href: "#" },
-                { Icon: Facebook, href: "#" },
-                { Icon: Twitter, href: "#" },
+                { Icon: SiInstagram, href: "#instagram" },
+                { Icon: SiFacebook, href: "#facebook" },
+                { Icon: SiX, href: "#X" },
               ].map(({ Icon, href }) => (
                 <a
                   key={href}
@@ -84,7 +73,7 @@ export default function Footer({ onNavigate }: FooterProps) {
               ].map((item) => (
                 <li key={item}>
                   <button
-                    onClick={() => onNavigate("menu")}
+                    onClick={() => navigate("/menu")}
                     className={styles.linkButton}
                   >
                     <span className="flex items-center gap-1">
@@ -104,7 +93,7 @@ export default function Footer({ onNavigate }: FooterProps) {
                 (item) => (
                   <li key={item}>
                     <button
-                      onClick={() => onNavigate("about")}
+                      onClick={() => navigate("/about")}
                       className={styles.linkButton}
                     >
                       <span className="flex items-center gap-1">

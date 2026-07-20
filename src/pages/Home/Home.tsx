@@ -12,10 +12,7 @@ import ProductCard from "../../components/ProductCard/ProductCard";
 import { supabase } from "../../lib/supabase";
 import type { Product } from "../../lib/database.types";
 import styles from "./Home.module.css";
-
-interface HomeProps {
-  onNavigate: (page: string) => void;
-}
+import { useNavigate } from "react-router-dom";
 
 const CATEGORY_INFO = [
   {
@@ -50,10 +47,10 @@ const CATEGORY_INFO = [
   },
 ];
 
-export default function Home({ onNavigate }: HomeProps) {
+export default function Home() {
   const [featured, setFeatured] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const navigate = useNavigate();
   useEffect(() => {
     supabase
       .from("products")
@@ -69,7 +66,7 @@ export default function Home({ onNavigate }: HomeProps) {
 
   return (
     <div className={styles.page}>
-      <Hero onShopNow={() => onNavigate("menu")} />
+      <Hero onShopNow={() => navigate("/menu")} />
 
       <section className={styles.section}>
         <div className={styles.glow} />
@@ -88,7 +85,7 @@ export default function Home({ onNavigate }: HomeProps) {
             {CATEGORY_INFO.map((cat, i) => (
               <button
                 key={cat.id}
-                onClick={() => onNavigate("menu")}
+                onClick={() => navigate("menu")}
                 className={styles.categoryCard}
                 style={{ animationDelay: `${i * 100}ms` }}
               >
@@ -135,7 +132,7 @@ export default function Home({ onNavigate }: HomeProps) {
               <h2 className={styles.featuredTitle}>Featured Blends</h2>
             </div>
             <button
-              onClick={() => onNavigate("menu")}
+              onClick={() => navigate("/menu")}
               className={styles.viewAllButton}
             >
               View All

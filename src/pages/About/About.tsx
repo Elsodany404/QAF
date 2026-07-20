@@ -1,18 +1,15 @@
 import { Leaf, Globe, Award, Heart, ArrowRight } from "lucide-react";
 import styles from "./About.module.css";
 
-interface AboutProps {
-  onShop: () => void;
-}
-
-export default function About({ onShop }: AboutProps) {
+export default function About() {
   return (
     <div className={styles.page}>
       <div
         className={styles.hero}
         style={{
+          
           backgroundImage:
-            "url(https://images.pexels.com/photos/894695/pexels-photo-894695.jpeg?auto=compress&cs=tinysrgb&w=1920)",
+            "url(https://images.pexels.com/photos/2396220/pexels-photo-2396220.jpeg?auto=compress&cs=tinysrgb&w=1920)",
         }}
       >
         <div className={styles.heroOverlay} />
@@ -181,7 +178,7 @@ export default function About({ onShop }: AboutProps) {
               Taste coffee that's been crafted with passion, sourced ethically,
               and roasted to perfection.
             </p>
-            <button onClick={onShop} className={styles.ctaButton}>
+            <button className={styles.ctaButton}>
               Shop Our Blends
               <ArrowRight className="w-5 h-5" />
             </button>

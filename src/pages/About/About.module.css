@@ -76,7 +76,7 @@
 
 .heroTitleAccent {
   color: transparent;
-  background: linear-gradient(90deg, var(--espresso-400), var(--mocha-300));
+  background: linear-gradient(90deg, var(--espresso-600), var(--espresso-200));
   -webkit-background-clip: text;
   background-clip: text;
 }

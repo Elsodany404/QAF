@@ -1,15 +1,7 @@
 import { CheckCircle, ArrowRight, Package, Truck, Mail } from "lucide-react";
 import styles from "./OrderSuccess.module.css";
 
-interface OrderSuccessProps {
-  orderId: string;
-  onContinue: () => void;
-}
-
-export default function OrderSuccess({
-  orderId,
-  onContinue,
-}: OrderSuccessProps) {
+export default function OrderSuccess() {
   return (
     <div className={styles.page}>
       <div className={styles.card}>

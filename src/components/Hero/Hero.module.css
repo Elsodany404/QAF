@@ -25,10 +25,10 @@
   inset: 0;
   background: linear-gradient(
     90deg,
-    rgba(183, 139, 95, 0.9),
-    rgba(183, 139, 95, 0.85),
-    rgba(183, 139, 95, 0.5),
-    rgba(183, 139, 95, 0.1)
+    rgba(64, 38, 31, 0.9),
+    rgba(64, 38, 31, 0.85),
+    rgba(64, 38, 31, 0.2),
+    rgba(64, 38, 31, 0.1)
   );
 }
 
@@ -45,7 +45,7 @@
   width: 24rem;
   height: 24rem;
   border-radius: 9999px;
-  background: rgba(218, 144, 14, 0.1);
+  /* background: rgba(218, 144, 14, 0.1); */
   filter: blur(48px);
 }
 
@@ -101,16 +101,17 @@
   font-size: clamp(3rem, 6vw, 5.5rem);
   font-weight: 700;
   line-height: 0.95;
-  color: white;
+  color: var(--mocha-100);
   animation: slideUp 0.7s ease-out both;
 }
 
 .headingAccent {
   display: block;
   color: transparent;
-  text-shadow: 3px 0 5px rgba(0, 0, 0, 0.1);
-  background: linear-gradient(90deg, var(--espresso-700), var(--mocha-600));
+  text-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(90deg, var(--gold-100), var(--gold-400));
   -webkit-background-clip: text;
+
   background-clip: text;
 }
 

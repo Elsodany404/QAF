@@ -1,0 +1,5 @@
+.Product {
+  display: grid;
+  grid-template-columns: 1.5fr 2fr;
+  padding-top: 5rem;
+}

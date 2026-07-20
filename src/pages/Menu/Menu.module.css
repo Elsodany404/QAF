@@ -1,8 +1,7 @@
 .page {
   min-height: 100vh;
   background: var(--cream-50);
-  padding-top: 5rem;
-  
+  padding-top: 3\rem;
 }
 
 .hero {
@@ -18,10 +17,11 @@
   inset: 0;
   background: linear-gradient(
     90deg,
-    rgba(17, 16, 31, 0.9),
-    rgba(17, 16, 31, 0.85),
-    rgba(17, 16, 31, 0.8)
+    rgba(212, 173, 126, 0.8),
+    rgba(212, 173, 126, 0.7)
   );
+  filter: brightness(10%);
+  /* filter: opacity(50%);  */
 }
 
 .heroContent {
@@ -51,7 +51,7 @@
   padding: 0.45rem 0.9rem;
   border-radius: 9999px;
   background: rgba(218, 144, 14, 0.2);
-  border: 1px solid rgba(218, 144, 14, 0.4);
+  border: 1px solid rgba(218, 144, 14, 0.8);
 }
 
 .heroBadgeText {
@@ -67,6 +67,7 @@
   font-family: "Playfair Display", serif;
   font-size: clamp(2.6rem, 5vw, 4rem);
   font-weight: 700;
+  color: var(--cream-100);
 }
 
 .heroText {
@@ -74,7 +75,6 @@
   margin: 0 auto;
   font-size: 1.05rem;
   line-height: 1.7;
-  color: var(--cream-100);
 }
 
 .main {

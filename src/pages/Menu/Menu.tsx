@@ -2,78 +2,57 @@ import { useEffect, useState } from "react";
 import { Search, SlidersHorizontal, X, Filter } from "lucide-react";
 import ProductCard from "../../components/ProductCard/ProductCard";
 import { supabase } from "../../lib/supabase";
-import type {
-  Product,
-  ProductCategory,
-  ProductSubcategory,
-} from "../../lib/database.types";
+import type { Product } from "../../types/db";
 import styles from "./Menu.module.css";
+import { useQuery } from "@tanstack/react-query";
+import { getAllProducts } from "../../services/Product";
+import { NavLink } from "react-router-dom";
 
-const CATEGORIES: { id: ProductCategory | "all"; label: string }[] = [
+const CATEGORIES = [
   { id: "all", label: "All Coffee" },
-  { id: "turkish_coffee", label: "Turkish Coffee" },
+  { id: "turkish", label: "Turkish Coffee" },
   { id: "espresso", label: "Espresso" },
-  { id: "flavored_coffee", label: "Flavored Coffee" },
-];
-
-const TURKISH_SUBCATEGORIES: { id: ProductSubcategory; label: string }[] = [
-  { id: "qaf_blend", label: "Qaf Blend" },
-  { id: "colombian_blend", label: "Colombian Blend" },
-  { id: "golden_blend", label: "Golden Blend" },
+  { id: "flavored", label: "Flavored Coffee" },
+  { id: "arabian & green blends", label: "Arabian & Green Blends" },
 ];
 
 export default function Menu() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [filtered, setFiltered] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeCategory, setActiveCategory] = useState<ProductCategory | "all">(
-    "all",
-  );
-  const [activeSubcategory, setActiveSubcategory] =
-    useState<ProductSubcategory | null>(null);
-  const [search, setSearch] = useState("");
+  const { data, error, isPending } = useQuery<Product[]>({
+    queryKey: ["products"],
+    queryFn: getAllProducts,
+  });
+  const [activeCategory, setActiveCategory] = useState<string | "all">("all");
 
-  useEffect(() => {
-    supabase
-      .from("products")
-      .select("*")
-      .order("sort_order")
-      .then(({ data }) => {
-        if (data) {
-          setProducts(data as Product[]);
-          setFiltered(data as Product[]);
-        }
-        setLoading(false);
-      });
-  }, []);
+  const [filtered, setFiltered] = useState<Product[]>([]);
+  const [search, setSearch] = useState("");
+  const products = data ?? [];
 
   useEffect(() => {
     let result = [...products];
     if (activeCategory !== "all") {
       result = result.filter((p) => p.category === activeCategory);
     }
-    if (activeSubcategory) {
-      result = result.filter((p) => p.subcategory === activeSubcategory);
-    }
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(
         (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.description.toLowerCase().includes(q),
+          p.name!.toLowerCase().includes(q) ||
+          (p.description && p.description.toLowerCase().includes(q)),
       );
     }
     setFiltered(result);
-  }, [products, activeCategory, activeSubcategory, search]);
+  }, [products, activeCategory, search]);
 
-  const handleCategoryChange = (cat: ProductCategory | "all") => {
-    setActiveCategory(cat);
-    setActiveSubcategory(null);
-  };
-
+  function handleCategoryChange(id: string) {
+    const activeCat = CATEGORIES.find((cat) => cat.id === id);
+    if (activeCat) {
+      setActiveCategory(activeCat.id);
+    }
+  }
   return (
     <div className={styles.page}>
-      <div
+      {/* Hero overlay */}
+      {/* <div
         className={styles.hero}
         style={{
           backgroundImage:
@@ -91,8 +70,7 @@ export default function Menu() {
             precision, served with pride.
           </p>
         </div>
-      </div>
-
+      </div> */}
       <div className={styles.main}>
         <div className={styles.toolbar}>
           <div className={styles.searchBox}>
@@ -109,12 +87,12 @@ export default function Menu() {
                 onClick={() => setSearch("")}
                 className={styles.clearButton}
               >
-                <X className="w-5 h-5" />
+                <X />
               </button>
             )}
           </div>
           <div className={styles.countCard}>
-            <Filter className="w-5 h-5 text-espresso-600" />
+            <Filter />
             <span className={styles.countValue}>{filtered.length} items</span>
           </div>
         </div>
@@ -131,27 +109,7 @@ export default function Menu() {
           ))}
         </div>
 
-        {activeCategory === "turkish_coffee" && (
-          <div className={styles.subcategoryRow}>
-            <button
-              onClick={() => setActiveSubcategory(null)}
-              className={`${styles.subcategoryButton} ${activeSubcategory === null ? styles.subcategoryButtonActive : ""}`}
-            >
-              All Blends
-            </button>
-            {TURKISH_SUBCATEGORIES.map((sub) => (
-              <button
-                key={sub.id}
-                onClick={() => setActiveSubcategory(sub.id)}
-                className={`${styles.subcategoryButton} ${activeSubcategory === sub.id ? styles.subcategoryButtonActive : ""}`}
-              >
-                {sub.label}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {loading ? (
+        {isPending ? (
           <div className={styles.productGrid}>
             {[...Array(8)].map((_, i) => (
               <div key={i} className={styles.skeletonCard}>
@@ -166,7 +124,7 @@ export default function Menu() {
               </div>
             ))}
           </div>
-        ) : filtered.length === 0 ? (
+        ) : products.length === 0 ? (
           <div className={styles.emptyState}>
             <div className={styles.emptyIcon}>
               <SlidersHorizontal />
@@ -178,7 +136,6 @@ export default function Menu() {
             <button
               onClick={() => {
                 setActiveCategory("all");
-                setActiveSubcategory(null);
                 setSearch("");
               }}
               className={styles.resetButton}
@@ -187,11 +144,13 @@ export default function Menu() {
             </button>
           </div>
         ) : (
-          <div className={styles.productGrid}>
-            {filtered.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
+          filtered && (
+            <div className={styles.productGrid}>
+              {filtered.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </div>
+          )
         )}
       </div>
     </div>
