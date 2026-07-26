@@ -161,21 +161,13 @@
   gap: 1rem;
 }
 
-.itemImage {
-  width: 4rem;
-  height: 4rem;
-  flex-shrink: 0;
-  object-fit: cover;
-  border-radius: 0.75rem;
-}
-
 .itemDetails {
   flex: 1;
   min-width: 0;
 }
 
 .itemName {
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 600;
   line-height: 1.3;
   color: var(--charcoal-900);
@@ -183,13 +175,17 @@
 
 .itemWeight {
   margin-top: 0.2rem;
-  font-size: 0.75rem;
+  font-size: 0.9rem;
   font-weight: 500;
   color: var(--espresso-600);
 }
-
+.itemOptions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
 .itemPrice {
-  margin-top: 0.25rem;
+  margin-top: 0.5rem;
   font-size: 0.9rem;
   font-weight: 700;
   color: var(--espresso-700);

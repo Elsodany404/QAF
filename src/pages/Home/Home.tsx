@@ -10,7 +10,7 @@ import {
 import Hero from "../../components/Hero/Hero";
 import ProductCard from "../../components/ProductCard/ProductCard";
 import { supabase } from "../../lib/supabase";
-import type { Product } from "../../lib/database.types";
+import type { Product } from "../../types/db";
 import styles from "./Home.module.css";
 import { useNavigate } from "react-router-dom";
 
@@ -66,7 +66,7 @@ export default function Home() {
 
   return (
     <div className={styles.page}>
-      <Hero onShopNow={() => navigate("/menu")} />
+      <Hero />
 
       <section className={styles.section}>
         <div className={styles.glow} />
@@ -136,7 +136,7 @@ export default function Home() {
               className={styles.viewAllButton}
             >
               View All
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight />
             </button>
           </div>
 
@@ -167,7 +167,7 @@ export default function Home() {
 
           <div className={styles.mobileButton}>
             <button
-              onClick={() => onNavigate("menu")}
+              onClick={() => navigate("menu")}
               className={styles.mobileButtonInner}
             >
               View All Products <ArrowRight className="w-4 h-4" />
@@ -260,7 +260,7 @@ export default function Home() {
               </div>
 
               <button
-                onClick={() => onNavigate("menu")}
+                onClick={() => navigate("menu")}
                 className={styles.viewAllButton}
               >
                 Shop Turkish Coffee
@@ -301,11 +301,8 @@ export default function Home() {
             Experience the difference that small-batch roasting, ethical
             sourcing, and pure passion make.
           </p>
-          <button
-            onClick={() => onNavigate("menu")}
-            className={styles.ctaButton}
-          >
-            <Zap className="w-5 h-5" />
+          <button onClick={() => navigate("menu")} className={styles.ctaButton}>
+            <Zap />
             Shop Now
           </button>
         </div>

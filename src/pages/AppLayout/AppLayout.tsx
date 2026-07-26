@@ -5,9 +5,6 @@ import CartDrawer from "../../components/CartDrawer/CartDrawer";
 import Footer from "../../components/Footer/Footer";
 import Navbar from "../../components/Navbar/Navbar";
 function AppLayout() {
-  const location = useLocation();
-  // Define the paths where you want to HIDE the component
-
   return (
     <div className={styles.app}>
       <Navbar />

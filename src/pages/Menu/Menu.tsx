@@ -1,23 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search, SlidersHorizontal, X, Filter } from "lucide-react";
 import ProductCard from "../../components/ProductCard/ProductCard";
-import { supabase } from "../../lib/supabase";
 import type { Product } from "../../types/db";
 import styles from "./Menu.module.css";
 import { useQuery } from "@tanstack/react-query";
 import { getAllProducts } from "../../services/Product";
-import { NavLink } from "react-router-dom";
-
-const CATEGORIES = [
-  { id: "all", label: "All Coffee" },
-  { id: "turkish", label: "Turkish Coffee" },
-  { id: "espresso", label: "Espresso" },
-  { id: "flavored", label: "Flavored Coffee" },
-  { id: "arabian & green blends", label: "Arabian & Green Blends" },
-];
+import { CATEGORIES } from "../../types/customTypes";
 
 export default function Menu() {
-  const { data, error, isPending } = useQuery<Product[]>({
+  const { data, isPending } = useQuery<Product[]>({
     queryKey: ["products"],
     queryFn: getAllProducts,
   });
@@ -25,7 +16,12 @@ export default function Menu() {
 
   const [filtered, setFiltered] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
-  const products = data ?? [];
+  const products = useMemo(
+    function () {
+      return data ?? [];
+    },
+    [data],
+  );
 
   useEffect(() => {
     let result = [...products];

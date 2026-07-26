@@ -6,10 +6,19 @@ import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import tanstackQuery from "@tanstack/eslint-plugin-query";
 import eslintConfigPrettier from "eslint-config-prettier";
+// 1. Import the unused-imports plugin
+import unusedImports from "eslint-plugin-unused-imports";
 
 export default tseslint.config(
   {
     ignores: ["dist", "coverage", "node_modules"],
+  },
+
+  // 2. Register the plugin globally at the top level
+  {
+    plugins: {
+      "unused-imports": unusedImports,
+    },
   },
 
   {
@@ -51,6 +60,9 @@ export default tseslint.config(
       // Disable built-in unused variable rules
       "no-unused-vars": "off",
       "@typescript-eslint/no-unused-vars": "off",
+
+      // 3. Add rule to automatically remove unused imports on --fix
+      "unused-imports/no-unused-imports": "error",
 
       // Warn for unused variables
       "unused-imports/no-unused-vars": [

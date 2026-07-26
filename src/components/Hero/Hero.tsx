@@ -1,10 +1,9 @@
+import { useNavigate } from "react-router-dom";
 import styles from "./Hero.module.css";
 
-interface HeroProps {
-  onShopNow: () => void;
-}
 
-export default function Hero({ onShopNow }: HeroProps) {
+export default function Hero() {
+  const navigate = useNavigate();
   return (
     <section className={styles.hero}>
       <div className={styles.background}>
@@ -39,7 +38,10 @@ export default function Hero({ onShopNow }: HeroProps) {
           </p>
 
           <div className={styles.actions}>
-            <button onClick={onShopNow} className={styles.primaryButton}>
+            <button
+              onClick={() => navigate("/menu")}
+              className={styles.primaryButton}
+            >
               <span className={styles.buttonContent}>
                 Explore Collection
                 <svg
@@ -58,7 +60,7 @@ export default function Hero({ onShopNow }: HeroProps) {
               </span>
             </button>
 
-            <button onClick={onShopNow} className={styles.secondaryButton}>
+            <button onClick={() => navigate('/about')} className={styles.secondaryButton}>
               Learn Our Story
             </button>
           </div>

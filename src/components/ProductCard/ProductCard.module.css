@@ -66,12 +66,12 @@
 
 .badge {
   color: white;
-  background: linear-gradient(90deg, var(--espresso-600), var(--mocha-600));
+  background: var(--cream-700);
 }
 
 .badgeAlt {
   color: var(--charcoal-900);
-  background: rgba(218, 144, 14, 0.9);
+  background: rgba(218, 144, 14);
 }
 
 .featured {
@@ -129,7 +129,7 @@
 }
 
 .title {
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem;
   font-family: "Playfair Display", serif;
   font-size: 1.1rem;
   font-weight: 700;
@@ -156,7 +156,6 @@
   gap: 0.5rem;
   margin-bottom: 1.25rem;
 }
-
 
 .weightButton {
   padding: 0.4rem 0.7rem;
@@ -200,10 +199,11 @@
 }
 
 .price {
-  font-family: "Playfair Display", serif;
+  font-family: var(--font-body);
   font-size: 1.6rem;
   font-weight: 700;
   color: var(--espresso-700);
+  margin-right: 2.5rem;
 }
 
 .unitLabel {
@@ -219,23 +219,23 @@
   border-radius: 0.85rem;
   font-weight: 600;
   color: white;
+  background: var(--espresso-600);
 
-  background: linear-gradient(90deg, var(--espresso-600), var(--mocha-600));
-  transition: all 0.2s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    filter 0.15s ease,
+    background 0.2s ease;
 }
 
 .addButton:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
   box-shadow: var(--shadow-soft-lg);
 }
 
-.addButtonDisabled {
-  background: var(--charcoal-200);
-  color: var(--charcoal-400);
-  cursor: not-allowed;
-}
-
-.addButtonAdded {
-  background: var(--espresso-600);
-  transform: scale(0.95);
+.addButton:active {
+  transform: translateY(1px) scale(0.97);
+  filter: brightness(0.9);
+  box-shadow: none;
+  background-color: var(--charcoal-100);
 }

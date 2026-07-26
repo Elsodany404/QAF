@@ -25,8 +25,8 @@
   inset: 0;
   background: linear-gradient(
     90deg,
-    rgba(64, 38, 31, 0.9),
-    rgba(64, 38, 31, 0.85),
+    rgba(64, 38, 31, 0.8),
+    rgba(64, 38, 31, 0.7),
     rgba(64, 38, 31, 0.2),
     rgba(64, 38, 31, 0.1)
   );
@@ -35,7 +35,7 @@
 .overlayBottom {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(17, 16, 31, 0.9), transparent);
+  background: linear-gradient(to top, var(--cream-900), transparent);
 }
 
 .glow {
@@ -45,7 +45,7 @@
   width: 24rem;
   height: 24rem;
   border-radius: 9999px;
-  /* background: rgba(218, 144, 14, 0.1); */
+  background: rgba(218, 144, 14, 0.1);
   filter: blur(48px);
 }
 
@@ -151,17 +151,13 @@
   font-size: 1rem;
   line-height: 1;
   cursor: pointer;
-  transition:
-    background-color 0.2s ease,
-    color 0.2s ease,
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: all 0.2s ease-in-out;
 }
 
 .primaryButton {
-  color: #fff;
-  background: linear-gradient(90deg, var(--espresso-600), var(--mocha-600));
-  box-shadow: var(--shadow-soft-lg);
+  color: white;
+  background: var(--cream-600);
+  box-shadow: var(--shadow-soft);
 }
 
 .primaryButton:hover {
@@ -170,9 +166,8 @@
 }
 
 .secondaryButton {
-  background: transparent;
-  color: var(--espresso-100);
-  border: 2px solid var(--espresso-600);
+  color: white;
+  border: 1px solid white;
 }
 
 .secondaryButton:hover {

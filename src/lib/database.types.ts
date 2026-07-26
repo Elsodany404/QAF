@@ -17,16 +17,19 @@ export type Database = {
       Options: {
         Row: {
           description: string | null
+          icon: string | null
           id: number
           name: string
         }
         Insert: {
           description?: string | null
+          icon?: string | null
           id: number
           name: string
         }
         Update: {
           description?: string | null
+          icon?: string | null
           id?: number
           name?: string
         }
@@ -34,25 +37,28 @@ export type Database = {
       }
       OptionValues: {
         Row: {
+          default: boolean
           id: number
           inStock: boolean
           label: string
           optionID: number
-          priceModifier: number
+          priceModifier: number | null
         }
         Insert: {
+          default?: boolean
           id: number
           inStock?: boolean
           label: string
           optionID: number
-          priceModifier?: number
+          priceModifier?: number | null
         }
         Update: {
+          default?: boolean
           id?: number
           inStock?: boolean
           label?: string
           optionID?: number
-          priceModifier?: number
+          priceModifier?: number | null
         }
         Relationships: [
           {
@@ -161,6 +167,7 @@ export type Database = {
           inStock: boolean
           name: string | null
           price: number
+          size: string[] | null
         }
         Insert: {
           category?: string | null
@@ -171,6 +178,7 @@ export type Database = {
           inStock?: boolean
           name?: string | null
           price: number
+          size?: string[] | null
         }
         Update: {
           category?: string | null
@@ -181,6 +189,7 @@ export type Database = {
           inStock?: boolean
           name?: string | null
           price?: number
+          size?: string[] | null
         }
         Relationships: []
       }

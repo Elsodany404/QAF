@@ -1,0 +1,128 @@
+@keyframes coffeeRingSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes coffeeSteamFloat {
+  0% {
+    stroke-dashoffset: 24;
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  50% {
+    opacity: 0.85;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes coffeeDripPulse {
+  0%, 100% { transform: scaleY(1); opacity: 0.9; }
+  50% { transform: scaleY(1.08); opacity: 0.6; }
+}
+
+/* Base Layout */
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+}
+
+.fullScreen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  padding: 0;
+  background-color: var(--spinner-bg);
+  backdrop-filter: blur(4px);
+  box-shadow: var(--shadow-soft-xl);
+}
+
+/* Theme Token Mappings */
+.espresso {
+  --spinner-primary: var(--espresso-600);
+  --spinner-secondary: var(--cream-300);
+  --spinner-accent: var(--gold-400);
+  --spinner-text: var(--espresso-800);
+  --spinner-bg: var(--cream-50);
+}
+
+.gold {
+  --spinner-primary: var(--gold-500);
+  --spinner-secondary: var(--gold-200);
+  --spinner-accent: var(--gold-400);
+  --spinner-text: var(--gold-900);
+  --spinner-bg: var(--gold-50);
+}
+
+.cream {
+  --spinner-primary: var(--cream-100);
+  --spinner-secondary: var(--espresso-500);
+  --spinner-accent: var(--gold-300);
+  --spinner-text: var(--cream-50);
+  --spinner-bg: var(--espresso-900);
+}
+
+/* Animated SVG Elements */
+.ringTrack {
+  stroke: var(--spinner-secondary);
+  opacity: 0.35;
+}
+
+.ring {
+  stroke: var(--spinner-accent);
+  stroke-dasharray: 45 130;
+  animation: coffeeRingSpin 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  transform-origin: center;
+}
+
+.steamGroup {
+  stroke: var(--spinner-primary);
+}
+
+.steamLine {
+  stroke-dasharray: 12 12;
+  animation: coffeeSteamFloat 2s ease-in-out infinite;
+}
+
+.steamLine1 { animation-delay: 0s; }
+.steamLine2 { animation-delay: 0.4s; }
+.steamLine3 { animation-delay: 0.8s; }
+
+.cupBody {
+  fill: var(--spinner-primary);
+}
+
+.liquidSurface {
+  fill: var(--spinner-accent);
+  animation: coffeeDripPulse 2s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+.cupHandle {
+  stroke: var(--spinner-primary);
+}
+
+.saucer {
+  stroke: var(--spinner-secondary);
+}
+
+/* Typography */
+.label {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  margin: 0;
+  color: var(--spinner-text);
+}
+
+.labelSmall {
+  font-size: 0.875rem;
+}

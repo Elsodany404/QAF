@@ -2,68 +2,112 @@ import { useState } from "react";
 import { ShoppingCart, Star } from "lucide-react";
 // Assuming Next.js, change to 'react-router-dom' if using Vite
 import type { Product, OptionValue } from "../../types/db";
-import { useCart } from "../../context/CartContext";
 import styles from "./ProductCard.module.css";
 import { useQuery } from "@tanstack/react-query";
-import { getOptions } from "../../services/Product";
-import { getOptionValues } from "../../helper/helper";
+import { getProductByID } from "../../services/Product";
 import { NavLink } from "react-router-dom";
+import {
+  calcPrice,
+  formatCurrency,
+  generateItemID,
+  getOptionByName,
+  getOptionsDefaultValues,
+} from "../../helper/helper";
+import { useCart } from "../../context/CartContext";
+import { Spinner } from "../Spinner/Spinner";
 
 interface ProductCardProps {
   product: Product;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const { data } = useQuery({
-    queryKey: ["productOptions", product.id],
-    queryFn: () => getOptions(product.id),
-    enabled: !!product.id,
-  });
-
-  const sizes = getOptionValues("size", data);
-  const roasting = getOptionValues("roasting", data);
-
   const { addItem } = useCart();
-  const [added, setAdded] = useState(false);
+  const { data, isLoading } = useQuery({
+    queryKey: ["productOptions", product.id],
+    queryFn: () => getProductByID(product.id),
+  });
+  const options = data?.ProductOptions.map((po) => po.optionID);
 
-  // States for card selection
-  const [selectedWeightID, setSelectedWeightID] = useState<number>(3);
-  const [selectedRoastID, setSelectedRoastID] = useState<number | null>(null);
-
-  const selectedWeight = sizes?.find(
-    (s: OptionValue) => s.id === selectedWeightID,
+  const [selectedWeight, setSelectedWeight] = useState<OptionValue | null>(
+    null,
   );
+  const [selectedRoast, setSelectedRoast] = useState<OptionValue | null>(null);
 
-  // Safe fallback to prevent NaN if priceModifier is missing
-  const displayPrice = product.price + (selectedWeight?.priceModifier ?? 0);
+  // 3. Early return if data is still loading to prevent operations on missing values
+  if (isLoading || !options) {
+    return <Spinner size="md" variant="espresso" label="loading options"/>;
+  }
+  
+  const sizeArr = getOptionByName("size", options) ?? [];
+  const roastArr = getOptionByName("roasting", options) ?? [];
 
-  const handleAdd = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevents navigating to the product page when clicking "Add"
-    // addItem();
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1500);
-  };
+  // 1. Derive active options immediately (Fallback: state -> default -> first item -> null)
+  const activeWeight = selectedWeight ?? sizeArr.find((s) => s.default);
 
-  // Build dynamic URL with query parameters for user selections
-  const productLink = {
-    pathname: `/products/${product.id}`,
-    query: {
-      size: selectedWeightID,
-      ...(selectedRoastID && { roast: selectedRoastID }),
-    },
-  };
+  const activeRoast = selectedRoast ?? roastArr.find((r) => r.default);
+
+  const selectedOptions: OptionValue[] = [];
+
+  if (activeWeight) {
+    selectedOptions.push(activeWeight);
+  }
+  if (activeRoast) {
+    selectedOptions.push(activeRoast);
+  }
+  const optionsDefaultValues = getOptionsDefaultValues(options);
+
+  if (optionsDefaultValues) {
+    optionsDefaultValues.forEach((v) => {
+      if (selectedOptions.find((s) => s.id === v.id)) return;
+      selectedOptions.push(v);
+    });
+  }
+  console.log(optionsDefaultValues);
+  console.log(selectedOptions);
+  // 2. Calculate price cleanly (safely ignores null values)
+  const finalPrice = calcPrice(product, selectedOptions);
+
+  // 3. Build URL safely without 'undefined' query params
+  const searchParams = new URLSearchParams();
+  if (activeWeight?.id) searchParams.set("size", String(activeWeight.id));
+  if (activeRoast?.id) {
+    searchParams.set("roast", String(activeRoast.id));
+  }
+  function handleAdd(e: React.MouseEvent<HTMLButtonElement>) {
+    e.stopPropagation();
+    e.preventDefault();
+    const item = {
+      itemID: generateItemID(product, selectedOptions),
+      product,
+      options: selectedOptions,
+      quantity: 1,
+      itemPrice: finalPrice,
+    };
+    addItem(item);
+  }
+
+  const link = `/products/${product.id}${
+    searchParams.toString() ? `?${searchParams.toString()}` : ""
+  }`;
   return (
-    // Wrap the entire card container in a Link
-    <NavLink to={productLink} className={styles.cardLink}>
+    <NavLink to={link} className={styles.cardLink}>
       <div className={styles.card}>
         <div className={styles.imageWrap}>
           <img
-            src={product.imageUrl!}
+            src={product.imageUrl || undefined}
             alt={product.name!}
             className={styles.image}
           />
           <div className={styles.overlay} />
-
+          {product.category === "turkish" ? (
+            <div className={`${styles.badges} ${styles.badgeAlt}`}>
+              {product.name?.split("|")[1].toUpperCase()}
+            </div>
+          ) : (
+            <div className={`${styles.badges} ${styles.badge}`}>
+              {product.category?.toUpperCase()}
+            </div>
+          )}
           {product.featured && (
             <div className={styles.featured}>
               <div className={styles.featuredBadge}>
@@ -85,56 +129,59 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         <div className={styles.content}>
           <h3 className={styles.title}>{product.name}</h3>
-          {product.description && (
-            <p className={styles.description}>{product.description}</p>
-          )}
 
-          {sizes && (
+          {sizeArr && (
             <div className={styles.weightRow}>
-              {sizes.map((sizeOption: OptionValue) => (
+              {sizeArr.map((s: OptionValue) => (
                 <button
-                  key={sizeOption.id}
+                  key={s.id}
                   onClick={(e) => {
-                    e.preventDefault(); // Stop Link navigation
-                    setSelectedWeightID(sizeOption.id);
+                    e.preventDefault();
+                    e.stopPropagation(); // Stop Link navigation
+                    setSelectedWeight(s);
                   }}
-                  className={`${styles.weightButton} ${selectedWeightID === sizeOption.id ? styles.weightButtonActive : ""}`}
+                  className={`${styles.weightButton} ${activeWeight?.id === s.id ? styles.weightButtonActive : ""}`}
                 >
-                  {sizeOption.label}
+                  {s.label}
                 </button>
               ))}
             </div>
           )}
 
-          {roasting && (
+          {roastArr.length > 0 && (
             <div className={styles.weightRow}>
-              {roasting.map((option: OptionValue) => (
-                <button
-                  key={option.id}
-                  onClick={(e) => {
-                    e.preventDefault(); // Stop Link navigation
-                    setSelectedRoastID(option.id);
-                  }}
-                  className={`${styles.weightButton} ${selectedRoastID === option.id ? styles.weightButtonActive : ""}`}
-                >
-                  {option.label}
-                </button>
-              ))}
+              {roastArr.map((value: OptionValue) => {
+                return (
+                  <button
+                    key={value.id}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation(); // Stop Link navigation
+                      setSelectedRoast(value);
+                    }}
+                    className={`${styles.weightButton} ${activeRoast?.id === value.id ? styles.weightButtonActive : ""}`}
+                  >
+                    {value.label}
+                  </button>
+                );
+              })}
             </div>
           )}
 
           <div className={styles.footer}>
             <div className={styles.priceWrap}>
-              <span className={styles.price}>${displayPrice.toFixed(2)}</span>
+              <span className={styles.price}>{formatCurrency(finalPrice)}</span>
               <span className={styles.unitLabel}>Per unit</span>
             </div>
+
             <button
               onClick={handleAdd}
               disabled={!product.inStock}
-              className={`${styles.addButton} ${added ? styles.addButtonAdded : ""} ${!product.inStock ? styles.addButtonDisabled : ""}`}
+              className={`${styles.addButton} ${!product.inStock ? styles.addButtonDisabled : ""}`}
             >
               <ShoppingCart />
-              <span>{added ? "Added!" : "Add"}</span>
+
+              <span>Add</span>
             </button>
           </div>
         </div>

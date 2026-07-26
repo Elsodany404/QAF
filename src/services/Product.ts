@@ -1,6 +1,5 @@
-import { data } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-import { Product } from "../types/db";
+import { ProductWithOptions } from "../types/customTypes";
 
 export async function getAllProducts() {
   const { data, error } = await supabase.from("Product").select("*");
@@ -9,41 +8,27 @@ export async function getAllProducts() {
 
   return data;
 }
-export async function getProductByID(id: number): Promise<Product> {
-  // 1. We keep the variable name as 'data' for cleanliness
-  // 2. We add .single() at the end to get one object instead of an array
-  let { data, error } = await supabase
-    .from("Product")
-    .select("*")
-    .eq("id", id)
-    .single();
 
-  if (error) throw error;
-
-  return data as Product;
-}
-export async function getOptions(productId: number) {
+export async function getProductByID(
+  productId: number,
+): Promise<ProductWithOptions> {
   const { data, error } = await supabase
-    .from("ProductOptions")
+    .from("Product")
     .select(
       `
-    productID,
-    optionID (
-      id,
-      name,
-      OptionValues (
-        id,
-        label,
-        priceModifier,
-        inStock,
-        optionID
+    *,
+    ProductOptions(
+      optionID(
+        *,
+        OptionValues(*)
       )
     )
   `,
     )
-    .eq("productID", productId);
+    .eq("id", productId)
+    .single();
 
   if (error) throw error;
 
-  return (data as any).map((item: any) => item.optionID);
+  return data;
 }

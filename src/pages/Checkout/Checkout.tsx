@@ -20,7 +20,7 @@ interface FormData {
 }
 
 export default function Checkout() {
-  const { items, totalPrice, clearCart } = useCart();
+  const { cart, cartPrice, clearCart } = useCart();
   const [form, setForm] = useState<FormData>({
     name: "",
     email: "",
@@ -33,8 +33,7 @@ export default function Checkout() {
   const [loading, setLoading] = useState(false);
   const [payError, setPayError] = useState("");
 
-  const shipping = totalPrice > 50 ? 0 : 5.99;
-  const grandTotal = totalPrice + shipping;
+  const grandTotal = cartPrice;
 
   const validate = () => {
     const e: Partial<FormData> = {};
@@ -70,7 +69,7 @@ export default function Checkout() {
 
       if (orderError || !order) throw new Error("Failed to create order");
 
-      const orderItems = items.map((item) => ({
+      const orderItems = cart.map((item) => ({
         order_id: order.id,
         product_id: item.product.id,
         product_name: item.product.name,
@@ -157,7 +156,7 @@ export default function Checkout() {
     </div>
   );
 
-  if (items.length === 0) {
+  if (cart.length === 0) {
     return (
       <div className={styles.emptyState}>
         <div className={styles.emptyIcon}>
@@ -256,7 +255,7 @@ export default function Checkout() {
             <div className={styles.summaryCard}>
               <h2 className={styles.summaryTitle}>Order Summary</h2>
               <div className={styles.summaryList}>
-                {items.map((item) => {
+                {cart.map((item) => {
                   const key = `${item.product.id}::${item.selectedWeight?.label ?? "default"}`;
                   return (
                     <div key={key} className={styles.summaryItem}>
