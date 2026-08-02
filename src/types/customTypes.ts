@@ -1,4 +1,4 @@
-import type { Option, OptionValue, Product } from "./db";
+import type { Option, OptionValue, Order, OrderItem, OrderStatus, Product } from "./db";
 
 export type OptionWithValue = Option & {
   OptionValues: OptionValue[];
@@ -24,3 +24,16 @@ export type Item = {
   quantity: number;
   itemPrice: number;
 };
+export type PaymentMethod = "paymob_card" | "vodafone_cash" | "cash_on_delivery";
+
+export type AdminOrder = Order & {
+  paymentMethod?: PaymentMethod | null;
+  paymentStatus?: string | null;
+  shippingStatus?: string | null;
+  OrderItem?: OrderItem[];
+  bostaOrderID?: string | null;
+  bostaTrackingNumber?: string | null;
+  bostaTrackingUrl?: string | null;
+};
+
+export type StatusFilter = OrderStatus | "all";

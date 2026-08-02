@@ -5,6 +5,8 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 import { CartProvider } from "./context/CartContext";
 import Spinner from "./components/Spinner/Spinner";
+import { Toaster } from "react-hot-toast";
+import Dashboard from "./pages/Dashboard/Dashboard";
 
 // Lazy-loaded route components
 const AppLayout = lazy(() => import("./pages/AppLayout/AppLayout"));
@@ -28,15 +30,7 @@ export default function App() {
       <ReactQueryDevtools initialIsOpen={false} />
       <CartProvider>
         <BrowserRouter>
-          <Suspense
-            fallback={
-              <Spinner
-                fullScreen
-                size="lg"
-                variant="gold"
-              />
-            }
-          >
+          <Suspense fallback={<Spinner fullScreen size="lg" variant="gold" />}>
             <Routes>
               <Route element={<AppLayout />}>
                 <Route index element={<Navigate replace to="home" />} />
@@ -46,10 +40,36 @@ export default function App() {
                 <Route path="products/:id" element={<Product />} />
                 <Route path="about" element={<About />} />
                 <Route path="order-success" element={<OrderSuccess />} />
+                <Route path="dashboard" element={<Dashboard />} />
               </Route>
             </Routes>
           </Suspense>
         </BrowserRouter>
+        <Toaster
+          position="top-right"
+          reverseOrder={false}
+          gutter={8}
+          toastOptions={{
+            duration: 3000,
+            style: {
+              background: "#fff",
+              color: "#111",
+              border: "1px solid #e5e7eb",
+            },
+            success: {
+              iconTheme: {
+                primary: "#22c55e",
+                secondary: "#fff",
+              },
+            },
+            error: {
+              iconTheme: {
+                primary: "#ef4444",
+                secondary: "#fff",
+              },
+            },
+          }}
+        />
       </CartProvider>
     </QueryClientProvider>
   );

@@ -26,6 +26,7 @@ export default function Navbar() {
     { id: "Home", label: "home" },
     { id: "Shop", label: "menu" },
     { id: "Our Story", label: "about" },
+    { id: "Dashboard", label: "dashboard" },
   ];
   const transparentNavBar = location.pathname === "/home";
 

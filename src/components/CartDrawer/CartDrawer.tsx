@@ -1,8 +1,11 @@
 import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 import styles from "./CartDrawer.module.css";
+import { formatCurrency } from "../../helper/helper";
+import { useNavigate } from "react-router-dom";
 
 export default function CartDrawer() {
+  const navigate = useNavigate();
   const {
     cart,
     open,
@@ -59,15 +62,15 @@ export default function CartDrawer() {
               return (
                 <div key={key} className={styles.itemCard}>
                   <div className={styles.itemRow}>
-                    <div className={styles.itemDetails}>
-                      <p className={styles.itemName}>{product.name}</p>
-                      <div className={styles.itemOptions}>
-                        {options.map((op) => (
-                          <span key={op.optionID}>{op.label}</span>
-                        ))}
-                      </div>
+                    <p className={styles.itemName}>{product.name}</p>
+                    <div className={styles.itemOptions}>
+                      {options.map((op) => (
+                        <span key={op.optionID}>{op.label}</span>
+                      ))}
                     </div>
-                    <p className={styles.itemPrice}>${item.itemPrice}</p>
+                    <p className={styles.itemPrice}>
+                      {formatCurrency(item.itemPrice)}
+                    </p>
                     <button
                       onClick={() => removeItem(item.itemID)}
                       className={styles.removeButton}
@@ -102,13 +105,14 @@ export default function CartDrawer() {
             <div className={styles.subtotalRow}>
               <span className={styles.subtotalLabel}>Subtotal</span>
               <span className={styles.subtotalValue}>
-                ${cartPrice.toFixed(2)}
+                {formatCurrency(cartPrice)}
               </span>
             </div>
             <p className={styles.helperText}>Shipping & taxes at checkout</p>
             <button
               onClick={() => {
                 closeCart();
+                navigate("/checkout");
               }}
               className={styles.checkoutButton}
             >
