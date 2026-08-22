@@ -60,20 +60,6 @@ function statusClass(status?: string | null) {
   return styles.badgePending;
 }
 
-// function optionsLabel(options: Json | null) {
-//   if (!Array.isArray(options)) return "";
-
-//   return options
-//     .map((option) => {
-//       if (option && typeof option === "object" && "label" in option) {
-//         const label = option.label;
-//         return typeof label === "string" ? label : "";
-//       }
-//       return "";
-//     })
-//     .filter(Boolean)
-//     .join(", ");
-// }
 
 export default function Dashboard() {
   const queryClient = useQueryClient();

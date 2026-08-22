@@ -13,9 +13,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
-  // console.log(location.pathname); // /about
-  // console.log(location.search);   // ?id=1
-  // console.log(location.hash);     // #section
+
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", handler);

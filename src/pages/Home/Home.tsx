@@ -13,6 +13,9 @@ import { supabase } from "../../lib/supabase";
 import type { Product } from "../../types/db";
 import styles from "./Home.module.css";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { getAllProducts } from "../../services/Product";
+// import Spinner from "../../components/Spinner/Spinner";
 
 const CATEGORY_INFO = [
   {
@@ -50,6 +53,10 @@ const CATEGORY_INFO = [
 export default function Home() {
   const [featured, setFeatured] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const query = useQuery<Product[]>({
+    queryKey: ["products"],
+    queryFn: getAllProducts,
+  });
   const navigate = useNavigate();
   useEffect(() => {
     supabase

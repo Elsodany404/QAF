@@ -1,19 +1,19 @@
-import { OptionWithValue } from "../types/customTypes";
+import { constructedData, ProductQuery } from "../types/customTypes";
 import { OptionValue, Product } from "../types/db";
 
-export function getOptionByName(
-  name: string,
-  data: OptionWithValue[],
-): OptionValue[] | undefined {
-  return data
-    ?.find((op) => op.name === name)
-    ?.OptionValues.sort((a, b) => a.id - b.id);
+export function constructData(data: ProductQuery): constructedData {
+  const { options, ...product } = data;
+  const transformedOption = options.map(({ OptionValues: values, ...rest }) => {
+    const defaultValue = values?.find((v) => v.default);
+    return {
+      ...rest,
+      values,
+      defaultValue,
+    };
+  });
+  return { product, options: transformedOption };
 }
-export function getOptionsDefaultValues(data: OptionWithValue[]) {
-  const values = data?.map((op) => op.OptionValues)?.flatMap((arr) => [...arr]);
 
-  return values?.filter((v) => v.default === true);
-}
 export function calcPrice(product: Product, options: OptionValue[]) {
   const basePrice = product.price;
   const priceModifier = options.reduce(
@@ -24,9 +24,9 @@ export function calcPrice(product: Product, options: OptionValue[]) {
 
   return Math.ceil(finalPrice);
 }
-export function generateItemID(product: Product, options: OptionValue[]) {
-  const optionsID = options.reduce((acc, curr) => (acc += curr.id), "");
-  return `${product.id}${optionsID}`;
+export function generateItemID(product: Product, values: OptionValue[]) {
+  const valuesIDs = values.map((v) => v.id).join(":");
+  return `${product.id}${valuesIDs}`;
 }
 
 export function formatCurrency(amount: number): string {

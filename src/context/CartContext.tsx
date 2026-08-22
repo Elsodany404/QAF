@@ -1,21 +1,5 @@
 import { createContext, ReactNode, useContext, useState } from "react";
-import { Item } from "../types/customTypes";
-
-type Cart = Item[];
-
-type CartContextT = {
-  cart: Cart;
-  open: boolean;
-  totalItems: number;
-  cartPrice: number;
-  closeCart: () => void;
-  openCart: () => void;
-  clearCart: () => void;
-  addItem: (item: Item) => void;
-  removeItem: (itemID: string) => void;
-  increaseQuantity: (itemID: string) => void;
-  decreaseQuantity: (itemID: string) => void;
-};
+import { Cart, CartContextT, Item, PaymentMethod } from "../types/customTypes";
 
 const cartContext = createContext<CartContextT | undefined>(undefined);
 
@@ -27,6 +11,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     (acc, curr) => acc + curr.itemPrice * curr.quantity,
     0,
   );
+  const [paymentMethod, setPaymentMethod] =
+    useState<PaymentMethod>("paymob_card");
 
   function addItem(item: Item) {
     const exist = cart.find((i) => i.itemID === item.itemID);
@@ -85,6 +71,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         decreaseQuantity,
         cartPrice,
         totalItems,
+        setPaymentMethod,
+        paymentMethod
       }}
     >
       {children}

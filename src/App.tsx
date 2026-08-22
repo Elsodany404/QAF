@@ -24,13 +24,14 @@ const queryClient = new QueryClient({
     },
   },
 });
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ReactQueryDevtools initialIsOpen={false} />
       <CartProvider>
         <BrowserRouter>
-          <Suspense fallback={<Spinner fullScreen size="lg" variant="gold" />}>
+          <Suspense fallback={<Spinner pagination />}>
             <Routes>
               <Route element={<AppLayout />}>
                 <Route index element={<Navigate replace to="home" />} />
@@ -39,14 +40,14 @@ export default function App() {
                 <Route path="menu" element={<Menu />} />
                 <Route path="products/:id" element={<Product />} />
                 <Route path="about" element={<About />} />
-                <Route path="order-success" element={<OrderSuccess />} />
+                <Route path="order-success/:id" element={<OrderSuccess />} />
                 <Route path="dashboard" element={<Dashboard />} />
               </Route>
             </Routes>
           </Suspense>
         </BrowserRouter>
         <Toaster
-          position="top-right"
+          position="top-center"
           reverseOrder={false}
           gutter={8}
           toastOptions={{

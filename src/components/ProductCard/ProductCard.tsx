@@ -1,20 +1,15 @@
-import { useState } from "react";
+// import { useState } from "react";
 import { ShoppingCart, Star } from "lucide-react";
-// Assuming Next.js, change to 'react-router-dom' if using Vite
-import type { Product, OptionValue } from "../../types/db";
+import type { OptionValue, Product } from "../../types/db";
 import styles from "./ProductCard.module.css";
 import { useQuery } from "@tanstack/react-query";
 import { getProductByID } from "../../services/Product";
-import { NavLink } from "react-router-dom";
-import {
-  calcPrice,
-  formatCurrency,
-  generateItemID,
-  getOptionByName,
-  getOptionsDefaultValues,
-} from "../../helper/helper";
+
 import { useCart } from "../../context/CartContext";
-import { Spinner } from "../Spinner/Spinner";
+import Spinner from "../Spinner/Spinner";
+import { useState } from "react";
+import { calcPrice, formatCurrency, generateItemID } from "../../helper/helper";
+import { NavLink } from "react-router-dom";
 
 interface ProductCardProps {
   product: Product;
@@ -23,75 +18,60 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCart();
   const { data, isLoading } = useQuery({
-    queryKey: ["productOptions", product.id],
+    queryKey: ["product", product?.id],
     queryFn: () => getProductByID(product.id),
+    enabled: Boolean(product?.id),
+    select: (productData) => ({
+      size: productData?.options?.find((op) => op.name === "Size"),
+      roast: productData?.options?.find((op) => op.name === "Roast"),
+      options: productData?.options,
+    }),
   });
-  const options = data?.ProductOptions.map((po) => po.optionID);
+
+  const defaultSize = data?.size?.defaultValue;
+  const defaultRoast = data?.roast?.defaultValue;
+
+  const otherDefaultValues =
+    data?.options
+      ?.filter((op) => op.name !== "Size" && op.name !== "Roast")
+      ?.map((op) => op.defaultValue) ?? [];
 
   const [selectedWeight, setSelectedWeight] = useState<OptionValue | null>(
     null,
   );
   const [selectedRoast, setSelectedRoast] = useState<OptionValue | null>(null);
 
-  // 3. Early return if data is still loading to prevent operations on missing values
-  if (isLoading || !options) {
-    return <Spinner size="md" variant="espresso" label="loading options"/>;
-  }
-  
-  const sizeArr = getOptionByName("size", options) ?? [];
-  const roastArr = getOptionByName("roasting", options) ?? [];
+  const activeWeight = selectedWeight ?? defaultSize;
+  const activeRoast = selectedRoast ?? defaultRoast;
 
-  // 1. Derive active options immediately (Fallback: state -> default -> first item -> null)
-  const activeWeight = selectedWeight ?? sizeArr.find((s) => s.default);
+  const selectedValues = [
+    activeRoast,
+    activeWeight,
+    ...otherDefaultValues,
+  ].filter((v) => v !== undefined);
 
-  const activeRoast = selectedRoast ?? roastArr.find((r) => r.default);
+  const finalPrice = calcPrice(product, selectedValues);
 
-  const selectedOptions: OptionValue[] = [];
-
-  if (activeWeight) {
-    selectedOptions.push(activeWeight);
-  }
-  if (activeRoast) {
-    selectedOptions.push(activeRoast);
-  }
-  const optionsDefaultValues = getOptionsDefaultValues(options);
-
-  if (optionsDefaultValues) {
-    optionsDefaultValues.forEach((v) => {
-      if (selectedOptions.find((s) => s.id === v.id)) return;
-      selectedOptions.push(v);
-    });
-  }
-  console.log(optionsDefaultValues);
-  console.log(selectedOptions);
-  // 2. Calculate price cleanly (safely ignores null values)
-  const finalPrice = calcPrice(product, selectedOptions);
-
-  // 3. Build URL safely without 'undefined' query params
-  const searchParams = new URLSearchParams();
-  if (activeWeight?.id) searchParams.set("size", String(activeWeight.id));
-  if (activeRoast?.id) {
-    searchParams.set("roast", String(activeRoast.id));
-  }
   function handleAdd(e: React.MouseEvent<HTMLButtonElement>) {
     e.stopPropagation();
     e.preventDefault();
     const item = {
-      itemID: generateItemID(product, selectedOptions),
+      itemID: generateItemID(product, selectedValues),
       product,
-      options: selectedOptions,
+      options: selectedValues,
       quantity: 1,
       itemPrice: finalPrice,
     };
     addItem(item);
   }
 
-  const link = `/products/${product.id}${
-    searchParams.toString() ? `?${searchParams.toString()}` : ""
-  }`;
+  const link = `/products/${product.id}`;
+
   return (
-    <NavLink to={link} className={styles.cardLink}>
+    <NavLink to={link} className={styles.cardLink} state={selectedValues}>
       <div className={styles.card}>
+        {isLoading && <Spinner pagination={false} />}
+
         <div className={styles.imageWrap}>
           <img
             src={product.imageUrl || undefined}
@@ -126,18 +106,17 @@ export default function ProductCard({ product }: ProductCardProps) {
             </div>
           )}
         </div>
-
         <div className={styles.content}>
           <h3 className={styles.title}>{product.name}</h3>
 
-          {sizeArr && (
+          {data?.size && (
             <div className={styles.weightRow}>
-              {sizeArr.map((s: OptionValue) => (
+              {data?.size?.values.map((s: OptionValue) => (
                 <button
                   key={s.id}
                   onClick={(e) => {
                     e.preventDefault();
-                    e.stopPropagation(); // Stop Link navigation
+                    e.stopPropagation(); 
                     setSelectedWeight(s);
                   }}
                   className={`${styles.weightButton} ${activeWeight?.id === s.id ? styles.weightButtonActive : ""}`}
@@ -148,9 +127,9 @@ export default function ProductCard({ product }: ProductCardProps) {
             </div>
           )}
 
-          {roastArr.length > 0 && (
+          {data?.roast && (
             <div className={styles.weightRow}>
-              {roastArr.map((value: OptionValue) => {
+              {data.roast.values.map((value: OptionValue) => {
                 return (
                   <button
                     key={value.id}

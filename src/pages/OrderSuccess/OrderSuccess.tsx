@@ -1,7 +1,14 @@
 import { CheckCircle, ArrowRight, Package, Truck, Mail } from "lucide-react";
 import styles from "./OrderSuccess.module.css";
+import { useNavigate, useParams } from "react-router-dom";
+import ErrorFallback from "../Error/ErrorFallback";
 
 export default function OrderSuccess() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  if (!id) {
+    return <ErrorFallback></ErrorFallback>
+  }
   return (
     <div className={styles.page}>
       <div className={styles.card}>
@@ -15,10 +22,7 @@ export default function OrderSuccess() {
             Thank you for your purchase. We're roasting your coffee now.
           </p>
           <p className={styles.orderId}>
-            Order ID:{" "}
-            <span className={styles.orderIdValue}>
-              {orderId.slice(0, 8).toUpperCase()}
-            </span>
+            Order ID: <span className={styles.orderIdValue}>{id}</span>
           </p>
         </div>
 
@@ -60,7 +64,10 @@ export default function OrderSuccess() {
           </p>
         </div>
 
-        <button onClick={onContinue} className={styles.continueButton}>
+        <button
+          onClick={() => navigate("/menu")}
+          className={styles.continueButton}
+        >
           Continue Shopping
           <ArrowRight className="w-5 h-5" />
         </button>

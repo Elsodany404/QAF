@@ -1,0 +1,15 @@
+.label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--charcoal-900);
+}
+
+.errorText {
+  padding: 0 0.5rem;
+  position: relative;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #dc2626;
+}

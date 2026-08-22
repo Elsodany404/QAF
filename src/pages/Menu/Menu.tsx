@@ -12,6 +12,7 @@ export default function Menu() {
     queryKey: ["products"],
     queryFn: getAllProducts,
   });
+  
   const [activeCategory, setActiveCategory] = useState<string | "all">("all");
 
   const [filtered, setFiltered] = useState<Product[]>([]);

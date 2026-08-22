@@ -72,40 +72,70 @@ export type Database = {
       }
       Order: {
         Row: {
+          addressDetails: string
+          apartment: string
+          bostaOrderID: string | null
+          bostaTrackingNumber: string | null
+          bostaTrackingUrl: string | null
+          city: string
           created_at: string
           customerEmail: string
           customerName: string
           customerPhone: string
+          governorate: string
           id: number
+          paymentMethod: string | null
+          paymentStatus: string | null
           paymobOrderID: string | null
           paymobTransactionID: string | null
-          shppingAddress: string
+          shippingStatus: string | null
           status: Database["public"]["Enums"]["orderStatus"]
-          totalAmount: number
+          street: string
+          totalPrice: number
         }
         Insert: {
+          addressDetails: string
+          apartment: string
+          bostaOrderID?: string | null
+          bostaTrackingNumber?: string | null
+          bostaTrackingUrl?: string | null
+          city: string
           created_at?: string
           customerEmail: string
           customerName: string
           customerPhone: string
+          governorate: string
           id?: number
+          paymentMethod?: string | null
+          paymentStatus?: string | null
           paymobOrderID?: string | null
           paymobTransactionID?: string | null
-          shppingAddress: string
+          shippingStatus?: string | null
           status?: Database["public"]["Enums"]["orderStatus"]
-          totalAmount: number
+          street: string
+          totalPrice: number
         }
         Update: {
+          addressDetails?: string
+          apartment?: string
+          bostaOrderID?: string | null
+          bostaTrackingNumber?: string | null
+          bostaTrackingUrl?: string | null
+          city?: string
           created_at?: string
           customerEmail?: string
           customerName?: string
           customerPhone?: string
+          governorate?: string
           id?: number
+          paymentMethod?: string | null
+          paymentStatus?: string | null
           paymobOrderID?: string | null
           paymobTransactionID?: string | null
-          shppingAddress?: string
+          shippingStatus?: string | null
           status?: Database["public"]["Enums"]["orderStatus"]
-          totalAmount?: number
+          street?: string
+          totalPrice?: number
         }
         Relationships: []
       }
@@ -118,7 +148,7 @@ export type Database = {
           productID: number
           productName: string
           quantity: number
-          unitPrice: number
+          totalPrice: number
         }
         Insert: {
           createdAt?: string
@@ -128,7 +158,7 @@ export type Database = {
           productID: number
           productName: string
           quantity: number
-          unitPrice: number
+          totalPrice: number
         }
         Update: {
           createdAt?: string
@@ -138,7 +168,7 @@ export type Database = {
           productID?: number
           productName?: string
           quantity?: number
-          unitPrice?: number
+          totalPrice?: number
         }
         Relationships: [
           {
@@ -151,7 +181,7 @@ export type Database = {
           {
             foreignKeyName: "OrderItem_productID_fkey"
             columns: ["productID"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "Product"
             referencedColumns: ["id"]
           },
@@ -167,7 +197,6 @@ export type Database = {
           inStock: boolean
           name: string | null
           price: number
-          size: string[] | null
         }
         Insert: {
           category?: string | null
@@ -178,7 +207,6 @@ export type Database = {
           inStock?: boolean
           name?: string | null
           price: number
-          size?: string[] | null
         }
         Update: {
           category?: string | null
@@ -189,7 +217,6 @@ export type Database = {
           inStock?: boolean
           name?: string | null
           price?: number
-          size?: string[] | null
         }
         Relationships: []
       }
@@ -231,9 +258,40 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_order:
+        | {
+            Args: {
+              p_customer_email: string
+              p_customer_name: string
+              p_customer_phone: string
+              p_items: Json
+              p_payment_method: string
+              p_shipping_address: string
+              p_total_amount: number
+            }
+            Returns: number
+          }
+        | {
+            Args: {
+              p_customer_email: string
+              p_customer_name: string
+              p_customer_phone: string
+              p_items: Json
+              p_payment_method: string
+              p_shipping_address: string
+              p_total_price: number
+            }
+            Returns: number
+          }
     }
     Enums: {
+      orderstatus:
+        | "pending"
+        | "paid"
+        | "shipped"
+        | "completed"
+        | "cancelled"
+        | "failed"
       orderStatus: "pending" | "paid" | "shipped" | "completed" | "cancelled"
     }
     CompositeTypes: {
@@ -362,6 +420,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      orderstatus: [
+        "pending",
+        "paid",
+        "shipped",
+        "completed",
+        "cancelled",
+        "failed",
+      ],
       orderStatus: ["pending", "paid", "shipped", "completed", "cancelled"],
     },
   },

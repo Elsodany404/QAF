@@ -1,4 +1,4 @@
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 
 import styles from "./AppLayout.module.css";
 import CartDrawer from "../../components/CartDrawer/CartDrawer";
