@@ -1,0 +1,279 @@
+.formSection {
+  display: grid;
+  gap: 2rem;
+}
+
+.card {
+  padding: 2rem;
+  border: 1px solid var(--cream-100);
+  border-radius: 1.5rem;
+  background: white;
+  box-shadow: var(--shadow-soft);
+}
+
+.cardTitle {
+  margin-bottom: 1.5rem;
+  font-family: "Playfair Display", serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--charcoal-950);
+}
+
+.fieldGrid {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .fieldGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.input {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 2px solid var(--cream-200);
+  border-radius: 0.9rem;
+  background: white;
+  color: var(--charcoal-900);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--gold-500);
+  box-shadow: 0 0 0 4px rgba(218, 144, 14, 0.2);
+}
+
+.inputError {
+  border-color: #ef4444;
+}
+
+.dropdown {
+  align-self: end;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dropdown label {
+  font-weight: 600;
+  color: var(--charcoal-900);
+}
+
+/* Styled Dropdown Upgrade */
+.dropdown select {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 2px solid var(--cream-200);
+  border-radius: 0.9rem;
+  background-color: white;
+  color: var(--charcoal-900);
+  font-size: 1rem;
+  cursor: pointer;
+
+  /* Remove native browser dropdown appearance */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  /* Add sleek custom dropdown chevron arrow */
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23131313%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem top 50%;
+  background-size: 0.65rem auto;
+}
+
+.dropdown select:focus {
+  outline: none;
+  border-color: var(--gold-500);
+  box-shadow: 0 0 0 4px rgba(218, 144, 14, 0.2);
+}
+
+.dropdown select:disabled {
+  background-color: var(--cream-100);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.dropdown option {
+  background-color: white;
+  color: var(--charcoal-900);
+}
+
+.errorText {
+  padding: 0 0.5rem;
+  position: relative;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #dc2626;
+}
+
+.ButtonGetAddress {
+  background-color: var(--espresso-600);
+  border-radius: 10px;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  align-self: end;
+  gap: 0.5rem;
+  padding: 1rem;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.ButtonGetAddress:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.ButtonGetAddress:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.paymentCard {
+  padding: 1.5rem;
+  border: 2px solid var(--gold-200);
+  border-radius: 1rem;
+  background: linear-gradient(90deg, var(--gold-50), var(--cream-100));
+}
+
+.paymentHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.paymentIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.8rem;
+  background: rgba(218, 144, 14, 0.2);
+}
+
+.paymentIcon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--gold-600);
+}
+
+.paymentTitle {
+  margin-bottom: 0.4rem;
+  font-weight: 700;
+  color: var(--charcoal-900);
+}
+
+.paymentBody {
+  margin-top: 0.6rem;
+  font-size: 0.9rem;
+  color: var(--charcoal-700);
+}
+
+.paymentSecurity {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gold-700);
+}
+
+.payError {
+  padding: 1rem;
+  border: 2px solid #fca5a5;
+  border-radius: 0.9rem;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.submitButton {
+  width: 100%;
+  padding: 1rem 1.25rem;
+  border-radius: 0.95rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: white;
+  background: linear-gradient(90deg, var(--espresso-600), var(--mocha-600));
+  box-shadow: var(--shadow-soft-lg);
+  cursor: pointer;
+  border: none;
+}
+
+.submitButtonDisabled {
+  background: var(--charcoal-300);
+  color: var(--charcoal-500);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.paymentChoices {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.paymentChoice {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 1rem;
+  border: 2px solid var(--cream-200);
+  border-radius: 0.9rem;
+  background: white;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.paymentChoice:hover {
+  border-color: var(--gold-300);
+  transform: translateY(-1px);
+}
+
+.paymentChoiceActive {
+  border-color: var(--gold-500);
+  background: var(--gold-50);
+}
+
+.paymentChoiceIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  background: var(--cream-100);
+  color: var(--espresso-700);
+}
+
+.paymentChoiceIcon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.paymentChoiceTitle,
+.paymentChoiceDesc {
+  display: block;
+}
+
+.paymentChoiceTitle {
+  font-weight: 700;
+  color: var(--charcoal-950);
+}
+
+.paymentChoiceDesc {
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--charcoal-600);
+}

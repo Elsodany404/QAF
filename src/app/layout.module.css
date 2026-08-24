@@ -1,0 +1,7 @@
+.app {
+  min-height: 100vh;
+  font-family: "Outfit", sans-serif;
+  color: var(--charcoal-900);
+  background: var(--cream-50);
+}
+

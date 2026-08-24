@@ -1,0 +1,135 @@
+.wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--cream-50);
+  padding: 2rem;
+  font-family: var(--font-body);
+}
+
+.card {
+  background-color: #ffffff;
+  max-width: 520px;
+  width: 100%;
+  border-radius: 20px;
+  padding: 3.5rem 2.5rem;
+  text-align: center;
+  box-shadow: var(--shadow-soft-xl);
+  border: 1px solid var(--cream-100);
+}
+
+.iconContainer {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.icon {
+  width: 56px;
+  height: 56px;
+  color: var(--gold-500);
+}
+
+.title {
+  font-family: var(--font-display);
+  color: var(--espresso-900);
+  font-size: 2.25rem;
+  font-weight: 600;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+}
+
+.description {
+  color: var(--charcoal-500);
+  font-size: 1.125rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.errorDetails {
+  text-align: left;
+  margin-bottom: 2.5rem;
+}
+
+.errorLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--charcoal-400);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.errorMessage {
+  background-color: var(--charcoal-50);
+  color: var(--charcoal-700);
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  overflow-x: auto;
+  border: 1px solid var(--charcoal-100);
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.btnPrimary,
+.btnSecondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  border-radius: 12px;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.btnPrimary {
+  background-color: var(--espresso-800);
+  color: var(--cream-50);
+  border: 1px solid var(--espresso-800);
+}
+
+.btnPrimary:hover {
+  background-color: var(--espresso-900);
+  border-color: var(--espresso-900);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-soft);
+}
+
+.btnSecondary {
+  background-color: transparent;
+  color: var(--espresso-800);
+  border: 1px solid var(--espresso-200);
+}
+
+.btnSecondary:hover {
+  background-color: var(--espresso-50);
+  border-color: var(--espresso-300);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 480px) {
+  .actions {
+    flex-direction: column;
+  }
+
+  .btnPrimary,
+  .btnSecondary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .card {
+    padding: 2.5rem 1.5rem;
+  }
+}

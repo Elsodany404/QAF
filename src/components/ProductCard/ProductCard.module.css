@@ -1,0 +1,241 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--cream-100);
+  border-radius: 1.5rem;
+  background: white;
+  box-shadow: var(--shadow-soft);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-soft-xl);
+  transform: scale(1.05);
+}
+
+.imageWrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--mocha-100), var(--cream-100));
+}
+
+.image {
+  object-fit: cover;
+  transition: transform 0.7s ease;
+}
+
+.card:hover .image {
+  transform: scale(1.1);
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(17, 16, 31, 0.4), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.card:hover .overlay {
+  opacity: 1;
+}
+
+.badges {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.badge,
+.badgeAlt {
+  display: inline-flex;
+  padding: 0.35rem 0.7rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  box-shadow: var(--shadow-soft);
+}
+
+.badge {
+  color: white;
+  background: var(--cream-700);
+}
+
+.badgeAlt {
+  color: var(--charcoal-900);
+  background: rgba(218, 144, 14);
+}
+
+
+
+.featuredBadge {
+  position: absolute;
+  top: 160px;
+  right: 10px;
+  
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 9999px;
+  background: var(--gold-400);
+  color: var(--charcoal-900);
+  font-size: 0.7rem;
+  font-weight: 700;
+  box-shadow: var(--shadow-soft);
+  animation: glow 2.5s ease-in-out infinite alternate;
+  
+}
+
+.outOfStockOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(17, 16, 31, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.outOfStockBox {
+  text-align: center;
+}
+
+.outOfStockTitle {
+  font-family: "Playfair Display", serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: white;
+}
+
+.outOfStockText {
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--cream-200);
+}
+
+.content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 1.25rem 1.4rem 1.4rem;
+}
+
+.title {
+  margin-bottom: 1rem;
+  font-family: "Playfair Display", serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--charcoal-950);
+  transition: color 0.2s ease;
+}
+
+.card:hover .title {
+  color: var(--espresso-700);
+}
+
+.description {
+  flex: 1;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--charcoal-600);
+}
+
+.weightRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.weightButton {
+  padding: 0.4rem 0.7rem;
+  border: 2px solid var(--cream-300);
+  border-radius: 0.7rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--charcoal-600);
+  transition: all 0.2s ease;
+}
+
+.weightButton:hover {
+  border-color: var(--espresso-400);
+  color: var(--espresso-600);
+}
+
+.weightButtonActive {
+  border-color: var(--espresso-600);
+  background: var(--espresso-50);
+  color: var(--espresso-700);
+}
+
+.weightModifier {
+  margin-left: 0.25rem;
+  color: var(--espresso-500);
+  font-weight: 700;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--cream-200);
+}
+
+.priceWrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.price {
+  font-family: var(--font-body);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--espresso-700);
+  margin-right: 2.5rem;
+}
+
+.unitLabel {
+  font-size: 0.75rem;
+  color: var(--charcoal-500);
+}
+
+.addButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.85rem;
+  font-weight: 600;
+  color: white;
+  background: var(--espresso-600);
+
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    filter 0.15s ease,
+    background 0.2s ease;
+}
+
+.addButton:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-soft-lg);
+}
+
+.addButton:active {
+  transform: translateY(1px) scale(0.97);
+  filter: brightness(0.9);
+  box-shadow: none;
+  background-color: var(--charcoal-100);
+}

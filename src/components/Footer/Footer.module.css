@@ -1,0 +1,262 @@
+.footer {
+  color: var(--cream-100);
+  background: linear-gradient(180deg, var(--charcoal-900), var(--charcoal-950));
+}
+
+.newsletterSection {
+  border-bottom: 1px solid var(--charcoal-800);
+}
+
+.newsletterInner {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 3rem 1rem 4rem;
+}
+
+@media (min-width: 640px) {
+  .newsletterInner {
+    padding: 3rem 1.5rem 4rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .newsletterInner {
+    padding: 3rem 2rem 4rem;
+  }
+}
+
+.newsletterCopy {
+  max-width: 42rem;
+}
+
+.title {
+  margin-bottom: 0.75rem;
+  font-family: "Playfair Display", serif;
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: white;
+}
+
+.description {
+  margin-bottom: 1.5rem;
+  color: var(--cream-300);
+}
+
+.form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.input {
+  flex: 1;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--charcoal-700);
+  border-radius: 0.75rem;
+  background: var(--charcoal-800);
+  color: white;
+}
+
+.input::placeholder {
+  color: var(--charcoal-400);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.8rem 1rem;
+  border-radius: 0.75rem;
+  color: white;
+  background: linear-gradient(90deg, var(--espresso-600), var(--mocha-600));
+}
+
+.mainFooter {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 4rem 1rem 2rem;
+}
+
+@media (min-width: 640px) {
+  .mainFooter {
+    padding: 4rem 1.5rem 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .mainFooter {
+    padding: 4rem 2rem 2rem;
+  }
+}
+
+.grid {
+  display: grid;
+  gap: 3rem;
+  margin-bottom: 3rem;
+}
+
+@media (min-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.brandWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.brandIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, var(--espresso-600), var(--mocha-600));
+}
+
+.brandIcon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--cream-50);
+}
+
+.brandTitle {
+  font-family: "Playfair Display", serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: white;
+}
+
+.brandSubtitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold-400);
+}
+
+.brandDescription {
+  margin-bottom: 1.25rem;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--cream-300);
+}
+
+.socials {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.socialLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  background: var(--charcoal-800);
+  color: var(--cream-300);
+  transition: all 0.2s ease;
+}
+
+.socialLink:hover {
+  color: white;
+  background: linear-gradient(135deg, var(--espresso-600), var(--mocha-600));
+}
+
+.sectionHeading {
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold-400);
+}
+
+.linkList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.linkButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.95rem;
+  color: var(--cream-300);
+  transition: color 0.2s ease;
+}
+
+.linkButton:hover {
+  color: var(--gold-400);
+}
+
+.linkIcon {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.linkButton:hover .linkIcon {
+  opacity: 1;
+}
+
+.contactList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.contactItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  color: var(--cream-300);
+}
+
+.contactItem svg {
+  margin-top: 0.1rem;
+  color: var(--gold-400);
+  flex-shrink: 0;
+}
+
+.bottomBar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--charcoal-800);
+}
+
+@media (min-width: 640px) {
+  .bottomBar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.copyright,
+.legalLink {
+  font-size: 0.8rem;
+  color: var(--charcoal-400);
+}
+
+.legalLinks {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.legalLink:hover {
+  color: var(--gold-400);
+}
