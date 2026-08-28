@@ -2,14 +2,16 @@ import { Leaf, Globe, Award, Heart, ArrowRight } from "lucide-react";
 import styles from "./page.module.css";
 import Image from "next/image";
 import signature_coffee_photo from "@/assets/images/signature_coffee_photo_big.jpg";
-import story_section_photo from "@/assets/images/story_section_photo.jpg"
-import story_section_photo_2 from "@/assets/images/story_section_photo_2.jpg"
+import story_section_photo from "@/assets/images/story_section_photo.jpg";
+import story_section_photo_2 from "@/assets/images/story_section_photo_2.jpg";
 export default function About() {
   return (
     <div className={styles.page}>
       <div className={styles.hero}>
         <Image
           quality={50}
+          loading="eager"
+          priority={true}
           placeholder="blur"
           className={styles.heroImage}
           src={signature_coffee_photo}

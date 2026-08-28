@@ -1,0 +1,41 @@
+.emptyState {
+  padding: 5rem 0;
+  text-align: center;
+}
+
+.emptyIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: 1rem;
+  border-radius: 9999px;
+  background: var(--cream-300);
+}
+
+.emptyIcon svg {
+  width: 2rem;
+  height: 2rem;
+  color: var(--cream-600);
+}
+
+.emptyTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--charcoal-600);
+}
+
+.emptyText {
+  margin-top: 0.35rem;
+  color: var(--charcoal-500);
+}
+
+.resetButton {
+  margin-top: 1.5rem;
+  padding: 0.8rem 1.2rem;
+  border-radius: 0.8rem;
+  background: linear-gradient(90deg, var(--espresso-600), var(--mocha-600));
+  color: white;
+  font-weight: 600;
+}

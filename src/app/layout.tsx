@@ -7,6 +7,7 @@ import styles from "./layout.module.css";
 import { Outfit, Playfair_Display } from "next/font/google";
 
 import "./index.css";
+import ScrollToTop from "@/components/ScrollToTop/ScrollToTop";
 
 export const metadata: Metadata = {
   title: {
@@ -43,6 +44,8 @@ export default function RootLayout({
     >
       <body>
         <Providers>
+          <ScrollToTop />
+
           <div className={styles.app}>
             <Navbar />
             <CartDrawer />

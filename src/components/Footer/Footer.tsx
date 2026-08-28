@@ -1,10 +1,8 @@
-"use client"
 import { Coffee, Mail, Phone, MapPin, ArrowRight } from "lucide-react";
 import styles from "./Footer.module.css";
 import { SiInstagram, SiFacebook, SiX } from "@icons-pack/react-simple-icons";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 export default function Footer() {
-  const router = useRouter();
   return (
     <footer className={styles.footer}>
       <div className={styles.newsletterSection}>
@@ -42,8 +40,8 @@ export default function Footer() {
               </div>
             </div>
             <p className={styles.brandDescription}>
-              Small-batch roasted coffee from the world finest origins.
-              Crafted with passion, served with purpose.
+              Small-batch roasted coffee from the world finest origins. Crafted
+              with passion, served with purpose.
             </p>
             <div className={styles.socials}>
               {[
@@ -73,15 +71,12 @@ export default function Footer() {
                 "All Products",
               ].map((item) => (
                 <li key={item}>
-                  <button
-                    onClick={() => router.push("/menu")}
-                    className={styles.linkButton}
-                  >
+                  <Link href={"/menu"} className={styles.linkButton}>
                     <span className="flex items-center gap-1">
                       {item}
                       <ArrowRight className={styles.linkIcon} />
                     </span>
-                  </button>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -93,15 +88,12 @@ export default function Footer() {
               {["Our Story", "Sourcing", "Sustainability", "Contact"].map(
                 (item) => (
                   <li key={item}>
-                    <button
-                      onClick={() => router.push("/about")}
-                      className={styles.linkButton}
-                    >
+                    <Link href={"/about"} className={styles.linkButton}>
                       <span className="flex items-center gap-1">
                         {item}
                         <ArrowRight className={styles.linkIcon} />
                       </span>
-                    </button>
+                    </Link>
                   </li>
                 ),
               )}

@@ -1,10 +1,9 @@
-import { useRouter } from "next/navigation";
 import styles from "./Hero.module.css";
 import Image from "next/image";
 import heroImage from "@/assets/images/hero.jpg";
+import Link from "next/link";
 
 export default function Hero() {
-  const router = useRouter();
   return (
     <section className={styles.hero}>
       <div className={styles.background}>
@@ -13,6 +12,9 @@ export default function Hero() {
           src={heroImage}
           placeholder="blur"
           alt="coffee roaster for hero section"
+          quality={50}
+          loading="eager"
+          priority={true}
         />
         <div className={styles.overlay} />
         <div className={styles.overlayBottom} />
@@ -38,10 +40,7 @@ export default function Hero() {
           </p>
 
           <div className={styles.actions}>
-            <button
-              onClick={() => router.push("/menu")}
-              className={styles.primaryButton}
-            >
+            <Link href={"/menu"} className={styles.primaryButton}>
               <span className={styles.buttonContent}>
                 Explore Collection
                 <svg
@@ -58,14 +57,11 @@ export default function Hero() {
                   />
                 </svg>
               </span>
-            </button>
+            </Link>
 
-            <button
-              onClick={() => router.push("/about")}
-              className={styles.secondaryButton}
-            >
+            <Link href={"/about"} className={styles.secondaryButton}>
               Learn Our Story
-            </button>
+            </Link>
           </div>
 
           <div className={styles.stats}>

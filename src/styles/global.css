@@ -97,7 +97,146 @@ body {
   background: var(--cream-50);
   line-height: 1.6;
 }
+.section {
+  position: relative;
+  padding: 6rem 0;
+  background: white;
+}
 
+.sectionAlt {
+  position: relative;
+  padding: 7rem 0;
+  background: linear-gradient(180deg, var(--cream-50), white, var(--cream-50));
+}
+
+.sectionDark {
+  position: relative;
+  padding: 6rem 0;
+  background: linear-gradient(
+    90deg,
+    var(--charcoal-900),
+    var(--espresso-950),
+    var(--charcoal-950)
+  );
+  color: white;
+  overflow: hidden;
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 80rem;
+  margin: 0 auto;
+  padding-inline: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding-inline: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding-inline: 2rem;
+  }
+}
+
+.glow,
+.glowLeft,
+.glowDark {
+  position: absolute;
+  top: 0;
+  width: 24rem;
+  height: 24rem;
+  border-radius: 9999px;
+  filter: blur(48px);
+}
+
+.glow {
+  right: 0;
+  background: rgba(218, 144, 14, 0.05);
+}
+
+.glowLeft {
+  left: 0;
+  background: rgba(114, 68, 61, 0.05);
+}
+
+.glowDark {
+  right: 0;
+  background: rgba(218, 144, 14, 0.1);
+}
+
+.badge {
+  display: inline-block;
+  margin-bottom: 1rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 9999px;
+  background: rgba(218, 144, 14, 0.1);
+  border: 1px solid rgba(218, 144, 14, 0.2);
+}
+
+.badgeText {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold-600);
+}
+
+.titleAccent {
+  color: transparent;
+  background: linear-gradient(90deg, var(--espresso-700), var(--mocha-600));
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.productGrid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .productGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .productGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .productGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
 ::-webkit-scrollbar {
   width: 15px;
   height: 15px;
@@ -125,7 +264,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.85rem 1.25rem;
+  padding: 0.75rem 1.15rem;
   font-weight: 600;
   border-radius: 0.9rem;
   transition: all 0.2s ease-in-out;
@@ -133,6 +272,11 @@ body {
 
 .premium-button:hover {
   transform: scale(1.02);
+}
+.premium-button:active {
+  transform: scale(0.95);
+  box-shadow: var(--shadow-soft-xl);
+  background-color: var(--cream-600);
 }
 
 .premium-button-primary {

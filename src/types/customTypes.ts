@@ -18,12 +18,13 @@ export type OrderQuery = Order & {
 export type ProductQuery = Product & {
   options: ProductOption[];
 };
+
 export type TransformedOption = Option & {
   values: OptionValue[];
   defaultValue: OptionValue;
 };
 
-export type constructedData = {
+export type DataItem = {
   product: Product;
   options: TransformedOption[]; // Added [] here
 };

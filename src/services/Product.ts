@@ -1,18 +1,33 @@
 import { constructData } from "../helper/helper";
 import { supabase } from "../lib/supabase";
-import { constructedData } from "../types/customTypes";
+import { DataItem } from "../types/customTypes";
 
-export async function getAllProducts() {
-  const { data, error } = await supabase.from("Product").select("*");
-
+export async function getAllProducts(): Promise<DataItem[]> {
+  const { data, error } = await supabase.from("Product").select(
+    `
+      *,
+      ProductOptions(
+        optionID(
+          *,
+          OptionValues(*)
+        )
+      )
+    `,
+  );
   if (error) throw error;
-
-  return data;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data ?? []).map((item: any) => {
+    const { ProductOptions, ...product } = item;
+    const rawData = {
+      ...product,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      options: ProductOptions?.map((opt: any) => opt.optionID) ?? [],
+    };
+    return constructData(rawData);
+  });
 }
 
-export async function getProductByID(
-  productId: number,
-): Promise<constructedData> {
+export async function getProductByID(productId: number): Promise<DataItem> {
   const { data, error } = await supabase
     .from("Product")
     .select(

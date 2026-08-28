@@ -1,40 +1,34 @@
-// import { useState } from "react";
+"use client";
 import { ShoppingCart, Star } from "lucide-react";
 import type { OptionValue, Product } from "../../types/db";
 import styles from "./ProductCard.module.css";
-import { useQuery } from "@tanstack/react-query";
-import { getProductByID } from "../../services/Product";
 
 import { useCart } from "../../context/CartContext";
 import Spinner from "../Spinner/Spinner";
 import { useState } from "react";
 import { calcPrice, formatCurrency, generateItemID } from "../../helper/helper";
 import Link from "next/link";
-
 import Image from "next/image";
+import { Button } from "../Button/Button";
+import { DataItem } from "@/types/customTypes";
 
 interface ProductCardProps {
-  product: Product;
+  dataItem: DataItem;
 }
 
-export default function ProductCard({ product }: ProductCardProps) {
+export default function ProductCard({ dataItem }: ProductCardProps) {
   const { addItem } = useCart();
-  const { data, isLoading } = useQuery({
-    queryKey: ["product", product?.id],
-    queryFn: () => getProductByID(product.id),
-    enabled: Boolean(product?.id),
-    select: (productData) => ({
-      size: productData?.options?.find((op) => op.name === "Size"),
-      roast: productData?.options?.find((op) => op.name === "Roast"),
-      options: productData?.options,
-    }),
-  });
+  const [imageLoading, setImageLoading] = useState(true);
+  const { product, options } = dataItem;
 
-  const defaultSize = data?.size?.defaultValue;
-  const defaultRoast = data?.roast?.defaultValue;
+  const sizeOption = options.find((op) => op.name === "Size");
+  const roastOption = options.find((op) => op.name === "Roast");
+
+  const defaultSize = sizeOption?.values.find((v) => v.default);
+  const defaultRoast = roastOption?.values.find((v) => v.default);
 
   const otherDefaultValues =
-    data?.options
+    options
       ?.filter((op) => op.name !== "Size" && op.name !== "Roast")
       ?.map((op) => op.defaultValue) ?? [];
 
@@ -72,15 +66,16 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <Link href={link} className={styles.cardLink}>
       <div className={styles.card}>
-        {isLoading && <Spinner variant="component" size="md" />}
-
         <div className={styles.imageWrap}>
+          {imageLoading && <Spinner variant="component" size="md" />}
           <Image
             fill
             sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
             src={product.imageUrl}
             alt={product.name}
             className={styles.image}
+            onLoad={() => setImageLoading(false)}
+            quality={25}
           />
           <div className={styles.overlay} />
           {product.category === "turkish" ? (
@@ -95,7 +90,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           {product.featured && (
             <div className={styles.featured}>
               <div className={styles.featuredBadge}>
-                <Star style={{}}/>
+                <Star style={{}} />
                 Featured
               </div>
             </div>
@@ -113,41 +108,45 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div className={styles.content}>
           <h3 className={styles.title}>{product.name}</h3>
 
-          {data?.size && (
+          {sizeOption && (
             <div className={styles.weightRow}>
-              {data?.size?.values.map((s: OptionValue) => (
-                <button
-                  key={s.id}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setSelectedWeight(s);
-                  }}
-                  className={`${styles.weightButton} ${activeWeight?.id === s.id ? styles.weightButtonActive : ""}`}
-                >
-                  {s.label}
-                </button>
-              ))}
+              {sizeOption?.values
+                .sort((a, b) => a.id - b.id)
+                .map((s: OptionValue) => (
+                  <button
+                    key={s.id}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setSelectedWeight(s);
+                    }}
+                    className={`${styles.weightButton} ${activeWeight?.id === s.id ? styles.weightButtonActive : ""}`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
             </div>
           )}
 
-          {data?.roast && (
+          {roastOption && (
             <div className={styles.weightRow}>
-              {data.roast.values.map((value: OptionValue) => {
-                return (
-                  <button
-                    key={value.id}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation(); // Stop Link navigation
-                      setSelectedRoast(value);
-                    }}
-                    className={`${styles.weightButton} ${activeRoast?.id === value.id ? styles.weightButtonActive : ""}`}
-                  >
-                    {value.label}
-                  </button>
-                );
-              })}
+              {roastOption.values
+                .sort((a, b) => a.id - b.id)
+                .map((value: OptionValue) => {
+                  return (
+                    <button
+                      key={value.id}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation(); // Stop Link navigation
+                        setSelectedRoast(value);
+                      }}
+                      className={`${styles.weightButton} ${activeRoast?.id === value.id ? styles.weightButtonActive : ""}`}
+                    >
+                      {value.label}
+                    </button>
+                  );
+                })}
             </div>
           )}
 
@@ -157,15 +156,12 @@ export default function ProductCard({ product }: ProductCardProps) {
               <span className={styles.unitLabel}>Per unit</span>
             </div>
 
-            <button
-              onClick={handleAdd}
-              disabled={!product.inStock}
-              className={`${styles.addButton} ${!product.inStock ? styles.addButtonDisabled : ""}`}
-            >
-              <ShoppingCart />
-
-              <span>Add</span>
-            </button>
+            <Button handler={(e) => handleAdd(e)}>
+              <Button.Icon>
+                <ShoppingCart />
+              </Button.Icon>
+              <Button.Text>Add</Button.Text>
+            </Button>
           </div>
         </div>
       </div>

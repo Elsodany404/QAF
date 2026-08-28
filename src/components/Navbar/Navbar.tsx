@@ -1,12 +1,11 @@
-"use client"
+"use client";
 import { useState, useEffect } from "react";
 import { ShoppingCart, Menu, X, Coffee } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 import styles from "./Navbar.module.css";
 import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
 
-// interface NavbarProps {
-// }
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -36,10 +35,7 @@ export default function Navbar() {
     <nav className={navbarClass}>
       <div className={styles.container}>
         <div className={styles.navInner}>
-          <button
-            onClick={() => ("/home")}
-            className={styles.logoButton}
-          >
+          <button onClick={() => "/home"} className={styles.logoButton}>
             <div className={styles.logoMark}>
               <div className={styles.logoMarkInner} />
               <div className={styles.logoIcon}>
@@ -54,13 +50,13 @@ export default function Navbar() {
 
           <div className={styles.desktopNav}>
             {navLinks.map((link) => (
-              <button
+              <Link
                 key={link.id}
-                onClick={() => router.push(`/${link.label}`)}
+                href={`${link.label}`}
                 className={`${styles.navLink} ${pathname === `/${link.label}` ? styles.navLinkActive : ""}`}
               >
                 {link.id}
-              </button>
+              </Link>
             ))}
           </div>
 

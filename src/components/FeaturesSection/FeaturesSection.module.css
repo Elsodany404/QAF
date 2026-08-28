@@ -1,0 +1,53 @@
+.valuesGrid {
+  display: grid;
+  gap: 2.5rem;
+}
+
+@media (min-width: 640px) {
+  .valuesGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.valueCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: slideUp 0.7s ease-out both;
+}
+
+.valueIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: 1.5rem;
+  border-radius: 9999px;
+  background: rgba(218, 144, 14, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.valueCard:hover .valueIcon {
+  transform: scale(1.1);
+}
+
+.valueIcon svg {
+  width: 1.75rem;
+  height: 1.75rem;
+  color: var(--gold-400);
+}
+
+.valueTitle {
+  margin-bottom: 0.75rem;
+  font-family: "Playfair Display", serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.valueDesc {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--cream-200);
+}

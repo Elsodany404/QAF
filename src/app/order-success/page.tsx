@@ -1,13 +1,20 @@
 import { CheckCircle, ArrowRight, Package, Truck, Mail } from "lucide-react";
-import styles from "./OrderSuccess.module.css";
-import { useNavigate, useParams } from "react-router-dom";
-import ErrorFallback from "../error";
-
-export default function OrderSuccess() {
-  const { id } = useParams();
-  const navigate = useNavigate();
+import styles from "./page.module.css";
+import { notFound, useRouter } from "next/navigation";
+import Link from "next/link";
+type OrderSuccessProps = {
+  searchParams: Promise<{
+    id: string;
+  }>;
+};
+export default async function OrderSuccess({
+  searchParams,
+}: OrderSuccessProps) {
+  const params = await searchParams;
+  
+  const id = params.id;
   if (!id) {
-    return <ErrorFallback></ErrorFallback>
+    notFound();
   }
   return (
     <div className={styles.page}>
@@ -19,7 +26,7 @@ export default function OrderSuccess() {
 
           <h1 className={styles.title}>Order Confirmed!</h1>
           <p className={styles.message}>
-            Thank you for your purchase. We're roasting your coffee now.
+            Thank you for your purchase. We are roasting your coffee now.
           </p>
           <p className={styles.orderId}>
             Order ID: <span className={styles.orderIdValue}>{id}</span>
@@ -64,13 +71,10 @@ export default function OrderSuccess() {
           </p>
         </div>
 
-        <button
-          onClick={() => navigate("/menu")}
-          className={styles.continueButton}
-        >
+        <Link href={"/menu"} className={styles.continueButton}>
           Continue Shopping
           <ArrowRight className="w-5 h-5" />
-        </button>
+        </Link>
       </div>
     </div>
   );

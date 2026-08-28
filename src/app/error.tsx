@@ -1,7 +1,6 @@
-"use client";
-import { AlertCircle, RefreshCcw, Home } from "lucide-react";
+"use client"
+import { AlertCircle, RefreshCcw } from "lucide-react";
 import styles from "./error.module.css";
-import { router } from "next/client";
 
 interface ErrorProps {
   error?: Error;
@@ -25,7 +24,9 @@ export default function Error({ error, reset }: ErrorProps) {
         {error && (
           <div className={styles.errorDetails}>
             <p className={styles.errorLabel}>Error details:</p>
+            <pre className={styles.errorMessage}>{error.name}</pre>
             <pre className={styles.errorMessage}>{error.message}</pre>
+            <pre className={styles.errorMessage}>{error.stack}</pre>
           </div>
         )}
 

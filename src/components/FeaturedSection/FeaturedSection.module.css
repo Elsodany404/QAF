@@ -1,0 +1,97 @@
+.featuredHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 4rem;
+}
+
+.featuredTitle {
+  font-family: "Playfair Display", serif;
+  font-size: clamp(2rem, 3.5vw, 2.8rem);
+  font-weight: 700;
+  color: var(--charcoal-950);
+}
+
+.viewAllButton,
+.mobileButtonInner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 0;
+  cursor: pointer;
+  color: white;
+  background: linear-gradient(90deg, var(--espresso-600), var(--mocha-600));
+  font-weight: 600;
+}
+
+.viewAllButton {
+  padding: 0.75rem 1rem;
+  border-radius: 0.85rem;
+}
+
+.viewAllIcon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.productGrid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .productGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .productGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.mobileButton {
+  margin-top: 3rem;
+  text-align: center;
+}
+
+.mobileButtonInner {
+  padding: 0.8rem 1rem;
+  border-radius: 0.85rem;
+}
+
+.mobileButtonIcon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.skeletonCard {
+  overflow: hidden;
+  border-radius: 1.5rem;
+  background: white;
+  box-shadow: var(--shadow-soft);
+}
+
+.skeletonImage {
+  aspect-ratio: 4 / 3;
+  background: linear-gradient(135deg, var(--mocha-100), var(--cream-100));
+}
+
+.skeletonBody {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.5rem;
+}
+
+.skeletonLine {
+  height: 0.8rem;
+  border-radius: 999px;
+  background: var(--cream-200);
+}
+
+.skeletonLineShort {
+  width: 70%;
+}
