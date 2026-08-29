@@ -63,7 +63,11 @@ export type CartContextT = {
   paymentMethod: PaymentMethod;
   setPaymentMethod: Dispatch<SetStateAction<PaymentMethod>>;
 };
-
+export type GetProductsParams = {
+  search?: string;
+  category?: string;
+  isFeatured?: boolean;
+};
 export const CATEGORIES = [
   { id: "all", label: "All Coffee" },
   { id: "turkish", label: "Turkish Coffee" },

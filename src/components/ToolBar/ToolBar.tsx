@@ -1,14 +1,40 @@
 "use client";
+import { useState, useEffect } from "react";
 import { Search, X } from "lucide-react";
 import styles from "./ToolBar.module.css";
 import { CATEGORIES } from "@/types/customTypes";
 import useParams from "@/hooks/useParams";
+import { useDebouncedCallback } from "use-debounce";
 
 function ToolBar() {
   const { handleCategoryChange, handleSearch, searchParams } = useParams();
 
-  const search = searchParams.get("search") ?? "";
+  const searchParam = searchParams.get("search") ?? "";
   const category = searchParams.get("category") ?? "all";
+
+  // Local state ensures the input updates smoothly without waiting for URL navigation
+  const [searchValue, setSearchValue] = useState(searchParam);
+
+  // Sync state if URL changes externally (e.g., user clicks 'back' button)
+  useEffect(() => {
+    setSearchValue(searchParam);
+  }, [searchParam]);
+
+  // Debounced callback
+  const debouncedSearch = useDebouncedCallback((value) => {
+    handleSearch(value);
+  }, 300);
+
+  const onSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setSearchValue(val);
+    debouncedSearch(val);
+  };
+
+  const handleClear = () => {
+    setSearchValue("");
+    handleSearch("");
+  };
 
   return (
     <>
@@ -18,24 +44,20 @@ function ToolBar() {
           <input
             type="text"
             placeholder="Search by name or flavor..."
-            value={search}
-            onChange={(e) => handleSearch(e.target.value)}
+            value={searchValue}
+            onChange={(e) => onSearchChange(e)}
             className={styles.searchInput}
           />
-          {search && (
+          {searchValue && (
             <button
               type="button"
-              onClick={() => handleSearch("")}
+              onClick={handleClear}
               className={styles.clearButton}
             >
               <X />
             </button>
           )}
         </div>
-        {/* <div className={styles.countCard}>
-          <Filter />
-          <span className={styles.countValue}>{numberOfItems} items</span>
-        </div> */}
       </div>
 
       <div className={styles.categoryTabs}>

@@ -2,11 +2,12 @@
 import { notFound } from "next/navigation";
 import { getProductByID, getAllProducts } from "@/services/Product";
 import ProductClient from "./productClient";
+import { DataItem } from "@/types/customTypes";
 
 export async function generateStaticParams() {
-  const products = await getAllProducts();
+  const dataItems: DataItem[] = await getAllProducts();
 
-  return products.map((product) => ({
+  return dataItems.map(({ product }) => ({
     productID: product.id.toString(),
   }));
 }

@@ -5,16 +5,16 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import type { OptionValue } from "@/types/db";
-import { useCart } from "@/context/CartContext";
 import Spinner from "@/components/Spinner/Spinner";
+import { useCart } from "@/context/CartContext";
 import { calcPrice, formatCurrency, generateItemID } from "@/helper/helper";
+import type { OptionValue } from "@/types/db";
 
+import { DataItem } from "@/types/customTypes";
 import styles from "./page.module.css";
-import { constructedData } from "@/types/customTypes";
 
 interface ProductClientProps {
-  data: constructedData;
+  data: DataItem;
 }
 
 export default function ProductClient({ data }: ProductClientProps) {
@@ -57,18 +57,17 @@ export default function ProductClient({ data }: ProductClientProps) {
     <div className={styles.Product}>
       <div className={styles["sticky-box"]}>
         <div className={styles["image-box"]}>
-          {imageLoading && (
-            <Spinner label="loading image" variant="component" size="lg" />
-          )}
+          {imageLoading && <Spinner variant="component" size="lg" />}
 
           <Image
-            sizes="(max-width: 768px) 100vw, 1200px"
-            quality={50}
+            sizes="(max-width: 768px) 100vw, 1400px"
+            quality={100}
             fill
             priority
             src={data.product.imageUrl}
             onLoad={() => setImageLoading(false)}
             alt={data.product.name}
+            loading="eager"
           />
         </div>
       </div>

@@ -3,12 +3,14 @@ import ToolBar from "@/components/ToolBar/ToolBar";
 import ProductList from "@/components/ProductList/ProductList";
 import { Suspense } from "react";
 import ListSkeleton from "@/components/ListSkeleton/ListSkeleton";
+
 type MenuProps = {
   searchParams: Promise<{
     search?: string;
     category?: string;
   }>;
 };
+
 export default async function Menu({ searchParams }: MenuProps) {
   const params = await searchParams;
 
@@ -20,7 +22,7 @@ export default async function Menu({ searchParams }: MenuProps) {
       <div className={styles.main}>
         <ToolBar />
 
-        <Suspense fallback={<ListSkeleton/>}>
+        <Suspense key={`${category}-${search}`} fallback={<ListSkeleton />}>
           <ProductList search={search} category={category} />
         </Suspense>
       </div>

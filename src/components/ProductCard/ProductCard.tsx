@@ -5,7 +5,7 @@ import styles from "./ProductCard.module.css";
 
 import { useCart } from "../../context/CartContext";
 import Spinner from "../Spinner/Spinner";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { calcPrice, formatCurrency, generateItemID } from "../../helper/helper";
 import Link from "next/link";
 import Image from "next/image";
@@ -60,14 +60,18 @@ export default function ProductCard({ dataItem }: ProductCardProps) {
     };
     addItem(item);
   }
+  useEffect(() => {
+    console.log("ProductCard mounted", product.id);
 
+    return () => console.log("ProductCard unmounted", product.id);
+  }, [product.id]);
   const link = `/products/${product.id}`;
 
   return (
     <Link href={link} className={styles.cardLink}>
       <div className={styles.card}>
+        {imageLoading && <Spinner variant="component" size="md" />}
         <div className={styles.imageWrap}>
-          {imageLoading && <Spinner variant="component" size="md" />}
           <Image
             fill
             sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"

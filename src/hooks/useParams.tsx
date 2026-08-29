@@ -1,36 +1,58 @@
-"use client"
+"use client";
+import { useCallback, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 function useParams() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  
+  const [isPending, startTransition] = useTransition();
 
-  function updateParams(key: string, value: string) {
-    const params = new URLSearchParams(searchParams.toString());
+  const updateParams = useCallback(
+    (key: string, value: string) => {
+      const params = new URLSearchParams(searchParams.toString());
 
-    if (value) {
-      params.set(key, value);
-    } else {
-      params.delete(key);
-    }
+      if (value.trim()) {
+        params.set(key, value.trim());
+      } else {
+        params.delete(key);
+      }
 
-    router.replace(`${pathname}?${params.toString()}`);
-  }
+      startTransition(() => {
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      });
+    },
+    [pathname, router, searchParams],
+  );
 
-  function handleCategoryChange(category: string) {
-    updateParams("category", category === "all" ? "" : category);
-  }
+  const handleCategoryChange = useCallback(
+    (category: string) => {
+      updateParams("category", category === "all" ? "" : category);
+    },
+    [updateParams],
+  );
 
-  function handleSearch(value: string) {
-    updateParams("search", value);
-  }
+  const handleSearch = useCallback(
+    (value: string) => {
+      updateParams("search", value);
+    },
+    [updateParams],
+  );
 
-  function resetFilters() {
-    router.replace(pathname);
-  }
-  return { handleCategoryChange, handleSearch, resetFilters, pathname, searchParams };
+  const resetFilters = useCallback(() => {
+    startTransition(() => {
+      router.replace(pathname, { scroll: false });
+    });
+  }, [pathname, router]);
+
+  return {
+    handleCategoryChange,
+    handleSearch,
+    resetFilters,
+    pathname,
+    searchParams,
+    isPending,
+  };
 }
 
 export default useParams;

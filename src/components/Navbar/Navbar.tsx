@@ -52,7 +52,7 @@ export default function Navbar() {
             {navLinks.map((link) => (
               <Link
                 key={link.id}
-                href={`${link.label}`}
+                href={`/${link.label}`}
                 className={`${styles.navLink} ${pathname === `/${link.label}` ? styles.navLinkActive : ""}`}
               >
                 {link.id}
