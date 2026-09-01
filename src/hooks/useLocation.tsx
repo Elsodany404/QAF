@@ -19,7 +19,7 @@ export function useLocationHandler(setValue: UseFormSetValue<FormValues>) {
 
       const streetAddress = road || suburb || "";
       if (streetAddress) {
-        setValue("address", streetAddress);
+        setValue("streetAddress", streetAddress);
       }
 
       const formattedAddress = [road, suburb, city, state, country]
