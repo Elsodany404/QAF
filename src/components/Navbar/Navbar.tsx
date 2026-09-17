@@ -23,7 +23,7 @@ export default function Navbar() {
   }, []);
 
   const navLinks = [
-    { id: "Home", label: "home" },
+    { id: "Home", label: "" },
     { id: "Shop", label: "menu" },
     { id: "Our Story", label: "about" },
   ];
@@ -37,7 +37,7 @@ export default function Navbar() {
     if (res.status === "success") {
       toast.success(res.message);
       await refetch(); // updates every useSession() consumer, including this Navbar
-      router.push("/home");
+      router.push("/");
       router.refresh(); // re-syncs any server-rendered bits that also read the session
     } else {
       toast.error(res.message);
@@ -50,7 +50,7 @@ export default function Navbar() {
     <nav className={navbarClass}>
       <div className={styles.container}>
         <div className={styles.navInner}>
-          <Link href="/home" className={styles.logoButton}>
+          <Link href="/" className={styles.logoButton}>
             <div className={styles.logoMark}>
               <div className={styles.logoMarkInner} />
               <div className={styles.logoIcon}>
