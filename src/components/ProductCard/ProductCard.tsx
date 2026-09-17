@@ -52,7 +52,10 @@ export default function ProductCard({ dataItem }: ProductCardProps) {
     e.stopPropagation();
     e.preventDefault();
     const item = {
-      itemID: generateItemID(product, selectedValues),
+      itemID: generateItemID(
+        product.id,
+        selectedValues.map((v) => v.id),
+      ),
       product,
       options: selectedValues,
       quantity: 1,
@@ -60,26 +63,30 @@ export default function ProductCard({ dataItem }: ProductCardProps) {
     };
     addItem(item);
   }
-  useEffect(() => {
-    console.log("ProductCard mounted", product.id);
 
-    return () => console.log("ProductCard unmounted", product.id);
-  }, [product.id]);
   const link = `/products/${product.id}`;
 
   return (
     <Link href={link} className={styles.cardLink}>
       <div className={styles.card}>
-        {imageLoading && <Spinner variant="component" size="md" />}
         <div className={styles.imageWrap}>
+          {imageLoading && (
+            <Image
+              fill
+              src={product["blurred-image"]}
+              alt={product.name}
+              sizes="(min-width: 280px) 25vw,(min-width: 1024px) 33vw,(min-width: 640px) 45vw,55vw"
+              className={styles.image}
+            />
+          )}
           <Image
             fill
-            sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+            loading="eager"
             src={product.imageUrl}
             alt={product.name}
+            sizes="(min-width: 1280px) 25vw,(min-width: 1024px) 33vw,(min-width: 640px) 45vw,55vw"
             className={styles.image}
             onLoad={() => setImageLoading(false)}
-            quality={25}
           />
           <div className={styles.overlay} />
           {product.category === "turkish" ? (
@@ -160,12 +167,10 @@ export default function ProductCard({ dataItem }: ProductCardProps) {
               <span className={styles.unitLabel}>Per unit</span>
             </div>
 
-            <Button handler={(e) => handleAdd(e)}>
-              <Button.Icon>
-                <ShoppingCart />
-              </Button.Icon>
-              <Button.Text>Add</Button.Text>
-            </Button>
+            <button onClick={handleAdd} className={styles.addButton}>
+              <ShoppingCart />
+              Add
+            </button>
           </div>
         </div>
       </div>

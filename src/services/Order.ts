@@ -1,9 +1,9 @@
 import { supabase } from "../lib/supabase";
-import { AdminOrder, orderPayloadT, OrderQuery } from "../types/customTypes";
-import { OrderStatus } from "../types/db";
+import { orderPayloadT, OrderQuery } from "../types/customTypes";
+import { Order, OrderStatus } from "../types/db";
 // import { OrderInsert, OrderStatus } from "../types/db";
 
-export async function getOrders(): Promise<AdminOrder[]> {
+export async function getOrders(): Promise<OrderQuery[]> {
   const { data, error } = await supabase
     .from("Order")
     .select("*, OrderItem(*)")
@@ -11,13 +11,13 @@ export async function getOrders(): Promise<AdminOrder[]> {
 
   if (error) throw error;
 
-  return (data ?? []) as unknown as AdminOrder[];
+  return data;
 }
 
 export async function getOrderByID(orderID: string): Promise<OrderQuery> {
   const { data, error } = await supabase
     .from("Order")
-    .select("*, OrderItem(*)")
+    .select("*, orderItems:OrderItem(*, product:Product(*))")
     .eq("id", orderID)
     .single();
 
@@ -39,23 +39,31 @@ export async function postOrder(orderPayload: orderPayloadT) {
       priceModifier: option.priceModifier,
     })),
   }));
-  console.log(items, "order items");
+
+  const subTotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
+
   const { data: orderId, error } = await supabase.rpc("create_order", {
     p_customer_name: orderPayload.customerName,
     p_customer_email: orderPayload.customerEmail,
     p_customer_phone: orderPayload.customerPhone,
-    p_total_price: orderPayload.totalPrice,
-    p_payment_method: orderPayload.paymentMethod,
 
     p_apartment: orderPayload.apartment,
     p_street: orderPayload.street,
+
     p_city: orderPayload.city,
-    p_governorate: orderPayload.governorate,
-    p_address_details: orderPayload.addressDetails,
+    p_cityid: orderPayload.cityID,
+
+    p_district: orderPayload.district,
+    p_districtid: orderPayload.districtID,
+
+    p_subtotal: subTotal,
+    p_shipping_fees: orderPayload.shippingFees,
+
+    p_payment_method: orderPayload.paymentMethod,
 
     p_items: items,
   });
-  console.log(orderId, 'orderID');
+
   if (error) {
     throw error;
   }
@@ -63,20 +71,16 @@ export async function postOrder(orderPayload: orderPayloadT) {
   return orderId;
 }
 
-export async function updateOrderStatus({
-  orderId,
-  status,
-}: {
-  orderId: number;
-  status: OrderStatus;
-}) {
-  const { error } = await supabase
-    .from("Order")
-    .update({
-      status,
-      shippingStatus: status === "shipped" ? "shipped" : undefined,
-    } as never)
-    .eq("id", orderId);
+export async function updateOrder(
+  orderID: number,
+  updates: Partial<Pick<Order, keyof Order>>,
+) {
+  {
+    const { error } = await supabase
+      .from("Order")
+      .update(updates)
+      .eq("id", orderID);
 
-  if (error) throw error;
+    if (error) throw error;
+  }
 }

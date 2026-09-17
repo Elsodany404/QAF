@@ -1,211 +1,787 @@
+/* =========================================================
+   PRODUCT PAGE
+========================================================= */
+
 .Product {
   display: grid;
-  grid-template-columns: minmax(350px, 3fr) minmax(0, 4fr);
+  grid-template-columns: minmax(0, 3fr) minmax(0, 4fr);
+
   padding-top: 5rem;
-  background-color: var(--cream-200);
+
+  min-height: 100vh;
+
+  background: linear-gradient(
+    135deg,
+    var(--cream-200) 0%,
+    var(--cream-100) 50%,
+    var(--cream-200) 100%
+  );
 }
 
-.content-box {
-  padding: 3.5rem 3rem;
-  position: relative;
-}
-.subHeader {
-  text-transform: uppercase;
-  font-family: sans-serif;
-  color: var(--gold-400);
-  background: rgba(218, 144, 14, 0.2);
-  border: 1px solid rgba(218, 144, 14, 0.4);
-  display: inline-block;
-  border-radius: 9999px;
-  padding: 0.3rem 1rem;
-  font-size: 0.8rem;
-  box-sizing: var(--shadow-soft);
-  margin-bottom: 1.7rem;
-}
-.header {
-  color: var(--espresso-500);
-  text-transform: capitalize;
-  font-size: 3rem;
-  line-height: 120%;
-  letter-spacing: -0.5px;
-  margin-bottom: 3rem;
-  text-shadow: 5px 0 10px rgba(0, 0, 0, 0.15);
-  margin-top: -1rem;
-}
-.features {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.7rem;
-  margin-bottom: 5rem;
-  & > div {
-    display: flex;
-    box-shadow: 0 20px 40px rgba(183, 139, 95, 0.3);
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    flex: 1 0 150px;
-    padding: 1rem;
-    border: 1px solid var(--mocha-500);
-    border-radius: 15px;
-  }
-  span {
-    font-size: 0.85rem;
-  }
+/* =========================================================
+   IMAGE / LEFT SIDE
+========================================================= */
 
-  .iconImage {
-    display: block;
-    width: 40px;
-    height: auto;
-    margin: 0 auto;
-    margin-bottom: 0.5rem;
-  }
-}
-
-.description {
-  margin-bottom: 3rem;
-  color: var(--espresso-900);
-  letter-spacing: -0.1px;
-  line-height: 140%;
-  font-size: 1.1rem;
-  border-bottom: 2px solid var(--gold-400);
-  padding-bottom: 1rem;
-}
 .sticky-box {
   position: sticky;
-  top: 0;
-  height: 100vh;
+  top: 5rem;
+
+  height: calc(100vh - 5rem);
+
+  min-height: 550px;
 }
+
 .image-box {
   position: relative;
+
   width: 100%;
   height: 100%;
-  img {
-    object-fit: cover;
-  }
+
+  overflow: hidden;
+
+  background: var(--charcoal-900);
 }
-.options {
+
+.image-box img {
+  object-fit: cover;
+}
+
+/* =========================================================
+   CONTENT / RIGHT SIDE
+========================================================= */
+
+.content-box {
+  position: relative;
+
+  padding: clamp(2.5rem, 5vw, 5rem) clamp(2rem, 4vw, 4.5rem);
+
+  min-width: 0;
+}
+
+/* =========================================================
+   CATEGORY
+========================================================= */
+
+.subHeader {
+  display: inline-flex;
+  align-items: center;
+
+  margin: 0 0 1rem;
+
+  padding: 0.45rem 1rem;
+
+  border: 1px solid rgba(218, 144, 14, 0.4);
+  border-radius: 999px;
+
+  background: rgba(218, 144, 14, 0.12);
+
+  color: var(--gold-600);
+
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* =========================================================
+   TITLE
+========================================================= */
+
+.header {
+  margin: 0 0 1.75rem;
+
+  color: var(--espresso-500);
+
+  font-family: var(--font-display), "Playfair Display", serif;
+
+  font-size: clamp(2.3rem, 4vw, 4rem);
+  font-weight: 700;
+
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+
+  text-transform: capitalize;
+
+  text-shadow: 4px 5px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* =========================================================
+   DESCRIPTION
+========================================================= */
+
+.description {
+  margin-bottom: 2rem;
+
+  padding-bottom: 1.25rem;
+
+  border-bottom: 1px solid var(--gold-400);
+
+  color: var(--espresso-900);
+
+  font-family: var(--font-body), sans-serif;
+  font-size: clamp(0.95rem, 1.2vw, 1.1rem);
+
+  line-height: 1.6;
+}
+
+/* =========================================================
+   FEATURE CARDS
+========================================================= */
+
+.features {
+  display: grid;
+
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  gap: 0.75rem;
+
+  margin-bottom: 3rem;
+}
+
+.features > div {
   display: flex;
-  flex-wrap: wrap;
-  margin-bottom: 5rem;
-  gap: 1rem;
-  fieldset {
-    flex: 1 0 40%;
-    font-family: var(--font-body);
-    border: none;
-    border-left: 3px solid var(--gold-400);
-    padding: 0.5rem 0 0.5rem 2.5rem;
-    margin-right: 4rem;
-    background-color: transparent;
-    legend {
-      font-family: var(--font-display);
-      font-size: 1.5rem;
-      text-transform: capitalize;
-      color: var(--mocha-900);
-      padding-bottom: 0.5rem;
-      width: 100%;
-    }
 
-    .choiceBar {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      margin-top: 1.25rem;
+  align-items: center;
+  justify-content: center;
 
-      .choice {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 0.5rem 1rem;
-        cursor: pointer;
-        border-radius: 6px;
-        background-color: var(--mocha-50);
-        border: 1px solid transparent;
-        transition: all 0.2s ease-in-out;
+  min-height: 150px;
 
-        span {
-          font-family: var(--font-body);
-          font-size: 1rem;
-          color: var(--mocha-800);
-          text-transform: uppercase;
-          letter-spacing: 0.03em;
-        }
+  padding: 1.25rem;
 
-        /* Hover Feedback */
-        &:hover {
-          background-color: var(--mocha-100);
-        }
+  border: 1px solid rgba(116, 78, 48, 0.35);
+  border-radius: 1rem;
 
-        /* Selected State Style Modifications */
-        &:has(input:checked) {
-          background-color: var(--cream-50);
-          border-color: var(--gold-400);
-          box-shadow: var(--shadow-soft);
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.35),
+    rgba(235, 216, 192, 0.45)
+  );
 
-          span {
-            color: var(--gold-900);
-            font-weight: 600;
-          }
-        }
+  box-shadow: 0 12px 30px rgba(183, 139, 95, 0.12);
 
-        /* Custom Styled Radio Button */
-        input[type="radio"] {
-          appearance: none;
-          -webkit-appearance: none;
-          width: 1.15rem;
-          height: 1.15rem;
-          border: 2px solid var(--mocha-300);
-          border-radius: 50%;
-          margin: 0;
-          display: grid;
-          place-content: center;
-          background-color: #ffffff;
-          transition: border-color 0.2s ease;
+  text-align: center;
 
-          &::before {
-            content: "";
-            width: 0.55rem;
-            height: 0.55rem;
-            border-radius: 50%;
-            transform: scale(0);
-            transition: 120ms transform ease-in-out;
-            background-color: var(--gold-500);
-          }
-
-          &:checked {
-            border-color: var(--gold-500);
-
-            &::before {
-              transform: scale(1);
-            }
-          }
-        }
-      }
-    }
-  }
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
 }
+
+.features > div:hover {
+  transform: translateY(-3px);
+
+  background: rgba(255, 255, 255, 0.55);
+
+  box-shadow: 0 18px 35px rgba(183, 139, 95, 0.18);
+}
+
+.features span {
+  color: var(--espresso-900);
+
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.85rem;
+
+  line-height: 1.55;
+}
+
+.iconImage {
+  display: block;
+
+  width: 40px;
+  height: 40px;
+
+  margin: 0 auto 0.7rem;
+
+  object-fit: contain;
+}
+
+/* =========================================================
+   OPTIONS
+========================================================= */
+
+.options {
+  display: grid;
+
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 2.5rem;
+
+  margin-bottom: 3.5rem;
+}
+
+.optionGroup {
+  min-width: 0;
+
+  margin: 0;
+  padding: 0.5rem 0 0.5rem 1.5rem;
+
+  border: 0;
+  border-left: 3px solid var(--gold-400);
+
+  background: transparent;
+}
+
+.optionGroup legend {
+  width: 100%;
+
+  margin-bottom: 0.75rem;
+  padding: 0;
+
+  color: var(--mocha-900);
+
+  font-family: var(--font-display), "Playfair Display", serif;
+
+  font-size: clamp(1.25rem, 2vw, 1.65rem);
+  line-height: 1.3;
+}
+
+/* =========================================================
+   OPTION CHOICES
+========================================================= */
+
+.choiceBar {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 0.6rem;
+
+  margin-top: 0.75rem;
+}
+
+.choice {
+  display: flex;
+
+  align-items: center;
+
+  gap: 0.6rem;
+
+  padding: 0.65rem 0.85rem;
+
+  border: 1px solid transparent;
+  border-radius: 0.65rem;
+
+  background: rgba(255, 255, 255, 0.55);
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.choice:hover {
+  background: rgba(255, 255, 255, 0.8);
+
+  transform: translateY(-1px);
+}
+
+.choice span {
+  color: var(--mocha-800);
+
+  font-family: var(--font-body), sans-serif;
+
+  font-size: 0.85rem;
+  font-weight: 500;
+
+  letter-spacing: 0.02em;
+
+  text-transform: uppercase;
+}
+
+/* =========================================================
+   CUSTOM RADIO
+========================================================= */
+
+.choice input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+
+  display: grid;
+  place-content: center;
+
+  width: 1.15rem;
+  height: 1.15rem;
+
+  margin: 0;
+
+  border: 2px solid var(--mocha-300);
+  border-radius: 50%;
+
+  background: white;
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.choice input[type="radio"]::before {
+  content: "";
+
+  width: 0.55rem;
+  height: 0.55rem;
+
+  border-radius: 50%;
+
+  background: var(--gold-500);
+
+  transform: scale(0);
+
+  transition: transform 0.15s ease;
+}
+
+.choice input[type="radio"]:checked {
+  border-color: var(--gold-500);
+
+  box-shadow: 0 0 0 3px rgba(218, 144, 14, 0.1);
+}
+
+.choice input[type="radio"]:checked::before {
+  transform: scale(1);
+}
+
+/* Selected option */
+
+.choice:has(input:checked) {
+  border-color: rgba(218, 144, 14, 0.55);
+
+  background: rgba(255, 252, 245, 0.9);
+
+  box-shadow: 0 5px 15px rgba(183, 139, 95, 0.12);
+}
+
+.choice:has(input:checked) span {
+  color: var(--gold-900);
+
+  font-weight: 700;
+}
+
+/* =========================================================
+   CALL TO ACTION
+========================================================= */
+
 .callToAction {
   display: flex;
+
   align-items: center;
   justify-content: space-between;
 
-  margin-bottom: 3rem;
+  gap: 2rem;
+
+  padding-top: 1.5rem;
+
+  border-top: 1px solid rgba(116, 78, 48, 0.15);
 }
+
 .action {
-  font-size: 1.1rem;
   display: flex;
-  gap: 1.5rem;
-  button {
+
+  align-items: center;
+
+  gap: 0.75rem;
+}
+
+.action button {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 0.5rem;
+
+  min-height: 3rem;
+
+  padding-inline: 1.1rem;
+
+  flex-shrink: 0;
+
+  text-transform: capitalize;
+}
+
+.action button svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* =========================================================
+   PRICE
+========================================================= */
+
+.price {
+  flex-shrink: 0;
+
+  padding: 0.45rem 0 0.55rem;
+
+  border-bottom: 3px solid var(--espresso-600);
+
+  color: var(--espresso-900);
+
+  font-family: var(--font-display), "Playfair Display", serif;
+
+  font-size: clamp(1.3rem, 2vw, 1.8rem);
+
+  font-weight: 600;
+
+  white-space: nowrap;
+}
+
+/* =========================================================
+   LARGE TABLET / SMALL DESKTOP
+   1100px and below
+========================================================= */
+
+@media (max-width: 1100px) {
+  .Product {
+    grid-template-columns: minmax(300px, 1fr) minmax(0, 1.1fr);
+  }
+
+  .content-box {
+    padding: 2.5rem 2rem;
+  }
+
+  .features {
+    grid-template-columns: 1fr;
+  }
+
+  .features > div {
+    min-height: 110px;
+
+    padding: 1rem;
+
+    flex-direction: row;
+
+    gap: 1rem;
+  }
+
+  .iconImage {
     flex-shrink: 0;
-    text-transform: capitalize;
+
+    margin: 0;
+  }
+
+  .features span {
+    text-align: left;
+  }
+
+  .options {
+    grid-template-columns: 1fr;
+
+    gap: 2rem;
+  }
+
+  .optionGroup {
+    margin: 0;
+  }
+
+  .callToAction {
+    align-items: flex-start;
+
+    flex-direction: column;
+
+    gap: 1.25rem;
+  }
+
+  .price {
+    align-self: flex-end;
   }
 }
-.price {
-  font-weight: 600;
-  color: var(--espresso-700);
-  margin-left: 1rem;
-  padding: 0 3rem;
-  border-bottom: 5px solid var(--espresso-500);
-  /* box-shadow: 0px 0px 10px 2px rgba(0, 0, 0, 0.1); */
-  font-family: var(--font-body);
-  font-size: 3rem;
+
+/* =========================================================
+   TABLET
+   768px - 900px
+========================================================= */
+
+@media (max-width: 900px) {
+  .Product {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .sticky-box {
+    min-height: 500px;
+  }
+
+  .content-box {
+    padding: 2rem 1.5rem;
+  }
+
+  .header {
+    font-size: 2.5rem;
+  }
+
+  .description {
+    font-size: 0.95rem;
+  }
+
+  .features {
+    margin-bottom: 2.25rem;
+  }
+
+  .features > div {
+    min-height: 100px;
+  }
+
+  .options {
+    margin-bottom: 2.5rem;
+  }
+
+  .choiceBar {
+    gap: 0.5rem;
+  }
+
+  .choice {
+    width: 100%;
+  }
+
+  .action {
+    width: 100%;
+  }
+
+  .action button {
+    flex: 1;
+  }
+}
+
+/* =========================================================
+   MOBILE
+   767px and below
+========================================================= */
+
+@media (max-width: 767px) {
+  .Product {
+    display: block;
+
+    padding-top: 4rem;
+
+    min-height: auto;
+  }
+
+  /* No sticky image on mobile */
+
+  .sticky-box {
+    position: relative;
+
+    top: auto;
+
+    width: 100%;
+    height: 55vw;
+
+    min-height: 280px;
+    max-height: 450px;
+  }
+
+  .image-box {
+    height: 100%;
+  }
+
+  .content-box {
+    padding: 2.25rem 1.25rem 3rem;
+  }
+
+  .subHeader {
+    margin-bottom: 0.85rem;
+
+    font-size: 0.7rem;
+  }
+
+  .header {
+    margin-bottom: 1.25rem;
+
+    font-size: clamp(2.25rem, 10vw, 3rem);
+  }
+
+  .description {
+    margin-bottom: 1.75rem;
+
+    padding-bottom: 1rem;
+
+    font-size: 0.95rem;
+    line-height: 1.55;
+  }
+
+  /* Feature cards become horizontal */
+
+  .features {
+    grid-template-columns: 1fr;
+
+    gap: 0.65rem;
+
+    margin-bottom: 2.5rem;
+  }
+
+  .features > div {
+    min-height: auto;
+
+    padding: 0.9rem 1rem;
+
+    border-radius: 0.8rem;
+  }
+
+  .features span {
+    font-size: 0.82rem;
+  }
+
+  .iconImage {
+    width: 35px;
+    height: 35px;
+  }
+
+  /* Options */
+
+  .options {
+    grid-template-columns: 1fr;
+
+    gap: 2rem;
+
+    margin-bottom: 2.5rem;
+  }
+
+  .optionGroup {
+    padding-left: 1rem;
+
+    border-left-width: 2px;
+  }
+
+  .optionGroup legend {
+    font-size: 1.35rem;
+  }
+
+  .choiceBar {
+    gap: 0.5rem;
+  }
+
+  .choice {
+    width: 100%;
+
+    padding: 0.7rem 0.8rem;
+  }
+
+  .choice span {
+    font-size: 0.8rem;
+  }
+
+  /* CTA */
+
+  .callToAction {
+    flex-direction: column-reverse;
+
+    align-items: stretch;
+
+    gap: 1.25rem;
+  }
+
+  .action {
+    width: 100%;
+
+    flex-direction: column;
+
+    gap: 0.65rem;
+  }
+
+  .action button {
+    width: 100%;
+
+    min-height: 3.2rem;
+  }
+
+  .price {
+    align-self: center;
+
+    font-size: 1.6rem;
+  }
+}
+
+/* =========================================================
+   SMALL MOBILE
+   480px and below
+========================================================= */
+
+@media (max-width: 480px) {
+  .Product {
+    padding-top: 3.75rem;
+  }
+
+  .sticky-box {
+    height: 72vw;
+
+    min-height: 260px;
+    max-height: 360px;
+  }
+
+  .content-box {
+    padding: 2rem 1rem 2.5rem;
+  }
+
+  .header {
+    font-size: 2.1rem;
+  }
+
+  .description {
+    font-size: 0.9rem;
+  }
+
+  .features > div {
+    padding: 0.8rem;
+  }
+
+  .features span {
+    font-size: 0.78rem;
+  }
+
+  .optionGroup legend {
+    font-size: 1.2rem;
+  }
+
+  .choice {
+    padding: 0.65rem 0.7rem;
+  }
+
+  .choice input[type="radio"] {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .choice input[type="radio"]::before {
+    width: 0.45rem;
+    height: 0.45rem;
+  }
+
+  .choice span {
+    font-size: 0.75rem;
+  }
+
+  .price {
+    font-size: 1.45rem;
+  }
+}
+
+/* =========================================================
+   VERY SMALL DEVICES
+   360px and below
+========================================================= */
+
+@media (max-width: 360px) {
+  .content-box {
+    padding-inline: 0.85rem;
+  }
+
+  .header {
+    font-size: 1.9rem;
+  }
+
+  .subHeader {
+    font-size: 0.65rem;
+  }
+
+  .features > div {
+    gap: 0.7rem;
+  }
+
+  .action button {
+    font-size: 0.85rem;
+  }
 }

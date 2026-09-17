@@ -1,10 +1,9 @@
-"use client"
+"use client";
 import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 import styles from "./CartDrawer.module.css";
 import { formatCurrency } from "../../helper/helper";
 import { useRouter } from "next/navigation";
-
 export default function CartDrawer() {
   const router = useRouter();
   const {
@@ -56,10 +55,9 @@ export default function CartDrawer() {
             </div>
           ) : (
             cart.map((item) => {
-              const key = `${item.product.id}`;
+              const key = `${item.product.id}${item.options.map((op) => op.id).join(":")}`;
               const product = item.product;
               const options = item.options;
-
               return (
                 <div key={key} className={styles.itemCard}>
                   <div className={styles.itemRow}>

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Search, X } from "lucide-react";
 import styles from "./ToolBar.module.css";
 import { CATEGORIES } from "@/types/customTypes";
-import useParams from "@/hooks/useParams";
+import useParams from "@/hooks/useSearchParams";
 import { useDebouncedCallback } from "use-debounce";
 
 function ToolBar() {
@@ -14,11 +14,12 @@ function ToolBar() {
 
   // Local state ensures the input updates smoothly without waiting for URL navigation
   const [searchValue, setSearchValue] = useState(searchParam);
+  const [prevSearchParam, setPrevSearchParam] = useState(searchParam);
 
-  // Sync state if URL changes externally (e.g., user clicks 'back' button)
-  useEffect(() => {
+  if (searchParam !== prevSearchParam) {
     setSearchValue(searchParam);
-  }, [searchParam]);
+    setPrevSearchParam(searchParam);
+  }
 
   // Debounced callback
   const debouncedSearch = useDebouncedCallback((value) => {

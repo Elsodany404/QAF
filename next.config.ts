@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      allowedOrigins: ["v5jd33rn-3000.uks1.devtunnels.ms", "localhost:3000"],
+    },
+  },
   images: {
     remotePatterns: [
       {
@@ -14,7 +19,7 @@ const nextConfig: NextConfig = {
         pathname: "/storage/v1/object/sign/**",
       },
     ],
-    qualities: [25, 50, 70,100],
+    qualities: [25, 50, 70, 100],
   },
 };
 

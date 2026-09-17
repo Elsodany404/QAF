@@ -1,10 +1,10 @@
-import { constructedData, ProductQuery } from "../types/customTypes";
+import { DataItem, ProductQuery } from "../types/customTypes";
 import { OptionValue, Product } from "../types/db";
 
-export function constructData(data: ProductQuery): constructedData {
+export function constructData(data: ProductQuery): DataItem {
   const { options, ...product } = data;
   const transformedOption = options.map(({ OptionValues: values, ...rest }) => {
-    const defaultValue = values?.find((v) => v.default);
+    const defaultValue = values.filter((v) => v.default)[0];
     return {
       ...rest,
       values,
@@ -12,6 +12,13 @@ export function constructData(data: ProductQuery): constructedData {
     };
   });
   return { product, options: transformedOption };
+}
+export function formatDate(date: Date) {
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+
+  return `${day}-${month}-${year}`;
 }
 
 export function calcPrice(product: Product, options: OptionValue[]) {
@@ -24,9 +31,8 @@ export function calcPrice(product: Product, options: OptionValue[]) {
 
   return Math.ceil(finalPrice);
 }
-export function generateItemID(product: Product, values: OptionValue[]) {
-  const valuesIDs = values.map((v) => v.id).join(":");
-  return `${product.id}${valuesIDs}`;
+export function generateItemID(productID: number, optionsIDs: number[]) {
+  return `${productID}:${optionsIDs.join(":")}`;
 }
 
 export function formatCurrency(amount: number): string {
@@ -37,4 +43,3 @@ export function formatCurrency(amount: number): string {
     maximumFractionDigits: 0,
   }).format(amount);
 }
-

@@ -14,6 +14,65 @@ export type Database = {
   }
   public: {
     Tables: {
+      account: {
+        Row: {
+          accessToken: string | null
+          accessTokenExpiresAt: string | null
+          accountId: string
+          createdAt: string
+          id: string
+          idToken: string | null
+          issuer: string | null
+          password: string | null
+          providerId: string
+          refreshToken: string | null
+          refreshTokenExpiresAt: string | null
+          scope: string | null
+          updatedAt: string
+          userId: string
+        }
+        Insert: {
+          accessToken?: string | null
+          accessTokenExpiresAt?: string | null
+          accountId: string
+          createdAt?: string
+          id: string
+          idToken?: string | null
+          issuer?: string | null
+          password?: string | null
+          providerId: string
+          refreshToken?: string | null
+          refreshTokenExpiresAt?: string | null
+          scope?: string | null
+          updatedAt: string
+          userId: string
+        }
+        Update: {
+          accessToken?: string | null
+          accessTokenExpiresAt?: string | null
+          accountId?: string
+          createdAt?: string
+          id?: string
+          idToken?: string | null
+          issuer?: string | null
+          password?: string | null
+          providerId?: string
+          refreshToken?: string | null
+          refreshTokenExpiresAt?: string | null
+          scope?: string | null
+          updatedAt?: string
+          userId?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_userId_fkey"
+            columns: ["userId"]
+            isOneToOne: false
+            referencedRelation: "user"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       Options: {
         Row: {
           description: string
@@ -72,69 +131,78 @@ export type Database = {
       }
       Order: {
         Row: {
-          addressDetails: string
           apartment: string
           bostaOrderID: string | null
           bostaTrackingNumber: string | null
           bostaTrackingUrl: string | null
           city: string
+          cityID: string
           created_at: string
           customerEmail: string
           customerName: string
           customerPhone: string
-          governorate: string
+          district: string
+          districtID: string
           id: number
           paymentMethod: string
           paymentStatus: string
           paymobOrderID: string | null
           paymobTransactionID: string | null
+          shippingFees: number
           shippingStatus: string
           status: Database["public"]["Enums"]["orderStatus"]
           street: string
+          subTotal: number
           totalPrice: number
         }
         Insert: {
-          addressDetails: string
           apartment: string
           bostaOrderID?: string | null
           bostaTrackingNumber?: string | null
           bostaTrackingUrl?: string | null
           city: string
+          cityID: string
           created_at?: string
           customerEmail: string
           customerName: string
           customerPhone: string
-          governorate: string
+          district: string
+          districtID: string
           id?: number
           paymentMethod: string
           paymentStatus?: string
           paymobOrderID?: string | null
           paymobTransactionID?: string | null
+          shippingFees: number
           shippingStatus?: string
           status?: Database["public"]["Enums"]["orderStatus"]
           street: string
+          subTotal: number
           totalPrice: number
         }
         Update: {
-          addressDetails?: string
           apartment?: string
           bostaOrderID?: string | null
           bostaTrackingNumber?: string | null
           bostaTrackingUrl?: string | null
           city?: string
+          cityID?: string
           created_at?: string
           customerEmail?: string
           customerName?: string
           customerPhone?: string
-          governorate?: string
+          district?: string
+          districtID?: string
           id?: number
           paymentMethod?: string
           paymentStatus?: string
           paymobOrderID?: string | null
           paymobTransactionID?: string | null
+          shippingFees?: number
           shippingStatus?: string
           status?: Database["public"]["Enums"]["orderStatus"]
           street?: string
+          subTotal?: number
           totalPrice?: number
         }
         Relationships: []
@@ -189,6 +257,7 @@ export type Database = {
       }
       Product: {
         Row: {
+          "blurred-image": string
           category: string
           description: string
           featured: boolean
@@ -199,6 +268,7 @@ export type Database = {
           price: number
         }
         Insert: {
+          "blurred-image": string
           category: string
           description: string
           featured?: boolean
@@ -209,6 +279,7 @@ export type Database = {
           price: number
         }
         Update: {
+          "blurred-image"?: string
           category?: string
           description?: string
           featured?: boolean
@@ -253,52 +324,130 @@ export type Database = {
           },
         ]
       }
+      session: {
+        Row: {
+          createdAt: string
+          expiresAt: string
+          id: string
+          ipAddress: string | null
+          token: string
+          updatedAt: string
+          userAgent: string | null
+          userId: string
+        }
+        Insert: {
+          createdAt?: string
+          expiresAt: string
+          id: string
+          ipAddress?: string | null
+          token: string
+          updatedAt: string
+          userAgent?: string | null
+          userId: string
+        }
+        Update: {
+          createdAt?: string
+          expiresAt?: string
+          id?: string
+          ipAddress?: string | null
+          token?: string
+          updatedAt?: string
+          userAgent?: string | null
+          userId?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_userId_fkey"
+            columns: ["userId"]
+            isOneToOne: false
+            referencedRelation: "user"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user: {
+        Row: {
+          createdAt: string
+          email: string
+          emailVerified: boolean
+          id: string
+          image: string | null
+          name: string
+          role: string
+          updatedAt: string
+        }
+        Insert: {
+          createdAt?: string
+          email: string
+          emailVerified: boolean
+          id: string
+          image?: string | null
+          name: string
+          role?: string
+          updatedAt?: string
+        }
+        Update: {
+          createdAt?: string
+          email?: string
+          emailVerified?: boolean
+          id?: string
+          image?: string | null
+          name?: string
+          role?: string
+          updatedAt?: string
+        }
+        Relationships: []
+      }
+      verification: {
+        Row: {
+          createdAt: string
+          expiresAt: string
+          id: string
+          identifier: string
+          updatedAt: string
+          value: string
+        }
+        Insert: {
+          createdAt?: string
+          expiresAt: string
+          id: string
+          identifier: string
+          updatedAt?: string
+          value: string
+        }
+        Update: {
+          createdAt?: string
+          expiresAt?: string
+          id?: string
+          identifier?: string
+          updatedAt?: string
+          value?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      create_order:
-        | {
-            Args: {
-              p_address_details: string
-              p_apartment: string
-              p_city: string
-              p_customer_email: string
-              p_customer_name: string
-              p_customer_phone: string
-              p_governorate: string
-              p_items: Json
-              p_payment_method: string
-              p_street: string
-              p_total_price: number
-            }
-            Returns: number
-          }
-        | {
-            Args: {
-              p_customer_email: string
-              p_customer_name: string
-              p_customer_phone: string
-              p_items: Json
-              p_payment_method: string
-              p_shipping_address: string
-              p_total_amount: number
-            }
-            Returns: number
-          }
-        | {
-            Args: {
-              p_customer_email: string
-              p_customer_name: string
-              p_customer_phone: string
-              p_items: Json
-              p_payment_method: string
-              p_shipping_address: string
-              p_total_price: number
-            }
-            Returns: number
-          }
+      create_order: {
+        Args: {
+          p_apartment: string
+          p_city: string
+          p_cityid: string
+          p_customer_email: string
+          p_customer_name: string
+          p_customer_phone: string
+          p_district: string
+          p_districtid: string
+          p_items: Json
+          p_payment_method: string
+          p_shipping_fees: number
+          p_street: string
+          p_subtotal: number
+        }
+        Returns: number
+      }
     }
     Enums: {
       orderstatus:
@@ -309,6 +458,7 @@ export type Database = {
         | "cancelled"
         | "failed"
       orderStatus: "pending" | "paid" | "shipped" | "completed" | "cancelled"
+      role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -324,12 +474,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -353,11 +503,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -378,11 +528,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -403,11 +553,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -420,11 +570,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -445,6 +595,7 @@ export const Constants = {
         "failed",
       ],
       orderStatus: ["pending", "paid", "shipped", "completed", "cancelled"],
+      role: ["admin", "user"],
     },
   },
 } as const

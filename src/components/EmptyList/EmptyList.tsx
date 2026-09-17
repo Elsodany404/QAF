@@ -1,7 +1,7 @@
 "use client"
 import { SlidersHorizontal } from "lucide-react";
 import styles from "./EmptyList.module.css";
-import useParams from "@/hooks/useParams";
+import useParams from "@/hooks/useSearchParams";
 
 function EmptyList() {
   const { resetFilters } = useParams();

@@ -8,7 +8,10 @@ import type {
   Product,
 } from "./db";
 import { Dispatch, SetStateAction } from "react";
-
+export type ActionState = {
+  status: "idle" | "success" | "failed";
+  message: string;
+};
 export type ProductOption = Option & {
   OptionValues: OptionValue[];
 };
@@ -23,22 +26,58 @@ export type TransformedOption = Option & {
   values: OptionValue[];
   defaultValue: OptionValue;
 };
+export type CreatePaymentResult =
+  | {
+      success: true;
+      data: {
+        client_secret: string;
+        [key: string]: unknown;
+      };
+    }
+  | {
+      success: false;
+      error: string;
+    };
 
 export type DataItem = {
   product: Product;
   options: TransformedOption[]; // Added [] here
 };
 export type Cart = Item[];
-export type orderPayloadT = Partial<Order> & { cart: Cart };
+
+export type orderPayloadT = {
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  city: string;
+  cityID: string;
+  district: string;
+  districtID: string;
+  street: string;
+  apartment: string;
+  paymentMethod: string;
+  shippingFees: number;
+  cart: Cart;
+};
+export type secureItem = {
+  productID: number;
+  optionsIDs: number[];
+  valuesIDs: number[];
+  quantity: number;
+};
+export type secureCart = secureItem[];
+
 export type FormValues = {
   name: string;
   email: string;
   phone: string;
-  governorate: string;
   city: string;
-  streetAddress: string;
+  cityID: string;
+  district: string;
+  districtID: string;
+  street: string;
   apartment: string;
-  details: string;
+  paymentMethod: PaymentMethod;
 };
 
 export type PaymentOptionsT = {
@@ -62,6 +101,11 @@ export type CartContextT = {
   decreaseQuantity: (itemID: string) => void;
   paymentMethod: PaymentMethod;
   setPaymentMethod: Dispatch<SetStateAction<PaymentMethod>>;
+  setCityName: Dispatch<SetStateAction<string | null>>;
+  taxOnCod: number;
+  shippingFees: number;
+  shippingFeesLoading: boolean;
+  cartLoaded: boolean;
 };
 export type GetProductsParams = {
   search?: string;
@@ -88,14 +132,31 @@ export type PaymentMethod =
   | "vodafone_cash"
   | "cash_on_delivery";
 
-export type AdminOrder = Order & {
-  paymentMethod?: PaymentMethod | null;
-  paymentStatus?: string | null;
-  shippingStatus?: string | null;
-  OrderItem?: OrderItem[];
-  bostaOrderID?: string | null;
-  bostaTrackingNumber?: string | null;
-  bostaTrackingUrl?: string | null;
+export type StatusFilter = OrderStatus | "all";
+
+export type BostaApiResponse = {
+  data: BostaCity[];
 };
 
-export type StatusFilter = OrderStatus | "all";
+export type BostaCity = {
+  cityId: string;
+  cityName: string;
+  cityOtherName: string;
+  cityCode: string;
+  districts: BostaDistrict[];
+  pickupAvailability: boolean;
+  dropOffAvailability: boolean;
+};
+
+export type BostaDistrict = {
+  zoneId: string;
+  zoneName: string;
+  zoneOtherName: string;
+  districtId: string;
+  districtName: string;
+  districtOtherName: string;
+  pickupAvailability: boolean;
+  dropOffAvailability: boolean;
+  isBusy?: boolean;
+  notAllowedBulkyOrders?: boolean;
+};

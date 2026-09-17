@@ -1,32 +1,47 @@
 .nav {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  inset: 0 0 auto;
   z-index: 50;
-  transition: all 0.3s ease;
+  width: 100%;
+  transition:
+    background-color 0.3s ease,
+    box-shadow 0.3s ease,
+    backdrop-filter 0.3s ease;
 }
+
+/* =========================
+   Navbar States
+   ========================= */
 
 .navTransparent {
   background-color: transparent;
+
   &.contrast-navbar {
     background-color: var(--espresso-700);
-    color: white;
+    color: #fff;
+
     .menuButton,
     .cartButton {
-      color: white;
+      color: #fff;
+    }
+
+    .logoTitle,
+    .logoSubtitle,
+    .navLink {
+      color: var(--mocha-100);
     }
   }
 }
 
 .navScrolled {
-  background: rgba(255, 249, 240, 0.5);
+  background: rgba(255, 249, 240, 0.7);
   backdrop-filter: blur(12px);
-  box-shadow: var(--shadow-soft-lg);
+  -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(17, 16, 31, 0.06);
-  .logoTitle {
-    color: var(--mocha-900);
-  }
+  box-shadow: var(--shadow-soft-lg);
+
+  .logoTitle,
+  .logoSubtitle,
   .navLink {
     color: var(--mocha-900);
   }
@@ -37,48 +52,64 @@
   }
 }
 
+/* =========================
+   Container
+   ========================= */
+
 .container {
+  width: 100%;
   max-width: 80rem;
-  margin: 0 auto;
-  padding: 0 1rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
 }
 
 @media (min-width: 640px) {
   .container {
-    padding: 0 1.5rem;
+    padding-inline: 1.5rem;
   }
 }
 
 @media (min-width: 1024px) {
   .container {
-    padding: 0 2rem;
+    padding-inline: 2rem;
   }
 }
+
+/* =========================
+   Navbar Inner
+   ========================= */
 
 .navInner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 5rem;
+  min-height: 5rem;
+  gap: 1rem;
 }
+
+/* =========================
+   Logo
+   ========================= */
 
 .logoButton {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   text-align: left;
+  flex-shrink: 0;
 }
 
 .logoMark {
   position: relative;
   width: 3rem;
   height: 3rem;
+  flex-shrink: 0;
 }
 
 .logoMarkInner {
   position: absolute;
   inset: 0;
-  border-radius: 9999px;
+  border-radius: 50%;
   background: linear-gradient(135deg, var(--espresso-600), var(--mocha-600));
   box-shadow: var(--shadow-soft);
   transition: box-shadow 0.2s ease;
@@ -91,30 +122,43 @@
 .logoIcon {
   position: absolute;
   inset: 0;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   color: var(--mocha-100);
 }
 
 .logoTitle {
+  margin: 0 0 0.3rem;
+
   font-family: "Playfair Display", serif;
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--mocha-100);
   line-height: 1.1;
   letter-spacing: 0.02em;
-  margin-bottom: 0.3rem;
+
+  color: var(--mocha-100);
+  transition: color 0.2s ease;
 }
 
 .logoSubtitle {
+  margin: 0;
+
   font-size: 0.75rem;
   font-weight: 600;
+  line-height: 1.1;
   letter-spacing: 0.15em;
   text-transform: uppercase;
+
   color: var(--mocha-100);
-  line-height: 1.1;
+  transition: color 0.2s ease;
 }
+
+/* =========================
+   Desktop Navigation
+   ========================= */
 
 .desktopNav {
   display: none;
@@ -128,80 +172,119 @@
   }
 }
 
+/* =========================
+   Navigation Links
+   ========================= */
+
 .navLink {
   position: relative;
+
+  padding: 0.5rem 0;
+
   font-size: 1rem;
   font-weight: 600;
+  line-height: 1.2;
   letter-spacing: 0.02em;
-  transition: color 0.2s ease;
-  border-radius: 999px;
+
   color: var(--mocha-100);
+  border-radius: 999px;
+
+  transition: color 0.2s ease;
+
+  &::after {
+    content: "";
+
+    position: absolute;
+    left: 0;
+    bottom: -0.35rem;
+
+    width: 0;
+    height: 2px;
+
+    background: linear-gradient(90deg, var(--gold-400), var(--gold-600));
+
+    transition: width 0.3s ease;
+  }
+
+  &:hover::after,
+  &.navLinkActive::after {
+    width: 100%;
+  }
 }
 
-/* .navLink:hover {
-  color: var(--mocha-900);
-} */
-
-/* .navLinkActive {
-  background-color: var(--cream-500);
-} */
-
-.navLink::after,
-.navLinkActive::after {
-  content: "";
-  position: absolute;
-  bottom: -0.5rem;
-  left: 0;
-  width: 0;
-  height: 0.125rem;
-  background: linear-gradient(90deg, var(--gold-400), var(--gold-600));
-  transition: width 0.3s ease;
-}
-
-.navLink:hover::after,
-.navLinkActive::after {
-  width: 100%;
-}
+/* =========================
+   Actions
+   ========================= */
 
 .actions {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .cartButton,
 .menuButton {
+  position: relative;
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.625rem;
+
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+
   border-radius: 0.75rem;
+
   color: var(--espresso-100);
-  transition: all 0.2s ease;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+
+  &:hover {
+    background: var(--mocha-100);
+    color: var(--espresso-900);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--gold-400);
+    outline-offset: 3px;
+  }
 }
 
-.cartButton:hover,
-.menuButton:hover {
-  background: var(--mocha-100);
-  color: var(--espresso-900);
-}
+/* =========================
+   Cart Badge
+   ========================= */
 
 .cartBadge {
   position: absolute;
   top: -0.25rem;
   right: -0.25rem;
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
+
   width: 1.25rem;
   height: 1.25rem;
-  border-radius: 9999px;
+
+  border-radius: 50%;
+
   background: linear-gradient(90deg, var(--gold-400), var(--gold-600));
+
   color: var(--charcoal-900);
+
   font-size: 0.7rem;
   font-weight: 700;
+
   animation: bounce 0.7s ease-in-out infinite alternate;
 }
+
+/* =========================
+   Mobile Menu
+   ========================= */
 
 .mobileMenu {
   border-top: 1px solid var(--cream-200);
@@ -217,23 +300,213 @@
 .mobileLink {
   display: block;
   width: 100%;
+
   padding: 0.75rem 1rem;
+
   border-radius: 0.75rem;
+
   font-size: 0.95rem;
   font-weight: 600;
   text-align: left;
-  transition: all 0.2s ease;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .mobileLinkActive {
   background: linear-gradient(90deg, var(--espresso-600), var(--mocha-600));
-  color: white;
+
+  color: #fff;
 }
 
 .mobileLinkDefault {
   color: var(--charcoal-700);
+
+  &:hover {
+    background: var(--cream-100);
+  }
 }
 
-.mobileLinkDefault:hover {
-  background: var(--cream-100);
+/* =========================
+   Authentication Buttons
+   ========================= */
+
+.authButtons {
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .authButtons {
+    display: flex;
+  }
+}
+
+.signInButton,
+.signUpButton,
+.signOutButton {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.01em;
+
+  padding: 0.65rem 1.15rem;
+
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+
+  &:focus-visible {
+    outline: 2px solid var(--gold-400);
+    outline-offset: 3px;
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+/* Sign In */
+
+.signInButton {
+  color: var(--charcoal-900);
+  background: var(--cream-50);
+  border-color: var(--cream-300);
+
+  &:hover {
+    color: var(--espresso-900);
+    background: var(--cream-300);
+    border-color: var(--cream-400);
+  }
+}
+
+/* Sign Up */
+
+.signUpButton {
+  color: var(--cream-50);
+  background: var(--cream-600);
+  border-color: var(--cream-700);
+  box-shadow: var(--shadow-soft);
+
+  &:hover {
+    background: var(--cream-700);
+    border-color: var(--cream-600);
+    box-shadow: var(--shadow-soft-lg);
+    transform: translateY(-1px);
+  }
+}
+
+/* Sign Out */
+
+.signOutButton {
+  color: var(--espresso-600);
+  background: var(--cream-50);
+  border-color: var(--espresso-200);
+
+  &:hover {
+    color: var(--cream-50);
+    background: var(--espresso-600);
+    border-color: var(--espresso-600);
+  }
+}
+
+/* =========================
+   Tablet
+   ========================= */
+
+@media (min-width: 768px) {
+  .navInner {
+    min-height: 5rem;
+  }
+
+  .actions {
+    gap: 0.75rem;
+  }
+
+  .menuButton {
+    display: none;
+  }
+  
+}
+
+/* =========================
+   Large Desktop
+   ========================= */
+
+@media (min-width: 1024px) {
+  .desktopNav {
+    gap: 2.5rem;
+  }
+
+  .navInner {
+    min-height: 5.25rem;
+  }
+}
+
+/* =========================
+   Small Mobile
+   ========================= */
+
+@media (max-width: 479px) {
+  .navInner {
+    min-height: 4.5rem;
+  }
+
+  .logoMark {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .logoTitle {
+    font-size: 1.05rem;
+  }
+
+  .logoSubtitle {
+    font-size: 0.65rem;
+  }
+
+  .actions {
+    gap: 0.25rem;
+  }
+
+  .cartButton,
+  .menuButton {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+}
+
+/* =========================
+   Reduced Motion
+   ========================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .nav,
+  .logoMarkInner,
+  .navLink,
+  .navLink::after,
+  .cartButton,
+  .menuButton,
+  .mobileLink,
+  .signInButton,
+  .signUpButton,
+  .signOutButton {
+    transition: none;
+  }
+
+  .cartBadge,
+  .mobileMenu {
+    animation: none;
+  }
 }

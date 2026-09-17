@@ -1,23 +1,27 @@
 "use client";
 import { useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   CheckCircle2,
   Clock3,
   CreditCard,
   Filter,
   Package,
+  PlusCircle,
   RefreshCw,
   Search,
+  ShoppingCart,
   Truck,
   XCircle,
 } from "lucide-react";
 import { formatCurrency } from "../../helper/helper";
 import styles from "./page.module.css";
 import { StatusFilter } from "../../types/customTypes";
-import { getOrders, updateOrderStatus } from "../../services/Order";
-import { toast } from "react-hot-toast";
+import { getOrders } from "../../services/Order";
 import OrderList from "@/components/OrderList/OrderList";
+import SchedulePickupModal from "@/components/SchedulePickupModal/SchedulePickupModal";
+import CreateOrderModal from "@/components/CreateOrderModal/CreateOrderModal";
+import AddProductModal from "@/components/AddProductModal/AddProductModal";
 
 const statusOptions: StatusFilter[] = [
   "all",
@@ -29,9 +33,13 @@ const statusOptions: StatusFilter[] = [
 ];
 
 export default function Dashboard() {
-  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+
+  // Modal visibility state
+  const [showPickup, setShowPickup] = useState(false);
+  const [showCreateOrder, setShowCreateOrder] = useState(false);
+  const [showAddProduct, setShowAddProduct] = useState(false);
 
   const {
     data: orders = [],
@@ -42,14 +50,6 @@ export default function Dashboard() {
   } = useQuery({
     queryKey: ["admin-orders"],
     queryFn: getOrders,
-  });
-
-  const statusMutation = useMutation({
-    mutationFn: updateOrderStatus,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
-    },
-    onError: (err) => toast.error(err.message),
   });
 
   const filteredOrders = useMemo(() => {
@@ -85,21 +85,57 @@ export default function Dashboard() {
   return (
     <div className={styles.page}>
       <main className={styles.shell}>
+        {/* ── Header ── */}
         <div className={styles.header}>
           <div>
             <p className={styles.eyebrow}>Admin</p>
             <h1 className={styles.title}>Orders Dashboard</h1>
           </div>
-          <button
-            type="button"
-            onClick={() => refetch()}
-            className={styles.refreshButton}
-          >
-            <RefreshCw className={isFetching ? styles.spin : ""} />
-            Refresh
-          </button>
+
+          <div className={styles.headerButtons}>
+            {/* Refresh */}
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className={styles.refreshButton}
+            >
+              <RefreshCw className={isFetching ? styles.spin : ""} />
+              Refresh
+            </button>
+
+            {/* Schedule Pickup */}
+            <button
+              type="button"
+              className={styles.pickupButton}
+              onClick={() => setShowPickup(true)}
+            >
+              <Truck />
+              Schedule Pickup
+            </button>
+
+            {/* Create Order */}
+            <button
+              type="button"
+              className={styles.createOrderButton}
+              onClick={() => setShowCreateOrder(true)}
+            >
+              <ShoppingCart />
+              New Order
+            </button>
+
+            {/* Add Product */}
+            <button
+              type="button"
+              className={styles.addProductButton}
+              onClick={() => setShowAddProduct(true)}
+            >
+              <PlusCircle />
+              Add Product
+            </button>
+          </div>
         </div>
 
+        {/* ── Metrics ── */}
         <section className={styles.metrics}>
           <div className={styles.metric}>
             <span className={styles.metricIcon}>
@@ -141,6 +177,7 @@ export default function Dashboard() {
           </div>
         </section>
 
+        {/* ── Toolbar ── */}
         <section className={styles.toolbar}>
           <div className={styles.searchBox}>
             <Search />
@@ -168,12 +205,10 @@ export default function Dashboard() {
           </div>
         </section>
 
+        {/* ── Orders panel ── */}
         <section className={styles.ordersPanel}>
           <div className={styles.panelHeader}>
             <p>{filteredOrders.length} orders</p>
-            {statusMutation.isError && (
-              <span className={styles.errorText}>Could not update status</span>
-            )}
           </div>
 
           {isPending ? (
@@ -196,6 +231,17 @@ export default function Dashboard() {
           )}
         </section>
       </main>
+
+      {/* ── Modals (portaled above everything) ── */}
+      {showPickup && (
+        <SchedulePickupModal onClose={() => setShowPickup(false)} />
+      )}
+      {showCreateOrder && (
+        <CreateOrderModal onClose={() => setShowCreateOrder(false)} />
+      )}
+      {showAddProduct && (
+        <AddProductModal onClose={() => setShowAddProduct(false)} />
+      )}
     </div>
   );
 }

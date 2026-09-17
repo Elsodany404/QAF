@@ -2,12 +2,11 @@ import Navbar from "@/components/Navbar/Navbar";
 import CartDrawer from "@/components/CartDrawer/CartDrawer";
 import Footer from "@/components/Footer/Footer";
 import type { Metadata } from "next";
-import Providers from "./providers";
 import styles from "./layout.module.css";
 import { Outfit, Playfair_Display } from "next/font/google";
 
 import "./index.css";
-import ScrollToTop from "@/components/ScrollToTop/ScrollToTop";
+import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: {
@@ -44,8 +43,6 @@ export default function RootLayout({
     >
       <body>
         <Providers>
-          <ScrollToTop />
-
           <div className={styles.app}>
             <Navbar />
             <CartDrawer />

@@ -5,7 +5,9 @@ import { useCart } from "../../context/CartContext";
 import styles from "./Navbar.module.css";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-
+import { useSession } from "@/lib/auth-client";
+import signOut from "@/actions/signOut";
+import { toast } from "react-hot-toast";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -13,7 +15,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
-
+  const { data: session, isPending, refetch } = useSession();
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", handler);
@@ -24,10 +26,24 @@ export default function Navbar() {
     { id: "Home", label: "home" },
     { id: "Shop", label: "menu" },
     { id: "Our Story", label: "about" },
-    { id: "Dashboard", label: "dashboard" },
+    
   ];
   const transparentNavBar = pathname === "/home";
-
+  if(mobileOpen){
+    navLinks.push({id: "Sign Up", label: 'sign-up'})
+    navLinks.push({id: "Sign In", label: 'sign-in'})
+  }
+  const handleSignOut = async () => {
+    const res = await signOut();
+    if (res.status === "success") {
+      toast.success(res.message);
+      await refetch(); // updates every useSession() consumer, including this Navbar
+      router.push("/home");
+      router.refresh(); // re-syncs any server-rendered bits that also read the session
+    } else {
+      toast.error(res.message);
+    }
+  };
   const navbarClass = `${styles.nav} ${
     scrolled || mobileOpen ? styles.navScrolled : styles.navTransparent
   } ${!transparentNavBar ? styles["contrast-navbar"] : ""}`;
@@ -35,7 +51,7 @@ export default function Navbar() {
     <nav className={navbarClass}>
       <div className={styles.container}>
         <div className={styles.navInner}>
-          <button onClick={() => "/home"} className={styles.logoButton}>
+          <Link href="/home" className={styles.logoButton}>
             <div className={styles.logoMark}>
               <div className={styles.logoMarkInner} />
               <div className={styles.logoIcon}>
@@ -46,7 +62,7 @@ export default function Navbar() {
               <p className={styles.logoTitle}>Qaf</p>
               <p className={styles.logoSubtitle}>Coffee Co.</p>
             </div>
-          </button>
+          </Link>
 
           <div className={styles.desktopNav}>
             {navLinks.map((link) => (
@@ -90,6 +106,26 @@ export default function Navbar() {
                 <Menu className="w-6 h-6" />
               )}
             </button>
+            <div className={styles.authButtons}>
+              {isPending ? null : !session?.user?.id ? (
+                <>
+                  <Link href="/sign-up" className={styles.signUpButton}>
+                    Sign Up
+                  </Link>
+                  {/* Fixed missing slash in href */}
+                  <Link href="/sign-in" className={styles.signInButton}>
+                    Sign In
+                  </Link>
+                </>
+              ) : (
+                <button
+                  onClick={handleSignOut}
+                  className={styles.signOutButton}
+                >
+                  Sign Out
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

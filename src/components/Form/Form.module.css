@@ -21,7 +21,7 @@
 
 .fieldGrid {
   display: grid;
-  gap: 1rem;
+  gap: 2rem;
 }
 
 @media (min-width: 640px) {
@@ -49,14 +49,12 @@
   border-color: #ef4444;
 }
 
-.dropdown {
-  align-self: end;
+.fieldGrid > * {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-}
+  align-self: end;
 
-.dropdown label {
   font-weight: 600;
   color: var(--charcoal-900);
 }
@@ -107,29 +105,6 @@
   font-size: 0.75rem;
   font-weight: 500;
   color: #dc2626;
-}
-
-.ButtonGetAddress {
-  background-color: var(--espresso-600);
-  border-radius: 10px;
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  align-self: end;
-  gap: 0.5rem;
-  padding: 1rem;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
-}
-
-.ButtonGetAddress:hover:not(:disabled) {
-  opacity: 0.9;
-}
-
-.ButtonGetAddress:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 .paymentCard {

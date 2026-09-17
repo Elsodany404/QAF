@@ -1,12 +1,14 @@
 "use client";
 import { useForm } from "react-hook-form";
-import { signUp } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import toast from "react-hot-toast";
+import { useActionState, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { Coffee, Eye, EyeOff, UserPlus } from "lucide-react";
 import styles from "./SignUpForm.module.css";
+import signUp from "@/actions/signUp";
+import { toast } from "react-hot-toast";
+import { ActionState } from "@/types/customTypes";
+import { useRouter } from "next/navigation";
+import { useSession } from "@/lib/auth-client";
 
 type SignUpFields = {
   name: string;
@@ -14,46 +16,45 @@ type SignUpFields = {
   password: string;
   confirmPassword: string;
 };
-
+const initialState: ActionState = {
+  status: "idle",
+  message: "",
+};
 export default function SignUpForm() {
-  const router = useRouter();
+  const [state, formAction, isPending] = useActionState(signUp, initialState);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const [, startTransition] = useTransition();
 
   const {
     register,
-    handleSubmit,
     watch,
+    handleSubmit,
     formState: { errors },
   } = useForm<SignUpFields>();
 
+  useEffect(() => {
+    if (state.status === "success") {
+      toast.success(state.message);
+      router.push("/sign-in");
+    } else if (state.status === "failed") {
+      toast.error(state.message);
+    }
+    // state only changes reference when useActionState gets a new result,
+    // so depending on the whole object here is intentional
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
+
   const passwordValue = watch("password");
 
-  const onSubmit = async (data: SignUpFields) => {
-    setLoading(true);
-    try {
-      await signUp.email(
-        {
-          name: data.name,
-          email: data.email,
-          password: data.password,
-        },
-        {
-          onSuccess: () => {
-            toast.success("Account created! Welcome to Qaf ☕");
-            router.push("/home");
-            router.refresh();
-          },
-          onError: (ctx) => {
-            toast.error(ctx.error.message ?? "Failed to create account.");
-          },
-        },
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+  function onValid(data: SignUpFields) {
+    const formData = new FormData();
+    formData.append("name", data.name);
+    formData.append("email", data.email);
+    formData.append("password", data.password);
+    startTransition(() => formAction(formData));
+  }
 
   return (
     <div className={styles.page}>
@@ -75,11 +76,7 @@ export default function SignUpForm() {
         <h1 className={styles.heading}>Create an account</h1>
         <p className={styles.subheading}>Join us and enjoy premium coffee</p>
 
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className={styles.form}
-          noValidate
-        >
+        <form onSubmit={handleSubmit(onValid)} className={styles.form} noValidate>
           {/* Name */}
           <div className={styles.field}>
             <label className={styles.label} htmlFor="name">
@@ -196,15 +193,15 @@ export default function SignUpForm() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={isPending}
             className={styles.submitButton}
           >
-            {loading ? (
+            {isPending ? (
               <span className={styles.spinner} />
             ) : (
               <UserPlus size={18} />
             )}
-            {loading ? "Creating account…" : "Create Account"}
+            {isPending ? "Creating account…" : "Create Account"}
           </button>
         </form>
 

@@ -1,4 +1,3 @@
-
 import Image from "next/image";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
@@ -17,6 +16,7 @@ const CATEGORY_INFO = [
       "Finely ground, slow-brewed perfection in three exceptional blends.",
     image: turkishCoffeeImage,
     blends: ["Qaf Blend", "Colombian Blend", "Golden Blend"],
+    link: "/menu?category=turkish",
   },
   {
     id: "espresso",
@@ -26,6 +26,7 @@ const CATEGORY_INFO = [
       "Bold shots crafted for baristas, perfectionists, and everyday ritualists.",
     image: espressoImage,
     blends: [],
+    link: "/menu?category=espresso",
   },
   {
     id: "flavored_coffee",
@@ -35,6 +36,7 @@ const CATEGORY_INFO = [
       "Natural infusions that transform your cup into a sensory experience.",
     image: flavoredCoffeeImage,
     blends: [],
+    link: "/menu?category=flavored",
   },
 ];
 
@@ -59,8 +61,7 @@ function OurCollection() {
           {CATEGORY_INFO.map((category, index) => (
             <Link
               key={category.id}
-            
-              href={"/menu"}
+              href={category.link}
               className={styles.categoryCard}
               style={{ animationDelay: `${index * 100}ms` }}
             >

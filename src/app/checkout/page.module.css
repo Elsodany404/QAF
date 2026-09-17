@@ -48,15 +48,27 @@
   display: grid;
   gap: 3rem;
 }
+/* .grid > :nth-child(1) {
+  order: 1;
+}
 
-@media (min-width: 1024px) {
+.grid > :nth-child(2) {
+  order: 2;
+} */
+
+@media (min-width: 900px) {
   .grid {
     grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-    gap: 3rem;
+  }
+  .grid > :nth-child(1) {
+    order: 2;
+  }
+  
+  .grid > :nth-child(2) {
+    order: 1;
   }
 }
 
-/* Duplicated from Form.module.css because Checkout.tsx uses them directly */
 .card {
   padding: 2rem;
   border: 1px solid var(--cream-100);
@@ -72,56 +84,3 @@
   font-weight: 700;
   color: var(--charcoal-950);
 }
-
-.emptyState {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 70vh;
-  text-align: center;
-}
-
-.emptyIcon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 5rem;
-  height: 5rem;
-  margin-bottom: 1.5rem;
-  border-radius: 9999px;
-  background: var(--cream-300);
-}
-
-.emptyIcon svg {
-  width: 2.5rem;
-  height: 2.5rem;
-  color: var(--cream-600);
-}
-
-.emptyTitle {
-  margin-bottom: 0.5rem;
-  font-family: "Playfair Display", serif;
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: var(--charcoal-900);
-}
-
-.emptyText {
-  margin-bottom: 2rem;
-  color: var(--charcoal-600);
-}
-
-.emptyButton {
-  padding: 0.8rem 1.2rem;
-  border-radius: 0.9rem;
-  background: linear-gradient(90deg, var(--espresso-600), var(--mocha-600));
-  color: white;
-  font-weight: 600;
-}
-
-/* 
-  NOTE: Your React code references styles.paymentChoices, styles.paymentChoice, 
-  styles.paymentChoiceActive, etc. Make sure you add CSS for those here 
-  as they were not included in your original CSS block!
-*/

@@ -43,7 +43,10 @@ export default function ProductClient({ data }: ProductClientProps) {
 
   function handleAdd() {
     const item = {
-      itemID: generateItemID(data.product, effectiveSelections),
+      itemID: generateItemID(
+        data.product.id,
+        effectiveSelections.map((s) => s.id),
+      ),
       product: data.product,
       options: effectiveSelections,
       quantity: 1,
@@ -57,17 +60,25 @@ export default function ProductClient({ data }: ProductClientProps) {
     <div className={styles.Product}>
       <div className={styles["sticky-box"]}>
         <div className={styles["image-box"]}>
-          {imageLoading && <Spinner variant="component" size="lg" />}
+          {imageLoading && (
+            <Image
+              sizes="(max-width: 768px) 100vw, 280px"
+              fill
+              priority
+              src={data.product["blurred-image"]}
+              alt={data.product.name}
+            ></Image>
+          )}
 
           <Image
-            sizes="(max-width: 768px) 100vw, 1400px"
-            quality={100}
+            sizes="(max-width: 768px) 100vw, 1200px"
             fill
             priority
             src={data.product.imageUrl}
             onLoad={() => setImageLoading(false)}
             alt={data.product.name}
             loading="eager"
+            quality={50}
           />
         </div>
       </div>
@@ -79,7 +90,6 @@ export default function ProductClient({ data }: ProductClientProps) {
           <h1 className={styles.header}>{data.product.name}</h1>
 
           <div className={styles.description}>{data.product.description}</div>
-
           <div className={styles.features}>
             {data.options.map((option) => (
               <div key={option.id}>
@@ -95,7 +105,6 @@ export default function ProductClient({ data }: ProductClientProps) {
               </div>
             ))}
           </div>
-
           <form className={styles.options}>
             {data.options.map((option) => (
               <fieldset key={option.id} className={styles.optionGroup}>
@@ -126,8 +135,6 @@ export default function ProductClient({ data }: ProductClientProps) {
           </form>
 
           <div className={styles.callToAction}>
-            <span className={styles.price}>{formatCurrency(finalPrice)}</span>
-
             <div className={styles.action}>
               <button
                 type="button"
@@ -150,6 +157,9 @@ export default function ProductClient({ data }: ProductClientProps) {
                 Checkout
               </button>
             </div>
+            <span className={styles.price}>
+              price : {formatCurrency(finalPrice)}
+            </span>
           </div>
         </div>
       </div>

@@ -33,7 +33,17 @@ export async function getProducts({
   isFeatured = false,
 }: GetProductsParams): Promise<DataItem[]> {
   // 1. Start the base query on the Product table
-  let query = supabase.from("Product").select("*");
+  let query = supabase.from("Product").select(
+    `
+      *,
+      ProductOptions(
+        optionID(
+          *,
+          OptionValues(*)
+        )
+      )
+    `,
+  );
 
   // 2. Add exact match filter for category
   if (category !== "all") {

@@ -1,19 +1,17 @@
 import { CheckCircle, ArrowRight, Package, Truck, Mail } from "lucide-react";
 import styles from "./page.module.css";
-import { notFound, useRouter } from "next/navigation";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 type OrderSuccessProps = {
-  searchParams: Promise<{
-    id: string;
+  params: Promise<{
+    orderID: string;
   }>;
 };
-export default async function OrderSuccess({
-  searchParams,
-}: OrderSuccessProps) {
-  const params = await searchParams;
-  
-  const id = params.id;
-  if (!id) {
+
+export default async function OrderSuccess({ params }: OrderSuccessProps) {
+  const { orderID } = await params;
+
+  if (!orderID) {
     notFound();
   }
   return (
@@ -29,7 +27,7 @@ export default async function OrderSuccess({
             Thank you for your purchase. We are roasting your coffee now.
           </p>
           <p className={styles.orderId}>
-            Order ID: <span className={styles.orderIdValue}>{id}</span>
+            Order ID: <span className={styles.orderIdValue}>{orderID}</span>
           </p>
         </div>
 
