@@ -141,7 +141,7 @@ export default function Navbar() {
                 }}
                 className={`${styles.mobileLink} ${pathname === `/${link.label}` ? styles.mobileLinkActive : styles.mobileLinkDefault}`}
               >
-                {link.label}
+                {link.id}
               </button>
             ))}
           </div>
