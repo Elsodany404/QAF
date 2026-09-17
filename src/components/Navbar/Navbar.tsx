@@ -26,12 +26,11 @@ export default function Navbar() {
     { id: "Home", label: "home" },
     { id: "Shop", label: "menu" },
     { id: "Our Story", label: "about" },
-    
   ];
-  const transparentNavBar = pathname === "/home";
-  if(mobileOpen){
-    navLinks.push({id: "Sign Up", label: 'sign-up'})
-    navLinks.push({id: "Sign In", label: 'sign-in'})
+  const transparentNavBar = pathname === "/";
+  if (mobileOpen) {
+    navLinks.push({ id: "Sign Up", label: "sign-up" });
+    navLinks.push({ id: "Sign In", label: "sign-in" });
   }
   const handleSignOut = async () => {
     const res = await signOut();
