@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import styles from "./OrderList.module.css";
 import { OrderQuery } from "@/types/customTypes";
-import { formatCurrency } from "@/helper/helper";
+import { formatCurrency } from "@/utils/helper";
 import {
   Banknote,
   ChevronDown,

@@ -1,11 +1,9 @@
 "use server";
 
-import { createClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 
 import { postOrder } from "@/services/Order";
 import {
-  ActionState,
   Cart,
   DataItem,
   Item,
@@ -13,15 +11,11 @@ import {
 } from "@/types/customTypes";
 import { OptionValue } from "@/types/db";
 import { calculateBostaFees } from "@/services/Bosta";
-import { constructData, generateItemID } from "@/helper/helper";
+import { constructData, generateItemID } from "@/utils/helper";
 
 import { createPayment } from "./createPayment";
 import { createDelivery } from "./createDelivery";
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SECRET_KEY!,
-);
+import supabaseAdmin from "@/supabase/admin"
 
 export default async function createOrder(
   _previousState: unknown,
@@ -157,11 +151,13 @@ export default async function createOrder(
    * =========================================================
    */
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const dataItems: DataItem[] = data.map((item: any) => {
     const { ProductOptions, ...product } = item;
 
     const rawData = {
       ...product,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       options: ProductOptions?.map((opt: any) => opt.optionID) ?? [],
     };
 
@@ -208,20 +204,6 @@ export default async function createOrder(
         );
       }
     }
-
-    /*
-     * -------------------------------------------------------
-     * Resolve value IDs to actual OptionValue objects
-     * -------------------------------------------------------
-     *
-     * Item.options requires:
-     *
-     * OptionValue[]
-     *
-     * NOT:
-     *
-     * number[]
-     */
 
     const selectedValues: OptionValue[] = [];
 
@@ -304,8 +286,6 @@ export default async function createOrder(
         throw new Error(`Invalid value selection for option ${optionID}`);
       }
     }
-
-    
 
     const optionPrice = selectedValues.reduce((total, optionValue) => {
       const modifier = Number(optionValue.priceModifier);

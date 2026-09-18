@@ -79,7 +79,6 @@ function Form() {
     },
   });
   const { errors } = formState;
-  const [, startTransition] = useTransition();
 
   const availableCities = bostaAddresses.data.filter(
     (c) => c.dropOffAvailability,
@@ -119,7 +118,7 @@ function Form() {
     formData.append("paymentMethod", paymentMethod);
     formData.append("secureCart", JSON.stringify(secureCart));
 
-    startTransition(() => formAction(formData));
+    formAction(formData);
   }
   if (cart.length === 0) {
     return null;

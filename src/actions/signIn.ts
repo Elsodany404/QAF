@@ -2,7 +2,6 @@
 
 import { auth } from "@/lib/auth";
 import { ActionState } from "@/types/customTypes";
-import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
 export default async function signIn(

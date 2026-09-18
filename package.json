@@ -5,10 +5,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start --hostname 0.0.0.0 --port 3000",
+    "start": "next start",
     "rebuild": "rm -rf .next && npm run build && npm run start",
     "clear-cache": "rm -rf .next && next dev",
-    "update-types": "supabase gen types typescript --project-id bdksjsmaqssxasrlyzci > src/lib/database.types.ts",
+    "update-types": "supabase gen types typescript --project-id bdksjsmaqssxasrlyzci > src/supabase/database.types.ts",
     "lint": "eslint",
     "check": "npx tsc --noEmit && npm run lint"
   },

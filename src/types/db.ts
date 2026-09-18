@@ -3,7 +3,7 @@ import type {
   TablesInsert,
   TablesUpdate,
   Enums,
-} from "../lib/database.types";
+} from "../supabase/database.types";
 
 // Rows
 export type Product = Tables<"Product">;

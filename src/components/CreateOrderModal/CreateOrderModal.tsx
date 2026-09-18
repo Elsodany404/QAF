@@ -10,7 +10,7 @@ import {
   Copy,
   ExternalLink,
 } from "lucide-react";
-import { adminCreateOrder, AdminCreateOrderPayload } from "@/actions/adminCreateOrder";
+import { adminCreateOrder, AdminCreateOrderPayload } from "@/actions/createManualOrder";
 import bostaAddresses from "@/assets/data/bostaDistricts.json";
 import styles from "./CreateOrderModal.module.css";
 

@@ -5,7 +5,7 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const database = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.SUPABASE_CONNECTION_STRING,
 });
 
 export const auth = betterAuth({

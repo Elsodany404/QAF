@@ -1,4 +1,4 @@
-import { supabase } from "../lib/supabase";
+import { supabase } from "../supabase/supabase";
 import { orderPayloadT, OrderQuery } from "../types/customTypes";
 import { Order, OrderStatus } from "../types/db";
 // import { OrderInsert, OrderStatus } from "../types/db";

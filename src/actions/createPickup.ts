@@ -1,7 +1,5 @@
 "use server";
-import { formatDate } from "@/helper/helper";
-
-const businessLocationId = "q3g2v58sxw";
+import { formatDate } from "@/utils/helper";
 
 export type CreatePickupResult =
   | { status: "success"; message: string; pickupID: string }
@@ -11,10 +9,15 @@ export type CreatePickupResult =
  * Schedule a Bosta pickup.
  * @param scheduledDate - ISO date string (YYYY-MM-DD). Defaults to today.
  */
+
 export async function createPickup(
   scheduledDate?: string,
 ): Promise<CreatePickupResult> {
   try {
+    const businessLocationId = process.env.BOSTA_BUSINESS_LOCATION_ID;
+    if (!businessLocationId) {
+      throw new Error("default business location id doesn't exist");
+    }
     const formattedDate = scheduledDate
       ? formatDate(new Date(scheduledDate))
       : formatDate(new Date());

@@ -107,6 +107,16 @@ export type CartContextT = {
   shippingFeesLoading: boolean;
   cartLoaded: boolean;
 };
+export type ProductFormInputs = {
+  name: string;
+  description: string;
+  priceRaw: number;
+  category: (typeof CATEGORIES)[number]["label"];
+  imageUrl : string;
+  featured : boolean;
+  inStock: boolean;
+};
+
 export type GetProductsParams = {
   search?: string;
   category?: string;
@@ -134,6 +144,11 @@ export type PaymentMethod =
 
 export type StatusFilter = OrderStatus | "all";
 
+export type AddProductResult =
+  | { type: "success"; message: "Product created"; productID: number }
+  | { type: "error"; message: "Failed to create product" }
+  | { type: "idle" };
+  
 export type BostaApiResponse = {
   data: BostaCity[];
 };

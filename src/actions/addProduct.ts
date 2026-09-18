@@ -1,20 +1,10 @@
 "use server";
 
-import { createClient } from "@supabase/supabase-js";
-import { CATEGORIES } from "@/types/customTypes";
-
-// Admin client bypasses RLS
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SECRET_KEY!,
-);
-
-export type AddProductResult =
-  | { status: "success"; message: string; productID: number }
-  | { status: "failed"; message: string };
+import { AddProductResult, CATEGORIES } from "@/types/customTypes";
+import supabaseAdmin from "@/supabase/admin";
 
 export async function addProduct(
-  _: unknown,
+  prevState: AddProductResult,
   formData: FormData,
 ): Promise<AddProductResult> {
   try {
@@ -27,41 +17,53 @@ export async function addProduct(
     const inStock = formData.get("inStock") !== "false";
 
     if (!name || !description || !priceRaw || !category || !imageUrl) {
-      return { status: "failed", message: "All fields are required" };
+      console.error("All fields are required");
+      return { type: "error", message: "Failed to create product" };
     }
 
     const price = Number(priceRaw);
     if (isNaN(price) || price <= 0) {
-      return { status: "failed", message: "Price must be a positive number" };
+      return { type: "error", message: "Failed to create product" };
     }
 
     const validCategories = CATEGORIES.filter((c) => c.id !== "all").map(
       (c) => c.id,
     );
     if (!validCategories.includes(category)) {
-      return { status: "failed", message: "Invalid category" };
+      console.error("invalid category");
+      return { type: "error", message: "Failed to create product" };
     }
 
     const { data, error } = await supabaseAdmin
       .from("Product")
-      .insert({ name, description, price, category, imageUrl, featured, inStock })
+      .insert({
+        name,
+        description,
+        price,
+        category,
+        imageUrl,
+        featured,
+        inStock,
+      })
       .select("id")
       .single();
 
     if (error) {
-      return { status: "failed", message: error.message };
+      console.error(error.message);
+      return { type: "error", message: "Failed to create product" };
     }
 
+    console.log(`Product "${name}" added successfully`);
     return {
-      status: "success",
-      message: `Product "${name}" added successfully`,
+      type: "success",
+      message: "Product created",
       productID: data.id,
     };
   } catch (err) {
+    console.error(err instanceof Error ? err.message : "Unexpected error");
     return {
-      status: "failed",
-      message: err instanceof Error ? err.message : "Unexpected error",
+      type: "error",
+      message: "Failed to create product",
     };
   }
 }
-
