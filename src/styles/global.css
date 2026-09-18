@@ -97,6 +97,10 @@ body {
   background: var(--cream-50);
   line-height: 1.6;
 }
+a,
+button {
+  -webkit-tap-highlight-color: transparent;
+}
 .section {
   position: relative;
   padding: 6rem 0;
