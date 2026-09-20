@@ -1,20 +1,27 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  overflow-y: auto;
+  background: rgba(12, 11, 22, 0.58);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 200;
-  padding: 1rem;
+  padding: max(1rem, env(safe-area-inset-top))
+    max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
 }
 
 .modal {
+  width: min(100%, 30rem);
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  margin: auto;
   background: white;
-  border-radius: 1.2rem;
-  width: min(28rem, 100%);
-  padding: 1.75rem;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  border: 1px solid var(--cream-200);
+  border-radius: 1rem;
+  padding: clamp(1.15rem, 4vw, 1.75rem);
+  box-shadow: 0 24px 70px rgba(12, 11, 22, 0.24);
 }
 
 .header {
@@ -96,6 +103,8 @@
 }
 
 .dateInput {
+  box-sizing: border-box;
+  min-height: 2.9rem;
   width: 100%;
   padding: 0.7rem 0.9rem;
   border: 1px solid var(--cream-200);
@@ -203,3 +212,31 @@
   color: var(--charcoal-950);
 }
 
+@media (max-width: 480px) {
+  .backdrop {
+    align-items: flex-end;
+    padding: 0.5rem;
+  }
+
+  .modal {
+    width: 100%;
+    max-height: calc(100dvh - 1rem);
+    border-radius: 0.9rem;
+  }
+
+  .title {
+    font-size: 1.1rem;
+  }
+
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .cancelBtn,
+  .submitBtn,
+  .closeBtn2 {
+    width: 100%;
+    min-height: 2.8rem;
+  }
+}

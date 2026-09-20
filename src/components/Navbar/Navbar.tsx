@@ -27,10 +27,15 @@ export default function Navbar() {
     { id: "Shop", label: "menu" },
     { id: "Our Story", label: "about" },
   ];
+  if(session?.user?.role === "admin") {
+    navLinks.push({ id: "Dashboard", label: "admin/dashboard" });
+  }
   const transparentNavBar = pathname === "/";
-  if (mobileOpen) {
+  if (mobileOpen && !session?.user?.id) {
     navLinks.push({ id: "Sign Up", label: "sign-up" });
     navLinks.push({ id: "Sign In", label: "sign-in" });
+  }else if(mobileOpen && session?.user?.id){
+    navLinks.push({ id: "Sign Out", label: "sign-out" });
   }
   const handleSignOut = async () => {
     const res = await signOut();

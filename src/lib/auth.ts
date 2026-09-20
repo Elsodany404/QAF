@@ -4,20 +4,41 @@ import { Pool } from "pg";
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+
 const database = new Pool({
   connectionString: process.env.SUPABASE_CONNECTION_STRING,
 });
 
 export const auth = betterAuth({
   database,
+
   baseURL: process.env.NEXT_PUBLIC_SITE_URL,
-  plugins: [
-    nextCookies(), // Automatically synchronizes Better Auth cookies in Server Actions
-  ],
+  user: {
+    additionalFields: {
+      role: {
+        type: "string",
+        required: false,
+        defaultValue: "user",
+        input: false,
+        returned: true,
+      },
+    },
+  },
+  session: {
+    // Maximum session lifetime: 30 days
+    expiresIn: 60 * 60 * 24 * 30,
+
+    // Refresh the session expiration when the user is active.
+    // This prevents an active user from unexpectedly getting logged out.
+    updateAge: 60 * 60 * 24,
+  },
+
+  plugins: [nextCookies()],
 
   emailVerification: {
     autoSignInAfterVerification: true,
-    sendVerificationEmail: async ({ user, url, token }, request) => {
+
+    sendVerificationEmail: async ({ user, url }) => {
       void resend.emails.send({
         from: "onboarding@resend.dev",
         to: user.email,
@@ -26,11 +47,17 @@ export const auth = betterAuth({
       });
     },
   },
+
   emailAndPassword: {
-    requireEmailVerification: true,
     enabled: true,
+
+    // User must verify email before being considered authenticated.
+    requireEmailVerification: true,
+
+    // Don't automatically log them in immediately after password signup.
     autoSignIn: false,
-    onExistingUserSignUp: async ({ user }, request) => {
+
+    onExistingUserSignUp: async ({ user }) => {
       void resend.emails.send({
         from: "onboarding@resend.dev",
         to: user.email,

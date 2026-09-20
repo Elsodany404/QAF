@@ -44,7 +44,7 @@ export default function SignInForm() {
     if (state.status === "success") {
       toast.success(state.message);
       refetch();
-      router.push("/dashboard");
+      router.push("/");
       router.refresh();
     } else if (state.status === "failed") {
       toast.error(state.message);

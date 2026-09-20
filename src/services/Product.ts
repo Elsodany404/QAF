@@ -1,4 +1,4 @@
-import { constructData } from "../helper/helper";
+import { constructData } from "../utils/helper";
 import { supabase } from "../supabase/supabase";
 import { DataItem, GetProductsParams } from "../types/customTypes";
 

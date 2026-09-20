@@ -1,0 +1,110 @@
+.page {
+  display: grid;
+  min-height: 100svh;
+  place-items: center;
+  padding: 7rem 1.5rem 4rem;
+  background:
+    linear-gradient(135deg, rgba(255, 248, 225, 0.8), transparent 48%),
+    var(--cream-50);
+}
+
+.panel {
+  width: min(100%, 38rem);
+  padding: clamp(2.25rem, 7vw, 4rem);
+  border: 1px solid var(--cream-200);
+  border-radius: 1.25rem;
+  background: #ffffff;
+  box-shadow: var(--shadow-soft-xl);
+  text-align: center;
+}
+
+.iconWrap {
+  display: grid;
+  width: 4.25rem;
+  height: 4.25rem;
+  margin: 0 auto 1.75rem;
+  place-items: center;
+  border-radius: 1rem;
+  background: var(--espresso-50);
+  color: var(--espresso-600);
+}
+
+.icon {
+  width: 2rem;
+  height: 2rem;
+}
+
+.eyebrow {
+  margin-bottom: 0.6rem;
+  color: var(--gold-700);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.title {
+  max-width: 27rem;
+  margin: 0 auto;
+  color: var(--espresso-900);
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  font-weight: 700;
+  line-height: 1.08;
+}
+
+.description {
+  max-width: 29rem;
+  margin: 1.25rem auto 0;
+  color: var(--charcoal-500);
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.action {
+  display: inline-flex;
+  min-height: 2.85rem;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 2rem;
+  padding: 0.75rem 1.15rem;
+  border-radius: 0.7rem;
+  background: var(--espresso-800);
+  color: var(--cream-50);
+  font-weight: 800;
+  text-decoration: none;
+  transition:
+    transform 160ms ease,
+    background-color 160ms ease;
+}
+
+.action svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.action:hover {
+  background: var(--espresso-900);
+  transform: translateY(-2px);
+}
+
+.action:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--gold-400) 45%, transparent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 520px) {
+  .page {
+    padding: 5.5rem 0.85rem 2rem;
+  }
+
+  .panel {
+    padding: 2.25rem 1.25rem 1.75rem;
+    border-radius: 1rem;
+  }
+
+  .action {
+    width: 100%;
+  }
+}

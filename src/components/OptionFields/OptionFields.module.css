@@ -1,0 +1,121 @@
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.label {
+  color: var(--charcoal-600);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.input {
+  min-width: 0;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid var(--cream-200);
+  border-radius: 0.7rem;
+  outline: none;
+  background: white;
+  color: var(--charcoal-900);
+  font: inherit;
+  font-weight: 700;
+}
+
+.input:focus {
+  border-color: var(--gold-500);
+}
+
+.errorText {
+  min-height: 1rem;
+  color: #b91c1c;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.optionCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  min-width: 0;
+  margin: 0;
+  padding: 1rem;
+  border: 1px solid var(--cream-200);
+  border-radius: 0.8rem;
+  background: var(--cream-50);
+}
+
+.optionHeader,
+.valuesHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.optionTitle {
+  color: var(--charcoal-950);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.valuesList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.addValueButton,
+.removeButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border: 0;
+  color: var(--gold-700);
+  font: inherit;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.addValueButton {
+  padding: 0.45rem 0.7rem;
+  border-radius: 0.5rem;
+  background: var(--gold-50);
+  font-size: 0.78rem;
+}
+
+.addValueButton svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.removeButton {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.45rem;
+  color: var(--charcoal-500);
+}
+
+.removeButton:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.removeButton svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+@media (max-width: 600px) {
+  .row {
+    grid-template-columns: 1fr;
+  }
+}

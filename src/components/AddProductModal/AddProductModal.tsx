@@ -1,17 +1,27 @@
-import { X, Package, CheckCircle2, AlertCircle } from "lucide-react";
+import { X, Package, CheckCircle2, AlertCircle, Plus } from "lucide-react";
 import styles from "./AddProductModal.module.css";
-import { useForm, SubmitHandler } from "react-hook-form";
+import { useFieldArray, useForm, SubmitHandler } from "react-hook-form";
 import {
   AddProductResult,
   CATEGORIES,
   ProductFormInputs,
+  ProductOptionFormInput,
 } from "@/types/customTypes";
 import { useActionState } from "react";
 import { addProduct } from "@/actions/addProduct";
+import OptionFields from "@/components/OptionFields/OptionFields";
+import { getImageDimensions } from "@/utils/imageDimensions";
 
 type Props = {
   onClose: () => void;
 };
+
+const emptyOption = (): ProductOptionFormInput => ({
+  name: "",
+  description: "",
+  icon: "",
+  values: [{ label: "", priceModifier: 0, default: true, inStock: true }],
+});
 
 export default function AddProductModal({ onClose }: Props) {
   const initialState: AddProductResult = {
@@ -25,9 +35,20 @@ export default function AddProductModal({ onClose }: Props) {
   const {
     register,
     handleSubmit,
-
+    control,
+    setValue,
+    getValues,
     formState: { errors },
-  } = useForm<ProductFormInputs>();
+  } = useForm<ProductFormInputs>({
+    defaultValues: { options: [emptyOption()] },
+  });
+
+  const {
+    fields: optionFields,
+    append: appendOption,
+    remove: removeOption,
+  } = useFieldArray({ control, name: "options" });
+
   const onSubmit: SubmitHandler<ProductFormInputs> = (
     data: ProductFormInputs,
   ) => {
@@ -39,6 +60,8 @@ export default function AddProductModal({ onClose }: Props) {
     formData.append("inStock", String(data.inStock));
     formData.append("priceRaw", String(data.priceRaw));
     formData.append("imageUrl", data.imageUrl);
+    formData.append("blurredImageUrl", data.blurredImageUrl);
+    formData.append("options", JSON.stringify(data.options));
 
     dispatchAction(formData);
   };
@@ -168,7 +191,7 @@ export default function AddProductModal({ onClose }: Props) {
 
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="imageUrl">
-                  Image URL *
+                  Product image URL * (minimum 1400 × 1100)
                 </label>
                 <input
                   id="imageUrl"
@@ -177,9 +200,63 @@ export default function AddProductModal({ onClose }: Props) {
                   placeholder="https://…"
                   {...register("imageUrl", {
                     required: "insert valid image url",
+                    validate: async (value) => {
+                      const dimensions = await getImageDimensions(value);
+
+                      if (!dimensions) return "unable to load image";
+                      if (dimensions.width < 1400 || dimensions.height < 1100) {
+                        return "image must be at least 1400 × 1100 px";
+                      }
+
+                      if (
+                        dimensions.width % 5 !== 0 ||
+                        dimensions.height % 5 !== 0
+                      ) {
+                        return "image dimensions must be divisible by 5 for the blurred image";
+                      }
+
+                      return true;
+                    },
                   })}
                 />
-                {errors.imageUrl && errors.imageUrl.message}
+                <span className={styles.errorText}>
+                  {errors.imageUrl?.message?.toString()}
+                </span>
+              </div>
+
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="blurredImageUrl">
+                  Blurred image URL * (exactly 20% dimensions)
+                </label>
+                <input
+                  id="blurredImageUrl"
+                  type="url"
+                  className={styles.input}
+                  placeholder="https://…"
+                  {...register("blurredImageUrl", {
+                    required: "insert blurred image url",
+                    validate: async (value) => {
+                      const productUrl = getValues("imageUrl");
+                      const productDimensions =
+                        await getImageDimensions(productUrl);
+                      const blurredDimensions = await getImageDimensions(value);
+
+                      if (!productDimensions || !blurredDimensions) {
+                        return "unable to load image dimensions";
+                      }
+
+                      return blurredDimensions.width ===
+                        productDimensions.width / 5 &&
+                        blurredDimensions.height ===
+                          productDimensions.height / 5
+                        ? true
+                        : `blurred image must be ${productDimensions.width / 5} × ${productDimensions.height / 5} px`;
+                    },
+                  })}
+                />
+                <span className={styles.errorText}>
+                  {errors.blurredImageUrl?.message?.toString()}
+                </span>
               </div>
             </div>
 
@@ -205,6 +282,38 @@ export default function AddProductModal({ onClose }: Props) {
                 In stock
               </label>
             </div>
+
+            <section className={styles.optionsSection}>
+              <div className={styles.optionsSectionHeader}>
+                <div>
+                  <h3 className={styles.sectionTitle}>Product options</h3>
+                  <p className={styles.sectionHint}>
+                    Add choices such as size, roast, or grind.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className={styles.addOptionButton}
+                  onClick={() => appendOption(emptyOption())}
+                >
+                  <Plus /> Add option
+                </button>
+              </div>
+
+              <div className={styles.optionsList}>
+                {optionFields.map((field, optionIndex) => (
+                  <OptionFields
+                    key={field.id}
+                    control={control}
+                    optionIndex={optionIndex}
+                    register={register}
+                    setValue={setValue}
+                    errors={errors}
+                    removeOption={removeOption}
+                  />
+                ))}
+              </div>
+            </section>
 
             <div className={styles.actions}>
               <button

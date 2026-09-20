@@ -6,7 +6,7 @@ import styles from "./ProductCard.module.css";
 import { useCart } from "../../context/CartContext";
 import Spinner from "../Spinner/Spinner";
 import { useEffect, useState } from "react";
-import { calcPrice, formatCurrency, generateItemID } from "../../helper/helper";
+import { calcPrice, formatCurrency, generateItemID } from "../../utils/helper";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "../Button/Button";
