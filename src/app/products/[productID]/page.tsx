@@ -8,7 +8,7 @@ export async function generateStaticParams() {
   const dataItems: DataItem[] = await getAllProducts();
 
   return dataItems.map(({ product }) => ({
-    productID: product.id.toString(),
+    productID: product.ID.toString(),
   }));
 }
 
