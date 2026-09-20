@@ -8,7 +8,6 @@ import signUp from "@/actions/signUp";
 import { toast } from "react-hot-toast";
 import { ActionState } from "@/types/customTypes";
 import { useRouter } from "next/navigation";
-import { useSession } from "@/lib/auth-client";
 
 type SignUpFields = {
   name: string;

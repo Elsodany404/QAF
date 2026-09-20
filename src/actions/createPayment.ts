@@ -48,14 +48,22 @@ export async function createPayment(
         : paymentMethod === "vodafone_cash"
           ? 5899224
           : null;
-    const amount = Math.round(order.subTotal * 100);
-
-    const items = order.orderItems.map((item) => ({
-      name: item.productName,
-      amount: Math.round((item.totalPrice / item.quantity) * 100),
-      description: item.product.description,
-      quantity: item.quantity,
-    }));
+    
+    const amount = Math.round((order.subTotal + order.shippingFees) * 100);
+    const items = [
+      ...order.orderItems.map((item) => ({
+        name: item.productName,
+        amount: Math.round((item.totalPrice / item.quantity) * 100),
+        description: item.product.description,
+        quantity: item.quantity,
+      })),
+      {
+        name: "Shipping",
+        amount: Math.round(order.shippingFees * 100),
+        description: "Shipping fee",
+        quantity: 1,
+      },
+    ];
     // ==========================================
     // 2. CREATE PAYMOB INTENTION
     // ==========================================
