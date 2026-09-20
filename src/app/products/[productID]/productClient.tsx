@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import Spinner from "@/components/Spinner/Spinner";
 import { useCart } from "@/context/CartContext";
 import { calcPrice, formatCurrency, generateItemID } from "@/utils/helper";
 import type { OptionValue } from "@/types/db";

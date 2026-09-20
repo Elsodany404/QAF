@@ -76,19 +76,19 @@ export type Database = {
       Options: {
         Row: {
           description: string
-          icon: string | null
+          icon: string
           id: number
           name: string
         }
         Insert: {
           description: string
-          icon?: string | null
+          icon: string
           id: number
           name: string
         }
         Update: {
           description?: string
-          icon?: string | null
+          icon?: string
           id?: number
           name?: string
         }
