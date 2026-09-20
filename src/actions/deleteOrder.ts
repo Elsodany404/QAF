@@ -1,13 +1,8 @@
 "use server";
 
-import { createClient } from "@supabase/supabase-js";
 import { ActionState } from "@/types/customTypes";
-
+import supabaseAdmin from "@/supabase/admin";
 // Admin client bypasses RLS
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SECRET_KEY!,
-);
 
 export async function deleteOrder(orderID: number): Promise<ActionState> {
   try {

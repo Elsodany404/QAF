@@ -107,6 +107,38 @@ export type CartContextT = {
   shippingFeesLoading: boolean;
   cartLoaded: boolean;
 };
+
+export type ImageDimensions = {
+  width: number;
+  height: number;
+};
+
+export type ProductFormInputs = {
+  name: string;
+  description: string;
+  priceRaw: number;
+  category: (typeof CATEGORIES)[number]["label"];
+  imageUrl: string;
+  blurredImageUrl: string;
+  featured: boolean;
+  inStock: boolean;
+  options: ProductOptionFormInput[];
+};
+
+export type ProductOptionFormInput = {
+  name: string;
+  description: string;
+  icon: string;
+  values: ProductOptionValueFormInput[];
+};
+
+export type ProductOptionValueFormInput = {
+  label: string;
+  priceModifier: number;
+  default: boolean;
+  inStock: boolean;
+};
+
 export type GetProductsParams = {
   search?: string;
   category?: string;
@@ -133,6 +165,11 @@ export type PaymentMethod =
   | "cash_on_delivery";
 
 export type StatusFilter = OrderStatus | "all";
+
+export type AddProductResult =
+  | { type: "success"; message: "Product created"; productID: number }
+  | { type: "error"; message: "Failed to create product" }
+  | { type: "idle" };
 
 export type BostaApiResponse = {
   data: BostaCity[];

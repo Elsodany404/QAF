@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState} from "react";
 import { Search, X } from "lucide-react";
 import styles from "./ToolBar.module.css";
 import { CATEGORIES } from "@/types/customTypes";

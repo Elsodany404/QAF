@@ -1,5 +1,5 @@
-import { constructData } from "../helper/helper";
-import { supabase } from "../lib/supabase";
+import { constructData } from "../utils/helper";
+import { supabase } from "../supabase/supabase";
 import { DataItem, GetProductsParams } from "../types/customTypes";
 
 export async function getAllProducts(): Promise<DataItem[]> {

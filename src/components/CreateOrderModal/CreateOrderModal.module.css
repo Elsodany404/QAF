@@ -1,24 +1,27 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  overflow-y: auto;
+  background: rgba(12, 11, 22, 0.58);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 200;
-  padding: 1rem;
-  overflow-y: auto;
+  padding: max(1rem, env(safe-area-inset-top))
+    max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
 }
 
 .modal {
-  background: white;
-  border-radius: 1.2rem;
-  width: min(40rem, 100%);
-  padding: 1.75rem;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
-  margin: auto;
-  max-height: calc(100vh - 2rem);
+  width: min(100%, 42rem);
+  max-height: calc(100dvh - 2rem);
   overflow-y: auto;
+  margin: auto;
+  background: white;
+  border: 1px solid var(--cream-200);
+  border-radius: 1rem;
+  padding: clamp(1.15rem, 4vw, 1.75rem);
+  box-shadow: 0 24px 70px rgba(12, 11, 22, 0.24);
 }
 
 .header {
@@ -103,8 +106,14 @@
   gap: 0.85rem;
 }
 
+.field {
+  min-width: 0;
+}
+
 @media (max-width: 480px) {
-  .row { grid-template-columns: 1fr; }
+  .row {
+    grid-template-columns: 1fr;
+  }
 }
 
 .field {
@@ -122,6 +131,9 @@
 
 .input,
 .select {
+  box-sizing: border-box;
+  min-height: 2.75rem;
+  width: 100%;
   padding: 0.6rem 0.85rem;
   border: 1px solid var(--cream-200);
   border-radius: 0.6rem;
@@ -264,6 +276,46 @@
   height: 0.85rem;
 }
 
+@media (max-width: 560px) {
+  .backdrop {
+    align-items: flex-end;
+    padding: 0.5rem;
+  }
+
+  .modal {
+    width: 100%;
+    max-height: calc(100dvh - 1rem);
+    border-radius: 0.9rem;
+  }
+
+  .title {
+    font-size: 1.1rem;
+  }
+
+  .row {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .cancelBtn,
+  .submitBtn {
+    width: 100%;
+    min-height: 2.8rem;
+  }
+
+  .linkRow {
+    align-items: stretch;
+  }
+
+  .payLink {
+    flex-basis: 100%;
+  }
+}
+
 .doneActions {
   display: flex;
   justify-content: flex-end;
@@ -278,4 +330,3 @@
   background: var(--gold-400);
   color: var(--charcoal-950);
 }
-

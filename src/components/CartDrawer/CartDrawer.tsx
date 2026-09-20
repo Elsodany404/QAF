@@ -2,7 +2,7 @@
 import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 import styles from "./CartDrawer.module.css";
-import { formatCurrency } from "../../helper/helper";
+import { formatCurrency } from "../../utils/helper";
 import { useRouter } from "next/navigation";
 export default function CartDrawer() {
   const router = useRouter();

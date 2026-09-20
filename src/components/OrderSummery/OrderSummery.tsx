@@ -2,7 +2,7 @@
 import { useCart } from "../../context/CartContext";
 import styles from "./OrderSummery.module.css";
 import Image from "next/image";
-import { formatCurrency } from "@/helper/helper";
+import { formatCurrency } from "@/utils/helper";
 
 function OrderSummery() {
   const {

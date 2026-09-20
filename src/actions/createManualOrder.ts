@@ -1,7 +1,7 @@
 "use server";
 
-import { supabase } from "@/lib/supabase";
 import { createPayment } from "./createPayment";
+import supabaseAdmin from "@/supabase/admin";
 
 export type AdminCreateOrderPayload = {
   customerName: string;
@@ -39,7 +39,7 @@ export async function adminCreateOrder(
   try {
     const subTotal = payload.items.reduce((acc, i) => acc + i.totalPrice, 0);
 
-    const { data: orderID, error } = await supabase.rpc("create_order", {
+    const { data: orderID, error } = await supabaseAdmin.rpc("create_order", {
       p_customer_name: payload.customerName,
       p_customer_email: payload.customerEmail,
       p_customer_phone: payload.customerPhone,
@@ -95,4 +95,3 @@ export async function adminCreateOrder(
     };
   }
 }
-

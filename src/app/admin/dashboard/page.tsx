@@ -14,10 +14,10 @@ import {
   Truck,
   XCircle,
 } from "lucide-react";
-import { formatCurrency } from "../../helper/helper";
+import { formatCurrency } from "@//utils/helper";
 import styles from "./page.module.css";
-import { StatusFilter } from "../../types/customTypes";
-import { getOrders } from "../../services/Order";
+import { StatusFilter } from "@/types/customTypes";
+import { getOrders } from "@/services/Order";
 import OrderList from "@/components/OrderList/OrderList";
 import SchedulePickupModal from "@/components/SchedulePickupModal/SchedulePickupModal";
 import CreateOrderModal from "@/components/CreateOrderModal/CreateOrderModal";

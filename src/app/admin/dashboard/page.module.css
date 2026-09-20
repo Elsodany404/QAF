@@ -1,11 +1,11 @@
 .page {
   min-height: 100vh;
-  padding-top: 5rem;
+  padding: 5rem 0 0;
   background: var(--cream-50);
 }
 
 .shell {
-  width: min(76rem, calc(100% - 2rem));
+  width: min(76rem, calc(100% - 3rem));
   margin: 0 auto;
   padding: 2.5rem 0 4rem;
 }
@@ -35,6 +35,7 @@
 
 .headerButtons {
   display: flex;
+  justify-content: flex-end;
   gap: 0.6rem;
   flex-wrap: wrap;
   align-items: center;
@@ -124,6 +125,65 @@
 @media (min-width: 900px) {
   .metrics {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 899px) {
+  .header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .headerButtons {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 560px) {
+  .page {
+    padding-top: 4.25rem;
+  }
+
+  .shell {
+    width: min(100% - 1.5rem, 32rem);
+    padding-top: 1.5rem;
+  }
+
+  .headerButtons {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .refreshButton,
+  .pickupButton,
+  .createOrderButton,
+  .addProductButton {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 0.65rem;
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+
+  .metric {
+    gap: 0.6rem;
+    padding: 0.75rem;
+  }
+
+  .metricIcon {
+    width: 2.15rem;
+    height: 2.15rem;
+  }
+
+  .metricValue {
+    font-size: 1rem;
+  }
+
+  .searchBox,
+  .filterWrap {
+    min-height: 2.8rem;
+    padding-inline: 0.75rem;
   }
 }
 

@@ -7,7 +7,7 @@ import { useState } from "react";
 
 import Spinner from "@/components/Spinner/Spinner";
 import { useCart } from "@/context/CartContext";
-import { calcPrice, formatCurrency, generateItemID } from "@/helper/helper";
+import { calcPrice, formatCurrency, generateItemID } from "@/utils/helper";
 import type { OptionValue } from "@/types/db";
 
 import { DataItem } from "@/types/customTypes";
