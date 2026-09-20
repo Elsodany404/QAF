@@ -87,55 +87,6 @@ export default function Footer() {
             </div>
 
             <div>
-              <h4 className={styles.sectionHeading}>Shop</h4>
-              <ul className={styles.linkList}>
-                {[
-                  "Turkish Coffee",
-                  "Espresso Blends",
-                  "Flavored Coffee",
-                  "All Products",
-                ].map((item) => (
-                  <li key={item}>
-                    <Link href={"/menu"} className={styles.linkButton}>
-                      <span className="flex items-center gap-1">
-                        {item}
-                        <ArrowRight className={styles.linkIcon} />
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <h4 className={styles.sectionHeading}>Company</h4>
-              <ul className={styles.linkList}>
-                {["Our Story", "Sourcing", "Sustainability"].map((item) => (
-                  <li key={item}>
-                    <Link href="/about" className={styles.linkButton}>
-                      <span className="flex items-center gap-1">
-                        {item}
-                        <ArrowRight className={styles.linkIcon} />
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-                <li>
-                  <button
-                    type="button"
-                    className={styles.linkButton}
-                    onClick={() => setContactOpen(true)}
-                  >
-                    <span className="flex items-center gap-1">
-                      Contact
-                      <ArrowRight className={styles.linkIcon} />
-                    </span>
-                  </button>
-                </li>
-              </ul>
-            </div>
-
-            <div>
               <h4 className={styles.sectionHeading}>Contact</h4>
               <ul className={styles.contactList}>
                 <li className={styles.contactItem}>
