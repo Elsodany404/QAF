@@ -25,7 +25,7 @@ export default function Navbar() {
   const navLinks = [
     { id: "Home", label: "" },
     { id: "Shop", label: "menu" },
-    { id: "Our Story", label: "about" },
+    { id: "About us", label: "about" },
   ];
   if(session?.user?.role === "admin") {
     navLinks.push({ id: "Dashboard", label: "admin/dashboard" });

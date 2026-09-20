@@ -64,7 +64,7 @@ export default function ProductCard({ dataItem }: ProductCardProps) {
     addItem(item);
   }
 
-  const link = `/products/${product.id}`;
+  const link = `/products/${product.ID}`;
 
   return (
     <Link href={link} className={styles.cardLink}>

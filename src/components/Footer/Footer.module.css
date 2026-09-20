@@ -254,9 +254,93 @@
 
 .legalLinks {
   display: flex;
+  flex-wrap: wrap;
   gap: 1.25rem;
 }
 
 .legalLink:hover {
   color: var(--gold-400);
+}
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(12, 11, 22, 0.72);
+}
+
+.contactModal {
+  width: min(100%, 30rem);
+  padding: 2rem;
+  border: 1px solid var(--cream-200);
+  border-radius: 1rem;
+  background: var(--cream-50);
+  color: var(--charcoal-900);
+  box-shadow: var(--shadow-soft-xl);
+}
+
+.modalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.modalEyebrow {
+  margin-bottom: 0.35rem;
+  color: var(--gold-600);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.modalTitle {
+  font-family: "Playfair Display", serif;
+  font-size: 2rem;
+  line-height: 1.1;
+}
+
+.modalClose {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.65rem;
+  color: var(--charcoal-600);
+}
+
+.modalClose:hover {
+  background: var(--cream-200);
+}
+
+.modalDescription {
+  margin: 1.25rem 0 1.5rem;
+  color: var(--charcoal-600);
+}
+
+.modalContactList {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.modalContactItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--charcoal-700);
+}
+
+.modalContactItem:hover {
+  color: var(--gold-700);
+}
+
+.modalContactItem svg {
+  width: 1.15rem;
+  color: var(--gold-600);
+  flex-shrink: 0;
 }
