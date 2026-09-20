@@ -76,19 +76,19 @@ export type Database = {
       Options: {
         Row: {
           description: string
-          icon: string
+          icon: string | null
           id: number
           name: string
         }
         Insert: {
           description: string
-          icon: string
+          icon?: string | null
           id: number
           name: string
         }
         Update: {
           description?: string
-          icon?: string
+          icon?: string | null
           id?: number
           name?: string
         }
@@ -262,10 +262,12 @@ export type Database = {
           description: string
           featured: boolean
           id: number
+          ID: string
           imageUrl: string
           inStock: boolean
           name: string
           price: number
+          uuid: string
         }
         Insert: {
           "blurred-image": string
@@ -273,10 +275,12 @@ export type Database = {
           description: string
           featured?: boolean
           id: number
+          ID?: string
           imageUrl: string
           inStock?: boolean
           name: string
           price: number
+          uuid?: string
         }
         Update: {
           "blurred-image"?: string
@@ -284,10 +288,12 @@ export type Database = {
           description?: string
           featured?: boolean
           id?: number
+          ID?: string
           imageUrl?: string
           inStock?: boolean
           name?: string
           price?: number
+          uuid?: string
         }
         Relationships: []
       }

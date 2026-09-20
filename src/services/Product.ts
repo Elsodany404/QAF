@@ -80,7 +80,7 @@ export async function getProducts({
 }
 
 export async function getProductByID(
-  productId: number | string,
+  productId:  string,
 ): Promise<DataItem | null> {
   const { data, error } = await supabase
     .from("Product")
@@ -95,7 +95,7 @@ export async function getProductByID(
     )
   `,
     )
-    .eq("id", productId)
+    .eq("ID", productId)
     .single();
 
   if (error) {

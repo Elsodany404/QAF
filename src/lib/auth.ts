@@ -40,7 +40,7 @@ export const auth = betterAuth({
 
     sendVerificationEmail: async ({ user, url }) => {
       void resend.emails.send({
-        from: "onboarding@resend.dev",
+        from: process.env.RESEND_FROM_EMAIL!,
         to: user.email,
         subject: "Verify your email address",
         text: `Click the link to verify your email: ${url}`,
@@ -59,7 +59,7 @@ export const auth = betterAuth({
 
     onExistingUserSignUp: async ({ user }) => {
       void resend.emails.send({
-        from: "onboarding@resend.dev",
+        from: process.env.RESEND_FROM_EMAIL!,
         to: user.email,
         subject: "Sign-up attempt with your email",
         text: "Someone tried to create an account using your email address. If this was you, try signing in instead. If not, you can safely ignore this email.",

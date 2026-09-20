@@ -19,7 +19,7 @@ export default async function Page({
 }) {
   const { productID } = await params;
 
-  const data = await getProductByID(Number(productID));
+  const data = await getProductByID(productID);
 
   if (!data) {
     notFound();
