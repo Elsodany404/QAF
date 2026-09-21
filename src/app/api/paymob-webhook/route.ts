@@ -136,6 +136,7 @@ export async function POST(req: Request) {
         status: isSuccess ? "completed" : "failed",
         paymentStatus: isSuccess ? "paid" : "failed",
         paymobTransactionID,
+        paymobOrderID: String(transaction.order?.id),
       })
       .eq("id", orderId)
       .select("id")

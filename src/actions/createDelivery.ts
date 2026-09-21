@@ -68,7 +68,6 @@ export async function createDelivery(orderID: string) {
         email: order.customerEmail || "no-reply@domain.com",
       },
 
-      webhookUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/api/webhooks/bosta`,
     };
 
     console.log("Creating Bosta delivery:", {
