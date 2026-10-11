@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { signInPath } from "@/lib/redirect";
 import { headers } from "next/headers";
 import { redirect, forbidden } from "next/navigation";
 
@@ -8,14 +9,14 @@ export default async function Page() {
   });
 
   // Authentication
+
   if (!session) {
-    redirect("/login");
+    redirect(signInPath("/admin/dashboard"));
   }
 
   // Authorization
   if (session.user.role !== "admin") {
     forbidden();
   }
-
-  return <div>Admin page</div>;
+  redirect("/admin/dashboard");
 }

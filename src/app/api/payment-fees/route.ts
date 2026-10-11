@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { calculateBostaFees } from "@/services/Bosta";
+import { getBostaFees } from "@/services/Bosta";
 
 export async function GET(request: NextRequest) {
   const dropOffCity = request.nextUrl.searchParams.get("dropOffCity");
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const shippingFees = await calculateBostaFees(dropOffCity, cod);
+    const shippingFees = await getBostaFees(dropOffCity, cod);
 
     return NextResponse.json({
       success: true,

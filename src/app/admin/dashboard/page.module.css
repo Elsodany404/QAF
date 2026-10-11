@@ -56,6 +56,17 @@
   box-shadow: var(--shadow-soft);
 }
 
+button.metric {
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+button.metric:hover {
+  border-color: var(--gold-300);
+}
+
 .pickupButton {
   display: inline-flex;
   align-items: center;

@@ -1,18 +1,5 @@
-import { DataItem, ProductQuery } from "../types/customTypes";
 import { OptionValue, Product } from "../types/db";
 
-export function constructData(data: ProductQuery): DataItem {
-  const { options, ...product } = data;
-  const transformedOption = options.map(({ OptionValues: values, ...rest }) => {
-    const defaultValue = values.filter((v) => v.default)[0];
-    return {
-      ...rest,
-      values,
-      defaultValue,
-    };
-  });
-  return { product, options: transformedOption };
-}
 export function formatDate(date: Date) {
   const day = String(date.getDate()).padStart(2, "0");
   const month = String(date.getMonth() + 1).padStart(2, "0");

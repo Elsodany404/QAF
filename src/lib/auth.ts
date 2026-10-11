@@ -1,9 +1,8 @@
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 import { Pool } from "pg";
-import { Resend } from "resend";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { linkEmail, sendEmail } from "@/lib/email";
+import { getSiteUrl } from "@/lib/siteUrl";
 
 const database = new Pool({
   connectionString: process.env.SUPABASE_CONNECTION_STRING,
@@ -12,7 +11,10 @@ const database = new Pool({
 export const auth = betterAuth({
   database,
 
-  baseURL: process.env.NEXT_PUBLIC_SITE_URL,
+  // Every auth link (email verification, password reset) is built from
+  // NEXT_PUBLIC_SITE_URL, and only that origin may call /api/auth.
+  baseURL: getSiteUrl(),
+  trustedOrigins: [getSiteUrl()],
   user: {
     additionalFields: {
       role: {
@@ -35,15 +37,40 @@ export const auth = betterAuth({
 
   plugins: [nextCookies()],
 
+  // Brute-force protection. Only applies to requests through /api/auth, so
+  // the auth forms must call authClient, not auth.api from a server action.
+  // Counters live in the database because in-memory counters reset on every
+  // serverless instance.
+  rateLimit: {
+    enabled: true,
+    storage: "database",
+    window: 60,
+    max: 100,
+    customRules: {
+      "/sign-in/email": { window: 60, max: 5 },
+      "/sign-up/email": { window: 60, max: 5 },
+      "/request-password-reset": { window: 600, max: 3 },
+      "/reset-password": { window: 600, max: 10 },
+      "/send-verification-email": { window: 600, max: 3 },
+    },
+  },
+
+  // Emails are not awaited so response times don't reveal whether an
+  // account exists.
   emailVerification: {
+    sendOnSignUp: true,
+    // Unverified users who try to sign in get a fresh link.
+    sendOnSignIn: true,
     autoSignInAfterVerification: true,
 
     sendVerificationEmail: async ({ user, url }) => {
-      void resend.emails.send({
-        from: process.env.RESEND_FROM_EMAIL!,
+      void linkEmail({
         to: user.email,
         subject: "Verify your email address",
-        text: `Click the link to verify your email: ${url}`,
+        intro: `Hi ${user.name}, welcome to Qaf Coffee! Confirm your email address to activate your account.`,
+        url,
+        action: "Verify email",
+        outro: "If you didn't create an account, you can ignore this email.",
       });
     },
   },
@@ -57,12 +84,28 @@ export const auth = betterAuth({
     // Don't automatically log them in immediately after password signup.
     autoSignIn: false,
 
+    resetPasswordTokenExpiresIn: 60 * 60,
+    // Signing out every device is the point of a reset if the account was
+    // compromised.
+    revokeSessionsOnPasswordReset: true,
+
+    sendResetPassword: async ({ user, url }) => {
+      void linkEmail({
+        to: user.email,
+        subject: "Reset your password",
+        intro: `Hi ${user.name}, we received a request to reset your Qaf Coffee password. This link is valid for 1 hour.`,
+        url,
+        action: "Choose a new password",
+        outro:
+          "If you didn't ask to reset your password, you can ignore this email — your password won't change.",
+      });
+    },
+
     onExistingUserSignUp: async ({ user }) => {
-      void resend.emails.send({
-        from: process.env.RESEND_FROM_EMAIL!,
+      void sendEmail({
         to: user.email,
         subject: "Sign-up attempt with your email",
-        text: "Someone tried to create an account using your email address. If this was you, try signing in instead. If not, you can safely ignore this email.",
+        text: "Someone tried to create an account using your email address. If this was you, try signing in instead — or use “Forgot password” if you can't remember it. If not, you can safely ignore this email.",
       });
     },
   },

@@ -1,4 +1,4 @@
-import { constructData } from "../utils/helper";
+import { constructData } from "../utils/constructAPI";
 import { supabase } from "../supabase/supabase";
 import { DataItem, GetProductsParams } from "../types/customTypes";
 
@@ -56,8 +56,16 @@ export async function getProducts({
   }
 
   // 4. Add case-insensitive partial match for search
-  if (search) {
-    query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`);
+  // PostgREST filter syntax uses , . ( ) : and * — strip them so a search
+  // term can't inject extra filter clauses.
+  const safeSearch = search
+    .replace(/[,.():*%\\]/g, " ")
+    .trim()
+    .slice(0, 100);
+  if (safeSearch) {
+    query = query.or(
+      `name.ilike.%${safeSearch}%,description.ilike.%${safeSearch}%`,
+    );
   }
 
   const { data, error } = await query;
@@ -80,7 +88,7 @@ export async function getProducts({
 }
 
 export async function getProductByID(
-  productId:  string,
+  productId: string,
 ): Promise<DataItem | null> {
   const { data, error } = await supabase
     .from("Product")
@@ -95,15 +103,12 @@ export async function getProductByID(
     )
   `,
     )
-    .eq("ID", productId)
+    .eq("id", productId)
     .single();
 
-  if (error) {
-    if (error.code === "PGRST116") {
-      return null;
-    }
-
-    throw error;
+  // A missing or malformed ID is a 404, not a server error.
+  if (error || !data) {
+    return null;
   }
 
   // Extract ProductOptions and return a flattened 'options' array

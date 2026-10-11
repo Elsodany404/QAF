@@ -1,0 +1,507 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Account Page
+   Layout:  hero → container > layout[sidebar | main]
+   Breakpoints: mobile-first
+     sm  ≥ 640px
+     md  ≥ 768px
+     lg  ≥ 1024px
+═══════════════════════════════════════════════════════════════════ */
+
+/* ── Page shell ────────────────────────────────────────────────────── */
+.page {
+  min-height: 100vh;
+  background: var(--cream-50);
+  padding-top: 4rem; /* clear fixed navbar */
+}
+
+/* ── Hero strip ────────────────────────────────────────────────────── */
+.hero {
+  position: relative;
+  padding: 4rem 1rem 3.5rem;
+  overflow: hidden;
+  background: linear-gradient(
+    135deg,
+    var(--charcoal-950) 0%,
+    var(--espresso-950) 60%,
+    var(--charcoal-900) 100%
+  );
+}
+
+@media (min-width: 640px) {
+  .hero {
+    padding: 5rem 1.5rem 4rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero {
+    padding: 5rem 2rem 4rem;
+  }
+}
+
+.glow {
+  position: absolute;
+  top: -5rem;
+  right: -5rem;
+  width: 28rem;
+  height: 28rem;
+  border-radius: 9999px;
+  background: rgba(218, 144, 14, 0.1);
+  filter: blur(72px);
+  pointer-events: none;
+}
+
+.heroContent {
+  position: relative;
+  z-index: 1;
+  max-width: 80rem;
+  margin: 0 auto;
+}
+
+.heroBadge {
+  display: inline-block;
+  margin-bottom: 0.75rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  background: rgba(218, 144, 14, 0.2);
+  border: 1px solid rgba(218, 144, 14, 0.4);
+}
+
+.heroBadgeText {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold-400);
+}
+
+.heroTitle {
+  font-family: "Playfair Display", serif;
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
+  font-weight: 700;
+  line-height: 1.15;
+  color: white;
+}
+
+.heroTitleAccent {
+  color: transparent;
+  background: linear-gradient(90deg, var(--gold-300), var(--gold-500));
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+/* ── Container ─────────────────────────────────────────────────────── */
+.container {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding: 2.5rem 1.5rem 5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding: 3rem 2rem 6rem;
+  }
+}
+
+/* ── Two-column layout ─────────────────────────────────────────────── */
+/* Mobile: single column, sidebar on top */
+.layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+/* Tablet+: sidebar column fixed at 260px, main takes the rest */
+@media (min-width: 768px) {
+  .layout {
+    grid-template-columns: 260px 1fr;
+    gap: 2rem;
+    align-items: start;
+  }
+}
+
+@media (min-width: 1024px) {
+  .layout {
+    grid-template-columns: 280px 1fr;
+    gap: 2.5rem;
+  }
+}
+
+/* ── Sidebar ───────────────────────────────────────────────────────── */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Only stick on desktop where there is enough height */
+@media (min-width: 768px) {
+  .sidebar {
+    position: sticky;
+    top: 5.5rem;
+  }
+}
+
+/* ── Profile card ──────────────────────────────────────────────────── */
+.profileCard {
+  padding: 1.75rem 1.5rem;
+  border-radius: 1.5rem;
+  background: white;
+  box-shadow: var(--shadow-soft);
+  text-align: center;
+}
+
+/* On mobile, show avatar + info side by side */
+.profileCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+@media (min-width: 480px) and (max-width: 767px) {
+  .profileCard {
+    flex-direction: row;
+    text-align: left;
+  }
+
+  .profileInfo {
+    align-items: flex-start !important;
+  }
+}
+
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, var(--gold-400), var(--espresso-600));
+  font-family: "Playfair Display", serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: white;
+}
+
+@media (min-width: 768px) {
+  .avatar {
+    width: 4.5rem;
+    height: 4.5rem;
+    font-size: 1.75rem;
+  }
+}
+
+.profileInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.profileName {
+  font-family: "Playfair Display", serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--charcoal-950);
+  line-height: 1.2;
+}
+
+.profileEmail {
+  font-size: 0.825rem;
+  color: var(--charcoal-500);
+  word-break: break-all;
+}
+
+.profileSince {
+  font-size: 0.75rem;
+  color: var(--charcoal-400);
+  margin-top: 0.2rem;
+}
+
+.adminBadge {
+  display: inline-block;
+  margin-top: 0.4rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 9999px;
+  background: rgba(218, 144, 14, 0.15);
+  border: 1px solid rgba(218, 144, 14, 0.35);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold-700);
+}
+
+/* ── Quick nav ─────────────────────────────────────────────────────── */
+.quickNav {
+  padding: 1.25rem;
+  border-radius: 1.25rem;
+  background: white;
+  box-shadow: var(--shadow-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+/* On mobile show quick nav as a horizontal scroll row */
+@media (max-width: 479px) {
+  .quickNav {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 0.5rem;
+    padding: 0.9rem 1rem;
+    scrollbar-width: none;
+  }
+
+  .quickNav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .quickNavLabel {
+    display: none;
+  }
+
+  .quickLink {
+    flex-shrink: 0;
+    padding: 0.5rem 0.9rem;
+    background: var(--cream-100);
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  .quickLinkArrow {
+    display: none;
+  }
+}
+
+.quickNavLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--charcoal-400);
+  padding: 0 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.quickLink {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--charcoal-700);
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.quickLink:hover {
+  background: var(--cream-100);
+  color: var(--charcoal-950);
+}
+
+.quickLinkArrow {
+  margin-left: auto;
+  opacity: 0;
+  transition:
+    opacity 0.15s,
+    transform 0.15s;
+}
+
+.quickLink:hover .quickLinkArrow {
+  opacity: 1;
+  transform: translateX(2px);
+}
+
+/* ── Sign out button ───────────────────────────────────────────────── */
+.signOutButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.7rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  background: rgba(239, 68, 68, 0.04);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #dc2626;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+}
+
+.signOutButton:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* ── Main column ───────────────────────────────────────────────────── */
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .main {
+    gap: 2rem;
+  }
+}
+
+/* ── Section card ──────────────────────────────────────────────────── */
+.section {
+  padding: 1.5rem;
+  border-radius: 1.5rem;
+  background: white;
+  box-shadow: var(--shadow-soft);
+}
+
+@media (min-width: 640px) {
+  .section {
+    padding: 2rem;
+  }
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--cream-200);
+  color: var(--charcoal-700);
+}
+
+@media (min-width: 640px) {
+  .sectionHeader {
+    margin-bottom: 1.5rem;
+  }
+}
+
+.sectionTitle {
+  font-family: "Playfair Display", serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--charcoal-950);
+}
+
+/* ── Empty orders state ────────────────────────────────────────────── */
+.emptyOrders {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .emptyOrders {
+    padding: 3rem 1rem;
+  }
+}
+
+.emptyIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 9999px;
+  background: var(--cream-100);
+  color: var(--charcoal-400);
+  margin-bottom: 0.4rem;
+}
+
+@media (min-width: 640px) {
+  .emptyIcon {
+    width: 4rem;
+    height: 4rem;
+  }
+}
+
+.emptyTitle {
+  font-family: "Playfair Display", serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--charcoal-950);
+}
+
+.emptyText {
+  font-size: 0.875rem;
+  color: var(--charcoal-500);
+  max-width: 22rem;
+  line-height: 1.6;
+}
+
+.shopButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.65rem 1.25rem;
+  border-radius: 0.9rem;
+  background: linear-gradient(90deg, var(--gold-400), var(--gold-600));
+  color: var(--charcoal-950);
+  font-weight: 700;
+  font-size: 0.875rem;
+  transition: opacity 0.2s;
+}
+
+.shopButton:hover {
+  opacity: 0.85;
+}
+
+/* ── Help card ─────────────────────────────────────────────────────── */
+.helpCard {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.helpText {
+  font-size: 0.9rem;
+  line-height: 1.75;
+  color: var(--charcoal-600);
+}
+
+.helpLinks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media (min-width: 480px) {
+  .helpLinks {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+}
+
+.helpLink {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--gold-700);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.helpLink:hover {
+  color: var(--gold-900);
+}

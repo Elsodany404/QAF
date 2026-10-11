@@ -7,6 +7,7 @@ import { Outfit, Playfair_Display } from "next/font/google";
 
 import "./index.css";
 import { Providers } from "./providers";
+import Spinner from "@/components/Spinner/Spinner";
 
 export const metadata: Metadata = {
   title: {
@@ -47,7 +48,11 @@ export default function RootLayout({
             <Navbar />
             <CartDrawer />
 
-            <main>{children}</main>
+            {!children ? (
+              <Spinner size="lg" variant="page" />
+            ) : (
+              <main>{children}</main>
+            )}
 
             <Footer />
           </div>

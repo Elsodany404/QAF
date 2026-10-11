@@ -22,9 +22,8 @@ function OrderSummery() {
         <h2 className={styles.summaryTitle}>Order Summary</h2>
         <div className={styles.summaryList}>
           {cart.map((item) => {
-            const key = item.product.id;
             return (
-              <div key={key} className={styles.summaryItem}>
+              <div key={item.itemID} className={styles.summaryItem}>
                 <div className={styles.summaryImageWrapper}>
                   <Image
                     src={item.product.imageUrl}
@@ -40,7 +39,7 @@ function OrderSummery() {
                   <p className={styles.summaryQty}>Qty: {item.quantity}</p>
                 </div>
                 <p className={styles.summaryPrice}>
-                  {formatCurrency(item.itemPrice)}
+                  {formatCurrency(item.itemPrice * item.quantity)}
                 </p>
               </div>
             );

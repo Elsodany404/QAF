@@ -6,7 +6,7 @@ import styles from "./Navbar.module.css";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth-client";
-import signOut from "@/actions/signOut";
+import signOut from "@/actions/auth/signOut";
 import { toast } from "react-hot-toast";
 
 export default function Navbar() {
@@ -26,15 +26,19 @@ export default function Navbar() {
     { id: "Home", label: "" },
     { id: "Shop", label: "menu" },
     { id: "About us", label: "about" },
+    { id: "Contact", label: "contact" },
+    { id: "Our Policies", label: "policies" },
+    { id: "Account", label: "user" },
   ];
-  if(session?.user?.role === "admin") {
+  if (session?.user?.role === "admin") {
     navLinks.push({ id: "Dashboard", label: "admin/dashboard" });
   }
+
   const transparentNavBar = pathname === "/";
   if (mobileOpen && !session?.user?.id) {
     navLinks.push({ id: "Sign Up", label: "sign-up" });
     navLinks.push({ id: "Sign In", label: "sign-in" });
-  }else if(mobileOpen && session?.user?.id){
+  } else if (mobileOpen && session?.user?.id) {
     navLinks.push({ id: "Sign Out", label: "sign-out" });
   }
   const handleSignOut = async () => {
@@ -82,6 +86,7 @@ export default function Navbar() {
 
           <div className={styles.actions}>
             <button
+              type="button"
               onClick={openCart}
               className={styles.cartButton}
               aria-label="Open cart"
@@ -116,18 +121,19 @@ export default function Navbar() {
                   <Link href="/sign-up" className={styles.signUpButton}>
                     Sign Up
                   </Link>
-                  {/* Fixed missing slash in href */}
                   <Link href="/sign-in" className={styles.signInButton}>
                     Sign In
                   </Link>
                 </>
               ) : (
-                <button
-                  onClick={handleSignOut}
-                  className={styles.signOutButton}
-                >
-                  Sign Out
-                </button>
+                <>
+                  <button
+                    onClick={handleSignOut}
+                    className={styles.signOutButton}
+                  >
+                    Sign Out
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -141,8 +147,12 @@ export default function Navbar() {
               <button
                 key={link.id}
                 onClick={() => {
-                  router.push(`/${link.label}`);
                   setMobileOpen(false);
+                  if (link.label === "sign-out") {
+                    void handleSignOut();
+                  } else {
+                    router.push(`/${link.label}`);
+                  }
                 }}
                 className={`${styles.mobileLink} ${pathname === `/${link.label}` ? styles.mobileLinkActive : styles.mobileLinkDefault}`}
               >

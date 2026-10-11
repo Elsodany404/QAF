@@ -27,6 +27,15 @@ export default async function sendContactMessage(
     return { status: "failed", message: "Please complete all fields." };
   }
 
+  if (
+    name.length > 100 ||
+    email.length > 254 ||
+    subject.length > 200 ||
+    message.length > 5000
+  ) {
+    return { status: "failed", message: "Your message is too long." };
+  }
+
   if (!/^\S+@\S+\.\S+$/.test(email)) {
     return { status: "failed", message: "Please enter a valid email address." };
   }

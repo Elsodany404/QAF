@@ -1,15 +1,13 @@
 "use client";
 import { ShoppingCart, Star } from "lucide-react";
-import type { OptionValue, Product } from "../../types/db";
+import type { OptionValue } from "@/types/db";
 import styles from "./ProductCard.module.css";
 
-import { useCart } from "../../context/CartContext";
-import Spinner from "../Spinner/Spinner";
-import { useEffect, useState } from "react";
+import { useCart } from "@/context/CartContext";
+import { useState } from "react";
 import { calcPrice, formatCurrency, generateItemID } from "../../utils/helper";
 import Link from "next/link";
 import Image from "next/image";
-import { Button } from "../Button/Button";
 import { DataItem } from "@/types/customTypes";
 
 interface ProductCardProps {
@@ -64,7 +62,7 @@ export default function ProductCard({ dataItem }: ProductCardProps) {
     addItem(item);
   }
 
-  const link = `/products/${product.ID}`;
+  const link = `/products/${product.id}`;
 
   return (
     <Link href={link} className={styles.cardLink}>

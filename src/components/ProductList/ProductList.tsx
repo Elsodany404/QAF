@@ -1,4 +1,4 @@
-import {  getProducts } from "@/services/Product";
+import { getProducts } from "@/services/Product";
 import EmptyList from "../EmptyList/EmptyList";
 import ProductCard from "../ProductCard/ProductCard";
 import type { DataItem } from "@/types/customTypes";
@@ -14,7 +14,6 @@ async function ProductList({
   category = "all",
   isFeatured = false,
 }: ProductListProps) {
-
   const dataItems: DataItem[] = await getProducts({
     search,
     category,

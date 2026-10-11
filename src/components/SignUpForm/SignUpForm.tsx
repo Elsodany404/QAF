@@ -4,7 +4,11 @@ import { useActionState, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { Coffee, Eye, EyeOff, UserPlus } from "lucide-react";
 import styles from "./SignUpForm.module.css";
-import signUp from "@/actions/signUp";
+import {
+  rememberPendingEmail,
+  signUpAction,
+  VERIFY_EMAIL_PATH,
+} from "@/lib/authActions";
 import { toast } from "react-hot-toast";
 import { ActionState } from "@/types/customTypes";
 import { useRouter } from "next/navigation";
@@ -20,7 +24,10 @@ const initialState: ActionState = {
   message: "",
 };
 export default function SignUpForm() {
-  const [state, formAction, isPending] = useActionState(signUp, initialState);
+  const [state, formAction, isPending] = useActionState(
+    signUpAction,
+    initialState,
+  );
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const router = useRouter();
@@ -29,14 +36,16 @@ export default function SignUpForm() {
   const {
     register,
     watch,
+    getValues,
     handleSubmit,
     formState: { errors },
   } = useForm<SignUpFields>();
 
   useEffect(() => {
     if (state.status === "success") {
-      toast.success(state.message);
-      router.push("/sign-in");
+      // Not signed in yet — send them to "check your email" instead of the shop.
+      rememberPendingEmail(getValues("email"));
+      router.push(VERIFY_EMAIL_PATH);
     } else if (state.status === "failed") {
       toast.error(state.message);
     }
@@ -75,7 +84,11 @@ export default function SignUpForm() {
         <h1 className={styles.heading}>Create an account</h1>
         <p className={styles.subheading}>Join us and enjoy premium coffee</p>
 
-        <form onSubmit={handleSubmit(onValid)} className={styles.form} noValidate>
+        <form
+          onSubmit={handleSubmit(onValid)}
+          className={styles.form}
+          noValidate
+        >
           {/* Name */}
           <div className={styles.field}>
             <label className={styles.label} htmlFor="name">

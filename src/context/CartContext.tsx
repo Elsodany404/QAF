@@ -5,12 +5,14 @@ import {
   ReactNode,
   useContext,
   useEffect,
+  useCallback,
   useState,
 } from "react";
 
 import { Cart, CartContextT, Item, PaymentMethod } from "../types/customTypes";
 
 import useShippingFees from "@/hooks/useShippingFees";
+import { MAX_CART_LINES, MAX_QUANTITY_PER_ITEM } from "@/utils/cartLimits";
 
 const cartContext = createContext<CartContextT | undefined>(undefined);
 
@@ -35,6 +37,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         const parsedCart: Cart = JSON.parse(savedCart);
 
         if (Array.isArray(parsedCart)) {
+          // localStorage only exists after mount; reading it during render
+          // would make the server and client HTML differ.
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           setCart(parsedCart);
         }
       }
@@ -83,13 +88,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
           i.itemID === item.itemID
             ? {
                 ...i,
-                quantity: i.quantity + 1,
+                quantity: Math.min(i.quantity + 1, MAX_QUANTITY_PER_ITEM),
               }
             : i,
         );
       }
 
       // Product doesn't exist → add it
+      if (prevCart.length >= MAX_CART_LINES) return prevCart;
       return [...prevCart, item];
     });
   }
@@ -104,7 +110,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         item.itemID === itemID
           ? {
               ...item,
-              quantity: item.quantity + 1,
+              quantity: Math.min(item.quantity + 1, MAX_QUANTITY_PER_ITEM),
             }
           : item,
       ),
@@ -126,9 +132,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     );
   }
 
-  function clearCart() {
+  const clearCart = useCallback(() => {
     setCart([]);
-  }
+  }, []);
 
   function closeCart() {
     setOpen(false);

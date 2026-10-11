@@ -9,13 +9,14 @@ import bostaAddresses from "@/assets/data/bostaDistricts.json";
 import {
   FormValues,
   PaymentOptionsT,
-  secureCart,
+  SecureCart,
 } from "../../types/customTypes";
 import { useSession } from "@/lib/auth-client";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useTransition } from "react";
 import createOrder from "@/actions/createOrder";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 const paymentOptions: PaymentOptionsT = [
   {
@@ -25,8 +26,8 @@ const paymentOptions: PaymentOptionsT = [
     Icon: CreditCard,
   },
   {
-    value: "vodafone_cash",
-    title: "Vodafone Cash",
+    value: "mobile_wallet",
+    title: "Mobile wallet",
     desc: "Complete wallet payment through Paymob.",
     Icon: Smartphone,
   },
@@ -64,20 +65,38 @@ function Form() {
   // Don't render checkout while we're waiting for the redirect
 
   const { data: session } = useSession();
-  const [, formAction, isPending] = useActionState(createOrder, undefined);
+  const [orderState, formAction, isPending] = useActionState(
+    createOrder,
+    undefined,
+  );
+  const [, startTransition] = useTransition();
 
-  const { register, watch, handleSubmit, formState } = useForm<FormValues>({
-    defaultValues: {
-      name: "Mohamed Elsodany",
-      email: "mouhmdsodany@gmail.com",
-      phone: "01067609291",
-      city: "",
-      district: "",
-      street: "123 Test Street",
-      apartment: "Apartment 5",
-    },
-  });
+  const { register, watch, handleSubmit, formState, getValues, setValue } =
+    useForm<FormValues>({
+      defaultValues: {
+        name: "",
+        email: "",
+        phone: "",
+        city: "",
+        district: "",
+        street: "",
+        apartment: "",
+      },
+    });
   const { errors } = formState;
+
+  // Prefill contact details from the signed-in account once it loads.
+  useEffect(() => {
+    if (!session?.user) return;
+    if (!getValues("name")) setValue("name", session.user.name);
+    if (!getValues("email")) setValue("email", session.user.email);
+  }, [session?.user, getValues, setValue]);
+
+  useEffect(() => {
+    if (orderState && !orderState.success) {
+      toast.error(orderState.error);
+    }
+  }, [orderState]);
 
   const availableCities = bostaAddresses.data.filter(
     (c) => c.dropOffAvailability,
@@ -94,7 +113,7 @@ function Form() {
   const district =
     availableDistricts.find((d) => d.districtName === selectedDistrict) || null;
 
-  const secureCart: secureCart = cart.map((item) => ({
+  const secureCart: SecureCart = cart.map((item) => ({
     productID: item.product.id,
     optionsIDs: item.options.map((op) => op.optionID),
     valuesIDs: item.options.map((op) => op.id),
@@ -117,18 +136,15 @@ function Form() {
     formData.append("paymentMethod", paymentMethod);
     formData.append("secureCart", JSON.stringify(secureCart));
 
-    formAction(formData);
+    startTransition(() => {
+      formAction(formData);
+    });
   }
   if (cart.length === 0) {
     return null;
   }
   return (
-    <form
-      onSubmit={handleSubmit(onValid, (errors) =>
-        console.log("VALIDATION ERRORS:", errors),
-      )}
-      className={styles.formSection}
-    >
+    <form onSubmit={handleSubmit(onValid)} className={styles.formSection}>
       <div className={styles.card}>
         <h2 className={styles.cardTitle}>Contact Information</h2>
 
@@ -141,7 +157,6 @@ function Form() {
 
             <input
               id="name"
-              defaultValue={session?.user.name || ""}
               className={styles.input}
               type="text"
               placeholder="John smith..."
@@ -159,7 +174,6 @@ function Form() {
 
             <input
               id="email"
-              defaultValue={session?.user.email || ""}
               className={styles.input}
               type="text"
               placeholder="johnsmith@example.com"

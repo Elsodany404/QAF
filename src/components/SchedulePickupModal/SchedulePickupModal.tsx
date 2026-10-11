@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { X, Truck, Calendar, CheckCircle2, AlertCircle } from "lucide-react";
-import { createPickup } from "@/actions/createPickup";
+import { createPickup } from "@/actions/dashboard/createPickup";
 import styles from "./SchedulePickupModal.module.css";
 
 interface Props {
@@ -122,7 +122,11 @@ export default function SchedulePickupModal({ onClose }: Props) {
 
         {result?.type === "success" && (
           <div className={styles.doneActions}>
-            <button type="button" className={styles.closeBtn2} onClick={onClose}>
+            <button
+              type="button"
+              className={styles.closeBtn2}
+              onClick={onClose}
+            >
               Close
             </button>
           </div>
@@ -131,4 +135,3 @@ export default function SchedulePickupModal({ onClose }: Props) {
     </div>
   );
 }
-

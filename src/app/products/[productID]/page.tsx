@@ -1,14 +1,17 @@
-// export default Product;
 import { notFound } from "next/navigation";
 import { getProductByID, getAllProducts } from "@/services/Product";
 import ProductClient from "./productClient";
 import { DataItem } from "@/types/customTypes";
 
+// Re-render at most every 5 minutes so price and stock changes show up
+// without a redeploy.
+export const revalidate = 300;
+
 export async function generateStaticParams() {
   const dataItems: DataItem[] = await getAllProducts();
 
   return dataItems.map(({ product }) => ({
-    productID: product.ID.toString(),
+    productID: product.id.toString(),
   }));
 }
 

@@ -1,9 +1,9 @@
-"use client"
+"use client";
 import { AlertCircle, RefreshCcw } from "lucide-react";
 import styles from "./error.module.css";
 
 interface ErrorProps {
-  error?: Error;
+  error?: Error & { digest?: string };
   reset?: () => void;
 }
 
@@ -21,14 +21,18 @@ export default function Error({ error, reset }: ErrorProps) {
           unexpected issue while loading this page.
         </p>
 
-        {error && (
+        {/* Stack traces can leak internals; only show them in development.
+            In production the digest lets you find the error in server logs. */}
+        {error && process.env.NODE_ENV === "development" ? (
           <div className={styles.errorDetails}>
             <p className={styles.errorLabel}>Error details:</p>
             <pre className={styles.errorMessage}>{error.name}</pre>
             <pre className={styles.errorMessage}>{error.message}</pre>
             <pre className={styles.errorMessage}>{error.stack}</pre>
           </div>
-        )}
+        ) : error?.digest ? (
+          <p className={styles.errorLabel}>Reference: {error.digest}</p>
+        ) : null}
 
         <div className={styles.actions}>
           {reset && (

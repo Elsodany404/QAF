@@ -138,6 +138,7 @@ export type Database = {
           city: string
           cityID: string
           created_at: string
+          customer_ID: string
           customerEmail: string
           customerName: string
           customerPhone: string
@@ -150,7 +151,6 @@ export type Database = {
           paymobTransactionID: string | null
           shippingFees: number
           shippingStatus: string
-          status: Database["public"]["Enums"]["orderStatus"]
           street: string
           subTotal: number
           totalPrice: number
@@ -163,6 +163,7 @@ export type Database = {
           city: string
           cityID: string
           created_at?: string
+          customer_ID: string
           customerEmail: string
           customerName: string
           customerPhone: string
@@ -175,7 +176,6 @@ export type Database = {
           paymobTransactionID?: string | null
           shippingFees: number
           shippingStatus?: string
-          status?: Database["public"]["Enums"]["orderStatus"]
           street: string
           subTotal: number
           totalPrice: number
@@ -188,6 +188,7 @@ export type Database = {
           city?: string
           cityID?: string
           created_at?: string
+          customer_ID?: string
           customerEmail?: string
           customerName?: string
           customerPhone?: string
@@ -200,12 +201,19 @@ export type Database = {
           paymobTransactionID?: string | null
           shippingFees?: number
           shippingStatus?: string
-          status?: Database["public"]["Enums"]["orderStatus"]
           street?: string
           subTotal?: number
           totalPrice?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "Order_customer_ID_fkey"
+            columns: ["customer_ID"]
+            isOneToOne: false
+            referencedRelation: "user"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       OrderItem: {
         Row: {
@@ -262,12 +270,10 @@ export type Database = {
           description: string
           featured: boolean
           id: number
-          ID: string
           imageUrl: string
           inStock: boolean
           name: string
           price: number
-          uuid: string
         }
         Insert: {
           "blurred-image": string
@@ -275,12 +281,10 @@ export type Database = {
           description: string
           featured?: boolean
           id: number
-          ID?: string
           imageUrl: string
           inStock?: boolean
           name: string
           price: number
-          uuid?: string
         }
         Update: {
           "blurred-image"?: string
@@ -288,12 +292,10 @@ export type Database = {
           description?: string
           featured?: boolean
           id?: number
-          ID?: string
           imageUrl?: string
           inStock?: boolean
           name?: string
           price?: number
-          uuid?: string
         }
         Relationships: []
       }
@@ -442,6 +444,7 @@ export type Database = {
           p_city: string
           p_cityid: string
           p_customer_email: string
+          p_customer_id: string
           p_customer_name: string
           p_customer_phone: string
           p_district: string

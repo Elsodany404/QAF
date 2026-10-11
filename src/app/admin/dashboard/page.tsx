@@ -2,8 +2,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  CheckCircle2,
-  Clock3,
+  AlertTriangle,
   CreditCard,
   Filter,
   Package,
@@ -14,26 +13,42 @@ import {
   Truck,
   XCircle,
 } from "lucide-react";
-import { formatCurrency } from "@//utils/helper";
+import { formatCurrency } from "@/utils/helper";
 import styles from "./page.module.css";
-import { StatusFilter } from "@/types/customTypes";
-import { getOrders } from "@/services/Order";
-import OrderList from "@/components/OrderList/OrderList";
+import { getAdminOrders } from "@/actions/dashboard/getAdminOrders";
+import OrderList from "@/components/OrderList/OrdersPanel";
 import SchedulePickupModal from "@/components/SchedulePickupModal/SchedulePickupModal";
 import CreateOrderModal from "@/components/CreateOrderModal/CreateOrderModal";
 import AddProductModal from "@/components/AddProductModal/AddProductModal";
+import {
+  DISPLAY_STATUS_META,
+  getDisplayStatus,
+  isOnlinePayment,
+  normalizePaymentStatus,
+  type OrderDisplayStatus,
+} from "@/lib/orderStatus";
+import type { OrderQuery } from "@/types/customTypes";
 
-const statusOptions: StatusFilter[] = [
-  "all",
-  "pending",
-  "paid",
-  "shipped",
-  "completed",
-  "cancelled",
-];
+type StatusFilter = OrderDisplayStatus | "all" | "needs_action";
+
+const statusOptions = Object.keys(DISPLAY_STATUS_META) as OrderDisplayStatus[];
+
+/** Orders the admin has to do something about. */
+function needsAction(order: OrderQuery) {
+  const status = getDisplayStatus(order);
+  if (status === "refund_due" || status === "exception") return true;
+  // Ready to ship but no Bosta shipment yet (e.g. the courier API failed).
+  return (
+    status === "processing" &&
+    !order.bostaOrderID &&
+    (!isOnlinePayment(order.paymentMethod) ||
+      normalizePaymentStatus(order.paymentStatus) === "paid")
+  );
+}
 
 export default function Dashboard() {
   const [search, setSearch] = useState("");
+
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
   // Modal visibility state
@@ -49,7 +64,9 @@ export default function Dashboard() {
     isFetching,
   } = useQuery({
     queryKey: ["admin-orders"],
-    queryFn: getOrders,
+    queryFn: getAdminOrders,
+    // Webhooks update orders in the background; keep the list fresh.
+    refetchInterval: 60_000,
   });
 
   const filteredOrders = useMemo(() => {
@@ -57,7 +74,10 @@ export default function Dashboard() {
 
     return orders.filter((order) => {
       const matchesStatus =
-        statusFilter === "all" || order.status === statusFilter;
+        statusFilter === "all" ||
+        (statusFilter === "needs_action"
+          ? needsAction(order)
+          : getDisplayStatus(order) === statusFilter);
       const matchesSearch =
         !q ||
         String(order.id).includes(q) ||
@@ -73,13 +93,17 @@ export default function Dashboard() {
 
   const metrics = useMemo(() => {
     const revenue = orders
-      .filter((order) => order.status !== "cancelled")
+      .filter((order) => normalizePaymentStatus(order.paymentStatus) === "paid")
       .reduce((sum, order) => sum + order.totalPrice, 0);
-    const pending = orders.filter((order) => order.status === "pending").length;
-    const shipped = orders.filter((order) => order.status === "shipped").length;
-    const paid = orders.filter((order) => order.status === "paid").length;
+    const statuses = orders.map(getDisplayStatus);
+    const inTransit = statuses.filter(
+      (s) =>
+        s === "ready_for_pickup" || s === "shipped" || s === "out_for_delivery",
+    ).length;
+    const delivered = statuses.filter((s) => s === "delivered").length;
+    const attention = orders.filter(needsAction).length;
 
-    return { revenue, pending, shipped, paid };
+    return { revenue, inTransit, delivered, attention };
   }, [orders]);
 
   return (
@@ -98,6 +122,7 @@ export default function Dashboard() {
               type="button"
               onClick={() => refetch()}
               className={styles.refreshButton}
+              disabled={isFetching}
             >
               <RefreshCw className={isFetching ? styles.spin : ""} />
               Refresh
@@ -122,8 +147,6 @@ export default function Dashboard() {
               <ShoppingCart />
               New Order
             </button>
-
-            {/* Add Product */}
             <button
               type="button"
               className={styles.addProductButton}
@@ -148,31 +171,35 @@ export default function Dashboard() {
               </p>
             </div>
           </div>
-          <div className={styles.metric}>
+          <button
+            type="button"
+            className={styles.metric}
+            onClick={() => setStatusFilter("needs_action")}
+          >
             <span className={styles.metricIcon}>
-              <Clock3 />
+              <AlertTriangle />
             </span>
             <div>
-              <p className={styles.metricLabel}>Pending</p>
-              <p className={styles.metricValue}>{metrics.pending}</p>
+              <p className={styles.metricLabel}>Needs action</p>
+              <p className={styles.metricValue}>{metrics.attention}</p>
             </div>
-          </div>
-          <div className={styles.metric}>
-            <span className={styles.metricIcon}>
-              <CheckCircle2 />
-            </span>
-            <div>
-              <p className={styles.metricLabel}>Paid</p>
-              <p className={styles.metricValue}>{metrics.paid}</p>
-            </div>
-          </div>
+          </button>
           <div className={styles.metric}>
             <span className={styles.metricIcon}>
               <Truck />
             </span>
             <div>
-              <p className={styles.metricLabel}>Shipped</p>
-              <p className={styles.metricValue}>{metrics.shipped}</p>
+              <p className={styles.metricLabel}>In transit</p>
+              <p className={styles.metricValue}>{metrics.inTransit}</p>
+            </div>
+          </div>
+          <div className={styles.metric}>
+            <span className={styles.metricIcon}>
+              <Package />
+            </span>
+            <div>
+              <p className={styles.metricLabel}>Delivered</p>
+              <p className={styles.metricValue}>{metrics.delivered}</p>
             </div>
           </div>
         </section>
@@ -196,9 +223,11 @@ export default function Dashboard() {
                 setStatusFilter(event.target.value as StatusFilter)
               }
             >
+              <option value="all">All statuses</option>
+              <option value="needs_action">Needs action</option>
               {statusOptions.map((status) => (
                 <option key={status} value={status}>
-                  {status === "all" ? "All statuses" : status}
+                  {DISPLAY_STATUS_META[status].label}
                 </option>
               ))}
             </select>

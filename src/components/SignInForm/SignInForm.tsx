@@ -4,7 +4,11 @@ import { useActionState, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { Coffee, Eye, EyeOff, LogIn } from "lucide-react";
 import styles from "./SignInForm.module.css";
-import signIn from "@/actions/signIn";
+import {
+  rememberPendingEmail,
+  signInAction,
+  VERIFY_EMAIL_PATH,
+} from "@/lib/authActions";
 import { toast } from "react-hot-toast";
 import { ActionState } from "@/types/customTypes";
 import { useRouter } from "next/navigation";
@@ -19,9 +23,12 @@ const initialState: ActionState = {
   message: "",
 };
 
-export default function SignInForm() {
+export default function SignInForm({ redirectTo }: { redirectTo: string }) {
   const [showPassword, setShowPassword] = useState(false);
-  const [state, formAction, isPending] = useActionState(signIn, initialState);
+  const [state, formAction, isPending] = useActionState(
+    signInAction,
+    initialState,
+  );
   const [, startTransition] = useTransition();
   const router = useRouter();
   const { refetch } = useSession();
@@ -29,6 +36,7 @@ export default function SignInForm() {
   const {
     register,
     handleSubmit,
+    getValues,
     formState: { errors },
   } = useForm<SignInFields>();
 
@@ -44,8 +52,11 @@ export default function SignInForm() {
     if (state.status === "success") {
       toast.success(state.message);
       refetch();
-      router.push("/");
+      router.push(redirectTo);
       router.refresh();
+    } else if (state.code === "EMAIL_NOT_VERIFIED") {
+      rememberPendingEmail(getValues("email"));
+      router.push(VERIFY_EMAIL_PATH);
     } else if (state.status === "failed") {
       toast.error(state.message);
     }
@@ -99,9 +110,14 @@ export default function SignInForm() {
           </div>
 
           <div className={styles.field}>
-            <label className={styles.label} htmlFor="password">
-              Password
-            </label>
+            <div className={styles.labelRow}>
+              <label className={styles.label} htmlFor="password">
+                Password
+              </label>
+              <Link href="/forgot-password" className={styles.forgotLink}>
+                Forgot password?
+              </Link>
+            </div>
             <div className={styles.passwordWrapper}>
               <input
                 id="password"

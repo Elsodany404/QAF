@@ -1,10 +1,28 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import SignInForm from "@/components/SignInForm/SignInForm";
+import { getCurrentSession } from "@/lib/adminAccess";
+import { safeRedirectPath } from "@/lib/redirect";
 
 export const metadata: Metadata = {
   title: "Sign In",
 };
 
-export default function SignInPage() {
-  return <SignInForm />;
+type SignInPageProps = {
+  searchParams: Promise<{ next?: string | string[] }>;
+};
+
+export default async function SignInPage({ searchParams }: SignInPageProps) {
+  const [{ next }, session] = await Promise.all([
+    searchParams,
+    getCurrentSession(),
+  ]);
+  const redirectTo = safeRedirectPath(Array.isArray(next) ? next[0] : next);
+
+  // Already signed in — go straight to where they were heading.
+  if (session) {
+    redirect(redirectTo);
+  }
+
+  return <SignInForm redirectTo={redirectTo} />;
 }

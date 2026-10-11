@@ -9,6 +9,9 @@ import SignatureSection from "@/components/SignatureSection/SignatureSection";
 import { Suspense } from "react";
 import Spinner from "@/components/Spinner/Spinner";
 
+// The featured products list is pre-rendered; refresh it every 5 minutes.
+export const revalidate = 300;
+
 export default async function Home() {
   return (
     <div className={styles.page}>

@@ -1,17 +1,7 @@
 import { CreditCard } from "lucide-react";
-import type {
-  Option,
-  OptionValue,
-  Order,
-  OrderItem,
-  OrderStatus,
-  Product,
-} from "./db";
+import type { Option, OptionValue, Order, OrderItem, Product } from "./db";
 import { Dispatch, SetStateAction } from "react";
-export type ActionState = {
-  status: "idle" | "success" | "failed";
-  message: string;
-};
+
 export type ProductOption = Option & {
   OptionValues: OptionValue[];
 };
@@ -26,13 +16,18 @@ export type TransformedOption = Option & {
   values: OptionValue[];
   defaultValue: OptionValue;
 };
-export type CreatePaymentResult =
+
+export type ActionState = {
+  status: "idle" | "success" | "failed";
+  message: string;
+  /** Machine-readable reason, for flows that react to a specific failure. */
+  code?: string;
+};
+
+export type ActionReturnType =
   | {
       success: true;
-      data: {
-        client_secret: string;
-        [key: string]: unknown;
-      };
+      data: unknown;
     }
   | {
       success: false;
@@ -43,9 +38,20 @@ export type DataItem = {
   product: Product;
   options: TransformedOption[]; // Added [] here
 };
+export type User = {
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+  email: string;
+  emailVerified: boolean;
+  name: string;
+  image?: string | null | undefined;
+  role: string | null | undefined;
+};
 export type Cart = Item[];
 
 export type orderPayloadT = {
+  customerID: string;
   customerName: string;
   customerEmail: string;
   customerPhone: string;
@@ -59,13 +65,13 @@ export type orderPayloadT = {
   shippingFees: number;
   cart: Cart;
 };
-export type secureItem = {
+export type SecureItem = {
   productID: number;
   optionsIDs: number[];
   valuesIDs: number[];
   quantity: number;
 };
-export type secureCart = secureItem[];
+export type SecureCart = SecureItem[];
 
 export type FormValues = {
   name: string;
@@ -160,15 +166,11 @@ export type Item = {
   itemPrice: number;
 };
 export type PaymentMethod =
-  | "paymob_card"
-  | "vodafone_cash"
-  | "cash_on_delivery";
-
-export type StatusFilter = OrderStatus | "all";
+  "paymob_card" | "mobile_wallet" | "cash_on_delivery";
 
 export type AddProductResult =
   | { type: "success"; message: "Product created"; productID: number }
-  | { type: "error"; message: "Failed to create product" }
+  | { type: "error"; message: string }
   | { type: "idle" };
 
 export type BostaApiResponse = {

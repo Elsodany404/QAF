@@ -1,6 +1,6 @@
-import { ShoppingBag } from 'lucide-react';
-import styles from './page.module.css';
-import Link from 'next/link';
+import { ShoppingBag } from "lucide-react";
+import styles from "./page.module.css";
+import Link from "next/link";
 function EmptyCart() {
   return (
     <div className={styles.emptyState}>

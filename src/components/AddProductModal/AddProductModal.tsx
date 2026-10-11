@@ -8,7 +8,7 @@ import {
   ProductOptionFormInput,
 } from "@/types/customTypes";
 import { useActionState } from "react";
-import { addProduct } from "@/actions/addProduct";
+import { addProduct } from "@/actions/dashboard/addProduct";
 import OptionFields from "@/components/OptionFields/OptionFields";
 import { getImageDimensions } from "@/utils/imageDimensions";
 

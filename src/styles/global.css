@@ -302,3 +302,10 @@ button {
 .premium-button-secondary:hover {
   box-shadow: var(--shadow-soft-xl);
 }
+
+.premium-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}

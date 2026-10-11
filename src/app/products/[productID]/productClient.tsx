@@ -29,6 +29,9 @@ export default function ProductClient({ data }: ProductClientProps) {
     selections.length > 0 ? selections : defaultSelections;
 
   const finalPrice = calcPrice(data.product, effectiveSelections);
+  const isAvailable =
+    data.product.inStock &&
+    effectiveSelections.every((selection) => selection?.inStock !== false);
 
   function handleSelectChange(chosenValue: OptionValue) {
     setSelection((prev) => {
@@ -41,6 +44,7 @@ export default function ProductClient({ data }: ProductClientProps) {
   }
 
   function handleAdd() {
+    if (!isAvailable) return;
     const item = {
       itemID: generateItemID(
         data.product.id,
@@ -110,7 +114,7 @@ export default function ProductClient({ data }: ProductClientProps) {
                 <legend>Select {option.name}</legend>
 
                 <div className={styles.choiceBar}>
-                  {option.values
+                  {[...option.values]
                     .sort((a, b) => a.id - b.id)
                     .map((value) => (
                       <label key={value.id} className={styles.choice}>
@@ -119,13 +123,17 @@ export default function ProductClient({ data }: ProductClientProps) {
                           required
                           name={`option-${option.id}`}
                           value={value.id}
+                          disabled={!value.inStock}
                           checked={effectiveSelections.some(
                             (selected) => selected.id === value.id,
                           )}
                           onChange={() => handleSelectChange(value)}
                         />
 
-                        <span>{value.label}</span>
+                        <span>
+                          {value.label}
+                          {!value.inStock && " (sold out)"}
+                        </span>
                       </label>
                     ))}
                 </div>
@@ -139,6 +147,7 @@ export default function ProductClient({ data }: ProductClientProps) {
                 type="button"
                 className="premium-button premium-button-secondary"
                 onClick={handleAdd}
+                disabled={!isAvailable}
               >
                 <ShoppingCart />
                 Add to cart
@@ -147,6 +156,7 @@ export default function ProductClient({ data }: ProductClientProps) {
               <button
                 type="button"
                 className="premium-button premium-button-primary"
+                disabled={!isAvailable}
                 onClick={() => {
                   handleAdd();
                   router.push("/checkout");
@@ -157,7 +167,11 @@ export default function ProductClient({ data }: ProductClientProps) {
               </button>
             </div>
             <span className={styles.price}>
-              price : {formatCurrency(finalPrice)}
+              {isAvailable
+                ? `price : ${formatCurrency(finalPrice)}`
+                : data.product.inStock
+                  ? "This option is sold out"
+                  : "Out of stock"}
             </span>
           </div>
         </div>

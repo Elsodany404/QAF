@@ -113,17 +113,20 @@ export default function Footer() {
               reserved.
             </p>
             <div className={styles.legalLinks}>
-              <Link href="/about#privacy-policy" className={styles.legalLink}>
+              <Link
+                href="/policies#privacy-policy"
+                className={styles.legalLink}
+              >
                 Privacy Policy
               </Link>
               <Link
-                href="/about#delivery-shipping-policy"
+                href="/policies#delivery-shipping-policy"
                 className={styles.legalLink}
               >
                 Delivery &amp; Shipping
               </Link>
               <Link
-                href="/about#return-refund-policy"
+                href="/policies#return-refund-policy"
                 className={styles.legalLink}
               >
                 Returns &amp; Refunds

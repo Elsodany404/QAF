@@ -1,4 +1,3 @@
-
 import Image from "next/image";
 import { Zap } from "lucide-react";
 
@@ -30,7 +29,7 @@ function CTASection() {
           and pure passion make.
         </p>
 
-        <Link  href={"/menu"} className={styles.ctaButton}>
+        <Link href={"/menu"} className={styles.ctaButton}>
           <Zap className={styles.ctaIcon} />
           <span>Shop Now</span>
         </Link>
