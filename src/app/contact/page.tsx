@@ -48,7 +48,7 @@ export default function Contact() {
                 <ul className={styles.contactList}>
                   <li className={styles.contactItem}>
                     <span className={styles.contactIcon}>
-                      <MapPin className="w-5 h-5" />
+                      <MapPin aria-hidden="true" />
                     </span>
                     <div>
                       <p className={styles.contactLabel}>Address</p>
@@ -60,11 +60,11 @@ export default function Contact() {
 
                   <li className={styles.contactItem}>
                     <span className={styles.contactIcon}>
-                      <Phone className="w-5 h-5" />
+                      <Phone aria-hidden="true" />
                     </span>
                     <div>
                       <p className={styles.contactLabel}>Phone</p>
-                      <a href="tel:01031200143" className={styles.contactValue}>
+                      <a href="tel:+201031200143" className={styles.contactValue}>
                         01031200143
                       </a>
                     </div>
@@ -72,7 +72,7 @@ export default function Contact() {
 
                   <li className={styles.contactItem}>
                     <span className={styles.contactIcon}>
-                      <Mail className="w-5 h-5" />
+                      <Mail aria-hidden="true" />
                     </span>
                     <div>
                       <p className={styles.contactLabel}>Email</p>
@@ -87,7 +87,7 @@ export default function Contact() {
 
                   <li className={styles.contactItem}>
                     <span className={styles.contactIcon}>
-                      <Clock className="w-5 h-5" />
+                      <Clock aria-hidden="true" />
                     </span>
                     <div>
                       <p className={styles.contactLabel}>Business Hours</p>
@@ -104,7 +104,7 @@ export default function Contact() {
                   rel="noreferrer"
                   className={styles.whatsappButton}
                 >
-                  <MessageCircle className="w-5 h-5" />
+                  <MessageCircle aria-hidden="true" />
                   Chat on WhatsApp
                 </a>
               </div>

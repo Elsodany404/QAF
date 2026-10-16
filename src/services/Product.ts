@@ -1,63 +1,34 @@
-import { constructData } from "../utils/constructAPI";
-import { supabase } from "../supabase/supabase";
-import { DataItem, GetProductsParams } from "../types/customTypes";
+import { supabase } from "@/supabase/supabase";
+import type { DataItem, GetProductsParams } from "@/types/customTypes";
+import {
+  PRODUCT_WITH_OPTIONS,
+  toDataItem,
+  type ProductRow,
+} from "@/utils/constructAPI";
 
-export async function getAllProducts(): Promise<DataItem[]> {
-  const { data, error } = await supabase.from("Product").select(
-    `
-      *,
-      ProductOptions(
-        optionID(
-          *,
-          OptionValues(*)
-        )
-      )
-    `,
-  );
-  if (error) throw error;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data ?? []).map((item: any) => {
-    const { ProductOptions, ...product } = item;
-    const rawData = {
-      ...product,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      options: ProductOptions?.map((opt: any) => opt.optionID) ?? [],
-    };
-    return constructData(rawData);
-  });
-}
+/*
+ * Public catalog reads (publishable key). Query errors are thrown, so a
+ * database outage shows the error page with "Try again" instead of an empty
+ * shop that looks like it has no products.
+ */
 
 export async function getProducts({
   search = "",
   category = "all",
   isFeatured = false,
-}: GetProductsParams): Promise<DataItem[]> {
-  // 1. Start the base query on the Product table
-  let query = supabase.from("Product").select(
-    `
-      *,
-      ProductOptions(
-        optionID(
-          *,
-          OptionValues(*)
-        )
-      )
-    `,
-  );
+}: GetProductsParams = {}): Promise<DataItem[]> {
+  let query = supabase.from("Product").select(PRODUCT_WITH_OPTIONS);
 
-  // 2. Add exact match filter for category
   if (category !== "all") {
     query = query.eq("category", category);
   }
 
-  // 3. Add boolean filter for featured items
   if (isFeatured) {
     query = query.eq("featured", true);
   }
 
-  // 4. Add case-insensitive partial match for search
-  // PostgREST filter syntax uses , . ( ) : and * — strip them so a search
-  // term can't inject extra filter clauses.
+  // PostgREST filter syntax uses , . ( ) : and * — strip them (and the LIKE
+  // wildcards) so a search term can't inject extra filter clauses.
   const safeSearch = search
     .replace(/[,.():*%\\]/g, " ")
     .trim()
@@ -68,55 +39,32 @@ export async function getProducts({
     );
   }
 
-  const { data, error } = await query;
-
+  const { data, error } = await query.order("id");
   if (error) {
-    console.error("Error fetching products:", error);
-    return [];
+    throw new Error(`Failed to load products: ${error.message}`);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data ?? []).map((item: any) => {
-    const { ProductOptions, ...product } = item;
-    const rawData = {
-      ...product,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      options: ProductOptions?.map((opt: any) => opt.optionID) ?? [],
-    };
-    return constructData(rawData);
-  });
+  return ((data ?? []) as ProductRow[]).map(toDataItem);
+}
+
+export function getAllProducts(): Promise<DataItem[]> {
+  return getProducts();
 }
 
 export async function getProductByID(
   productId: string,
 ): Promise<DataItem | null> {
+  // A malformed ID can't match a product: that's a 404, not a query error.
+  if (!/^\d{1,18}$/.test(productId)) return null;
+
   const { data, error } = await supabase
     .from("Product")
-    .select(
-      `
-    *,
-    ProductOptions(
-      optionID(
-        *,
-        OptionValues(*)
-      )
-    )
-  `,
-    )
+    .select(PRODUCT_WITH_OPTIONS)
     .eq("id", productId)
-    .single();
+    .maybeSingle();
 
-  // A missing or malformed ID is a 404, not a server error.
-  if (error || !data) {
-    return null;
+  if (error) {
+    throw new Error(`Failed to load product ${productId}: ${error.message}`);
   }
-
-  // Extract ProductOptions and return a flattened 'options' array
-  const { ProductOptions, ...product } = data;
-  const rawData = {
-    ...product,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    options: ProductOptions.map((item: any) => item.optionID),
-  };
-  return constructData(rawData);
+  return data ? toDataItem(data as ProductRow) : null;
 }

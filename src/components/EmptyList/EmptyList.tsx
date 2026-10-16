@@ -1,18 +1,22 @@
 "use client";
 import { SlidersHorizontal } from "lucide-react";
 import styles from "./EmptyList.module.css";
-import useParams from "@/hooks/useSearchParams";
+import useMenuFilters from "@/hooks/useMenuFilters";
 
 function EmptyList() {
-  const { resetFilters } = useParams();
+  const { resetFilters } = useMenuFilters();
   return (
     <div className={styles.emptyState}>
       <div className={styles.emptyIcon}>
-        <SlidersHorizontal />
+        <SlidersHorizontal aria-hidden="true" />
       </div>
       <p className={styles.emptyTitle}>No coffee found</p>
       <p className={styles.emptyText}>Try adjusting your filters or search</p>
-      <button onClick={resetFilters} className={styles.resetButton}>
+      <button
+        type="button"
+        onClick={resetFilters}
+        className={styles.resetButton}
+      >
         Reset filters
       </button>
     </div>

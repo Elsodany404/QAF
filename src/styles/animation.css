@@ -21,7 +21,7 @@
 @keyframes slideUp {
   0% {
     opacity: 0;
-    transform: translateY(24px);
+    transform: translateY(20px);
   }
   100% {
     opacity: 1;
@@ -32,7 +32,7 @@
 @keyframes fade-scale {
   0% {
     opacity: 0;
-    transform: scale(0.98);
+    transform: scale(0.95);
   }
   100% {
     opacity: 1;
@@ -61,11 +61,11 @@
 }
 
 .animate-fade-in {
-  animation: fade-in 0.3s ease both;
+  animation: fadeIn 0.3s ease both;
 }
 
 .animate-slide-up {
-  animation: slide-up 0.7s ease-out both;
+  animation: slideUp 0.7s ease-out both;
 }
 
 .animate-float {

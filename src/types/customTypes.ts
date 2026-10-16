@@ -1,6 +1,6 @@
-import { CreditCard } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import type { Dispatch, SetStateAction } from "react";
 import type { Option, OptionValue, Order, OrderItem, Product } from "./db";
-import { Dispatch, SetStateAction } from "react";
 
 export type ProductOption = Option & {
   OptionValues: OptionValue[];
@@ -36,7 +36,7 @@ export type ActionReturnType =
 
 export type DataItem = {
   product: Product;
-  options: TransformedOption[]; // Added [] here
+  options: TransformedOption[];
 };
 export type User = {
   id: string;
@@ -49,6 +49,7 @@ export type User = {
   role: string | null | undefined;
 };
 export type Cart = Item[];
+export type AddItemResult = "added" | "max_quantity" | "cart_full";
 
 export type orderPayloadT = {
   customerID: string;
@@ -61,7 +62,7 @@ export type orderPayloadT = {
   districtID: string;
   street: string;
   apartment: string;
-  paymentMethod: string;
+  paymentMethod: PaymentMethod;
   shippingFees: number;
   cart: Cart;
 };
@@ -90,7 +91,7 @@ export type PaymentOptionsT = {
   value: PaymentMethod;
   title: string;
   desc: string;
-  Icon: typeof CreditCard;
+  Icon: LucideIcon;
 }[];
 
 export type CartContextT = {
@@ -101,29 +102,29 @@ export type CartContextT = {
   closeCart: () => void;
   openCart: () => void;
   clearCart: () => void;
-  addItem: (item: Item) => void;
+  addItem: (item: Item) => AddItemResult;
   removeItem: (itemID: string) => void;
   increaseQuantity: (itemID: string) => void;
   decreaseQuantity: (itemID: string) => void;
   paymentMethod: PaymentMethod;
   setPaymentMethod: Dispatch<SetStateAction<PaymentMethod>>;
+  /** City the checkout is quoting shipping for; null until one is picked. */
+  cityName: string | null;
   setCityName: Dispatch<SetStateAction<string | null>>;
-  taxOnCod: number;
-  shippingFees: number;
+  /** null until Bosta has priced the chosen city. */
+  shippingFees: number | null;
   shippingFeesLoading: boolean;
+  shippingFeesError: string | null;
+  retryShippingFees: () => void;
   cartLoaded: boolean;
-};
-
-export type ImageDimensions = {
-  width: number;
-  height: number;
 };
 
 export type ProductFormInputs = {
   name: string;
   description: string;
   priceRaw: number;
-  category: (typeof CATEGORIES)[number]["label"];
+  /** A CATEGORIES id other than "all". */
+  category: string;
   imageUrl: string;
   blurredImageUrl: string;
   featured: boolean;
@@ -140,6 +141,10 @@ export type ProductOptionFormInput = {
 
 export type ProductOptionValueFormInput = {
   label: string;
+  /**
+   * Price change as a fraction of the base price: 0.1 = +10%, -0.2 = -20%.
+   * (The admin form takes percent and converts.)
+   */
   priceModifier: number;
   default: boolean;
   inStock: boolean;
@@ -173,10 +178,7 @@ export type AddProductResult =
   | { type: "error"; message: string }
   | { type: "idle" };
 
-export type BostaApiResponse = {
-  data: BostaCity[];
-};
-
+/** Shape of src/assets/data/bostaDistricts.json (Bosta's city list). */
 export type BostaCity = {
   cityId: string;
   cityName: string;

@@ -6,8 +6,6 @@ import FeaturedSection from "@/components/FeaturedSection/FeaturedSection";
 import FeaturesSection from "@/components/FeaturesSection/FeaturesSection";
 import CTASection from "@/components/CTASection/CTASection";
 import SignatureSection from "@/components/SignatureSection/SignatureSection";
-import { Suspense } from "react";
-import Spinner from "@/components/Spinner/Spinner";
 
 // The featured products list is pre-rendered; refresh it every 5 minutes.
 export const revalidate = 300;
@@ -19,9 +17,8 @@ export default async function Home() {
 
       <OurCollectionSection />
 
-      <Suspense fallback={<Spinner variant="component" size="lg" />}>
-        <FeaturedSection />
-      </Suspense>
+      {/* Streams in on its own: FeaturedSection has its own Suspense boundary. */}
+      <FeaturedSection />
 
       <FeaturesSection />
 

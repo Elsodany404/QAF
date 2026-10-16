@@ -49,6 +49,7 @@ export default function Footer() {
                 placeholder="Enter your email"
                 className={styles.input}
                 aria-label="Your email address"
+                autoComplete="email"
                 maxLength={254}
                 required
               />
@@ -66,7 +67,7 @@ export default function Footer() {
                 aria-label="Join the newsletter"
                 disabled={isPending}
               >
-                <ArrowRight className="w-5 h-5" />
+                <ArrowRight size={20} aria-hidden="true" />
               </button>
             </form>
             <p className={styles.formMessage} role="status">
@@ -81,7 +82,7 @@ export default function Footer() {
           <div>
             <div className={styles.brandWrap}>
               <div className={styles.brandIcon}>
-                <Coffee className="w-5 h-5" />
+                <Coffee aria-hidden="true" />
               </div>
               <div>
                 <p className={styles.brandTitle}>Qaf Coffee</p>
@@ -89,29 +90,31 @@ export default function Footer() {
               </div>
             </div>
             <p className={styles.brandDescription}>
-              Small-batch roasted coffee from the world finest origins.
+              Small-batch roasted coffee from the world&apos;s finest origins.
               Crafted with passion, served with purpose.
             </p>
             <div className={styles.socials}>
               {[
                 {
                   Icon: SiInstagram,
+                  label: "Qaf Coffee on Instagram",
                   href: "https://www.instagram.com/qafcoffeebn/",
                 },
                 {
                   Icon: SiFacebook,
+                  label: "Qaf Coffee on Facebook",
                   href: "https://www.facebook.com/QAFCOFFEE/?locale=ar_AR",
                 },
-              ].map(({ Icon, href }) => (
+              ].map(({ Icon, label, href }) => (
                 <a
                   key={href}
                   href={href}
                   className={styles.socialLink}
-                  aria-label="Visit Qaf Coffee social page"
-                  target={href.startsWith("http") ? "_blank" : undefined}
-                  rel={href.startsWith("http") ? "noreferrer" : undefined}
+                  aria-label={label}
+                  target="_blank"
+                  rel="noreferrer"
                 >
-                  <Icon className="w-5 h-5" />
+                  <Icon aria-hidden="true" />
                 </a>
               ))}
             </div>
@@ -121,15 +124,15 @@ export default function Footer() {
             <h4 className={styles.sectionHeading}>Contact</h4>
             <ul className={styles.contactList}>
               <li className={styles.contactItem}>
-                <MapPin className="w-5 h-5" />
-                <span>C8, 10th of Ramadan, Al-sharqya, Egypt</span>
+                <MapPin aria-hidden="true" />
+                <span>C8, 10th of Ramadan, Al-Sharqya, Egypt</span>
               </li>
               <li className={styles.contactItem}>
-                <Phone className="w-5 h-5" />
-                <a href="tel:01031200143">01031200143</a>
+                <Phone aria-hidden="true" />
+                <a href="tel:+201031200143">01031200143</a>
               </li>
               <li className={styles.contactItem}>
-                <Mail className="w-5 h-5" />
+                <Mail aria-hidden="true" />
                 <a href="mailto:sales@qafcoffee.store">
                   sales@qafcoffee.store
                 </a>

@@ -3,11 +3,11 @@
   place-items: center;
 }
 
+/* Route loading: covers the page but leaves the navbar visible and usable. */
 .page {
   position: fixed;
-  inset: 0;
-  min-height: 100vh;
-  z-index: 1000;
+  inset: var(--nav-height) 0 0;
+  z-index: 45;
   background: var(--cream-50);
 }
 

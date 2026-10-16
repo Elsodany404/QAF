@@ -3,11 +3,12 @@ import { useState } from "react";
 import { Search, X } from "lucide-react";
 import styles from "./ToolBar.module.css";
 import { CATEGORIES } from "@/types/customTypes";
-import useParams from "@/hooks/useSearchParams";
+import useMenuFilters from "@/hooks/useMenuFilters";
 import { useDebouncedCallback } from "use-debounce";
 
 function ToolBar() {
-  const { handleCategoryChange, handleSearch, searchParams } = useParams();
+  const { handleCategoryChange, handleSearch, searchParams } =
+    useMenuFilters();
 
   const searchParam = searchParams.get("search") ?? "";
   const category = searchParams.get("category") ?? "all";
@@ -41,9 +42,12 @@ function ToolBar() {
     <>
       <div className={styles.toolbar}>
         <div className={styles.searchBox}>
-          <Search className={styles.searchIcon} />
+          <Search className={styles.searchIcon} aria-hidden="true" />
           <input
             type="text"
+            inputMode="search"
+            enterKeyHint="search"
+            aria-label="Search coffee"
             placeholder="Search by name or flavor..."
             value={searchValue}
             onChange={(e) => onSearchChange(e)}
@@ -54,19 +58,25 @@ function ToolBar() {
               type="button"
               onClick={handleClear}
               className={styles.clearButton}
+              aria-label="Clear search"
             >
-              <X />
+              <X aria-hidden="true" />
             </button>
           )}
         </div>
       </div>
 
-      <div className={styles.categoryTabs}>
+      <div
+        className={styles.categoryTabs}
+        role="group"
+        aria-label="Filter by category"
+      >
         {CATEGORIES.map((cat) => (
           <button
             type="button"
             key={cat.id}
             onClick={() => handleCategoryChange(cat.id)}
+            aria-pressed={category === cat.id}
             className={`${styles.categoryButton} ${category === cat.id ? styles.categoryButtonActive : ""}`}
           >
             {cat.label}

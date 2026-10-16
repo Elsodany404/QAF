@@ -1,9 +1,10 @@
 .page {
   min-height: 100vh;
   background: var(--cream-50);
-  padding-top: 5rem;
+  padding-top: var(--nav-height);
 }
 
+/* Deliberately narrower than the site container: checkout is a form. */
 .container {
   max-width: 72rem;
   margin: 0 auto;
@@ -38,7 +39,7 @@
 
 .title {
   margin-bottom: 3rem;
-  font-family: "Playfair Display", serif;
+  font-family: var(--font-display);
   font-size: clamp(2.2rem, 4vw, 3rem);
   font-weight: 700;
   color: var(--charcoal-950);
@@ -48,39 +49,20 @@
   display: grid;
   gap: 3rem;
 }
-/* .grid > :nth-child(1) {
-  order: 1;
-}
 
-.grid > :nth-child(2) {
-  order: 2;
-} */
-
+/* Side by side: the form on the left, the summary on the right. On phones the
+   summary stays first so the total is visible before the form. The columns
+   stretch to the same height so the summary card can stay in view (sticky). */
 @media (min-width: 900px) {
   .grid {
     grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   }
+
   .grid > :nth-child(1) {
     order: 2;
   }
-  
+
   .grid > :nth-child(2) {
     order: 1;
   }
-}
-
-.card {
-  padding: 2rem;
-  border: 1px solid var(--cream-100);
-  border-radius: 1.5rem;
-  background: white;
-  box-shadow: var(--shadow-soft);
-}
-
-.cardTitle {
-  margin-bottom: 1.5rem;
-  font-family: "Playfair Display", serif;
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--charcoal-950);
 }

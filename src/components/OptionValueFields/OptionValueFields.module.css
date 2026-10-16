@@ -49,8 +49,8 @@
 }
 
 .removeValueButton:hover:not(:disabled) {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: var(--danger-100);
+  color: var(--danger-700);
 }
 
 .removeValueButton svg {

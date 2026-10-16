@@ -1,24 +1,20 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { X, Truck, Calendar, CheckCircle2, AlertCircle } from "lucide-react";
+import { AlertCircle, Calendar, CheckCircle2, Truck, X } from "lucide-react";
 import { createPickup } from "@/actions/dashboard/createPickup";
+import { useDialog } from "@/hooks/useDialog";
+import { todayInEgypt } from "@/lib/egyptDate";
 import styles from "./SchedulePickupModal.module.css";
 
 interface Props {
   onClose: () => void;
 }
 
-/** Today's date in the admin's time zone, as YYYY-MM-DD. */
-function localISODate() {
-  const now = new Date();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${now.getFullYear()}-${month}-${day}`;
-}
-
 export default function SchedulePickupModal({ onClose }: Props) {
-  const [date, setDate] = useState(localISODate);
+  const dialogRef = useDialog<HTMLDivElement>(true, onClose);
+  // Same calendar day the server checks against.
+  const [date, setDate] = useState(() => todayInEgypt());
   const [result, setResult] = useState<{
     type: "success" | "error";
     message: string;
@@ -46,17 +42,27 @@ export default function SchedulePickupModal({ onClose }: Props) {
   }
 
   // Minimum date = today
-  const todayISO = localISODate();
+  const todayISO = todayInEgypt();
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+      <div
+        ref={dialogRef}
+        className={styles.modal}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="pickup-title"
+        tabIndex={-1}
+      >
         <div className={styles.header}>
           <div className={styles.headerLeft}>
             <span className={styles.icon}>
-              <Truck />
+              <Truck aria-hidden="true" />
             </span>
-            <h2 className={styles.title}>Schedule Pickup</h2>
+            <h2 id="pickup-title" className={styles.title}>
+              Schedule Pickup
+            </h2>
           </div>
           <button
             type="button"
@@ -64,7 +70,7 @@ export default function SchedulePickupModal({ onClose }: Props) {
             onClick={onClose}
             aria-label="Close"
           >
-            <X />
+            <X aria-hidden="true" />
           </button>
         </div>
 
@@ -90,11 +96,12 @@ export default function SchedulePickupModal({ onClose }: Props) {
           </div>
         ) : (
           <form className={styles.form} onSubmit={handleSubmit}>
-            <label className={styles.label}>
-              <Calendar className={styles.inputIcon} />
+            <label className={styles.label} htmlFor="pickup-date">
+              <Calendar className={styles.inputIcon} aria-hidden="true" />
               <span>Pickup date</span>
             </label>
             <input
+              id="pickup-date"
               type="date"
               className={styles.dateInput}
               value={date}

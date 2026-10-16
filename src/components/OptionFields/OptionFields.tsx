@@ -1,3 +1,5 @@
+"use client";
+
 import { Plus, Trash2 } from "lucide-react";
 import {
   Control,
@@ -113,7 +115,13 @@ export default function OptionFields({
       </div>
 
       <div className={styles.valuesHeader}>
-        <span className={styles.label}>Option values *</span>
+        <span className={styles.label}>
+          Option values *
+          <small className={styles.hint}>
+            Price change is a percentage of the base price: 25 = +25%, -10 =
+            −10%, 0 = same price.
+          </small>
+        </span>
         <button
           type="button"
           className={styles.addValueButton}

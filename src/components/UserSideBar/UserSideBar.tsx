@@ -36,6 +36,8 @@ function UserSideBar({ user }: { user: User }) {
     ? new Date(user.createdAt).toLocaleDateString("en-GB", {
         month: "long",
         year: "numeric",
+        // Fixed zone: rendered on the server and again in the browser.
+        timeZone: "Africa/Cairo",
       })
     : null;
 
@@ -45,7 +47,7 @@ function UserSideBar({ user }: { user: User }) {
       <div className={styles.profileCard}>
         <Image
           src={user.image || defaultPhoto}
-          alt="Profile"
+          alt=""
           width={100}
           height={100}
         />
@@ -78,9 +80,13 @@ function UserSideBar({ user }: { user: User }) {
             : []),
         ].map(({ href, Icon, label }) => (
           <Link key={href} href={href} className={styles.quickLink}>
-            <Icon className="w-4 h-4" />
+            <Icon size={16} aria-hidden="true" />
             {label}
-            <ArrowRight className={`w-4 h-4 ${styles.quickLinkArrow}`} />
+            <ArrowRight
+              size={16}
+              className={styles.quickLinkArrow}
+              aria-hidden="true"
+            />
           </Link>
         ))}
       </nav>
@@ -91,7 +97,7 @@ function UserSideBar({ user }: { user: User }) {
         onClick={handleSignOut}
         className={styles.signOutButton}
       >
-        <LogOut className="w-4 h-4" />
+        <LogOut size={16} aria-hidden="true" />
         Sign Out
       </button>
     </aside>

@@ -1,5 +1,5 @@
 .app {
-  font-family: "Outfit", sans-serif;
+  font-family: var(--font-body);
   color: var(--charcoal-900);
   background: var(--cream-50);
 }

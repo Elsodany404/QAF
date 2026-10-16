@@ -8,8 +8,8 @@
 }
 
 .featuredTitle {
-  font-family: "Playfair Display", serif;
-  font-size: clamp(2rem, 3.5vw, 2.8rem);
+  font-family: var(--font-display);
+  font-size: var(--section-title-size);
   font-weight: 700;
   color: var(--charcoal-950);
 }
@@ -36,23 +36,6 @@
   height: 1.25rem;
 }
 
-.productGrid {
-  display: grid;
-  gap: 1.5rem;
-}
-
-@media (min-width: 640px) {
-  .productGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 1024px) {
-  .productGrid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
 .mobileButton {
   margin-top: 3rem;
   text-align: center;
@@ -68,30 +51,20 @@
   height: 1rem;
 }
 
-.skeletonCard {
-  overflow: hidden;
-  border-radius: 1.5rem;
-  background: white;
-  box-shadow: var(--shadow-soft);
+/* One "View all" link per screen size: in the header on wide screens, below
+   the products on phones. */
+@media (max-width: 767px) {
+  .viewAllButton {
+    display: none;
+  }
+
+  .featuredHeader {
+    margin-bottom: 2.5rem;
+  }
 }
 
-.skeletonImage {
-  aspect-ratio: 4 / 3;
-  background: linear-gradient(135deg, var(--mocha-100), var(--cream-100));
-}
-
-.skeletonBody {
-  display: grid;
-  gap: 0.75rem;
-  padding: 1.5rem;
-}
-
-.skeletonLine {
-  height: 0.8rem;
-  border-radius: 999px;
-  background: var(--cream-200);
-}
-
-.skeletonLineShort {
-  width: 70%;
+@media (min-width: 768px) {
+  .mobileButton {
+    display: none;
+  }
 }

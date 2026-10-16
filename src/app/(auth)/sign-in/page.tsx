@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import SignInForm from "@/components/SignInForm/SignInForm";
 import { getCurrentSession } from "@/lib/adminAccess";
 import { safeRedirectPath } from "@/lib/redirect";
+import { firstParam } from "@/lib/searchParams";
 
 export const metadata: Metadata = {
   title: "Sign In",
@@ -17,7 +18,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
     searchParams,
     getCurrentSession(),
   ]);
-  const redirectTo = safeRedirectPath(Array.isArray(next) ? next[0] : next);
+  const redirectTo = safeRedirectPath(firstParam(next));
 
   // Already signed in — go straight to where they were heading.
   if (session) {

@@ -2,7 +2,7 @@
   display: grid;
   min-height: 100svh;
   place-items: center;
-  padding: 7rem 1.5rem 4rem;
+  padding: calc(var(--nav-height) + 2rem) 1.5rem 2rem;
   background:
     radial-gradient(
       circle at 12% 18%,
@@ -19,7 +19,7 @@
   overflow: hidden;
   border: 1px solid var(--cream-200);
   border-radius: 1.25rem;
-  background: #ffffff;
+  background: white;
   box-shadow: var(--shadow-soft-xl);
   text-align: center;
 }

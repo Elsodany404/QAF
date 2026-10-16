@@ -1,16 +1,23 @@
-import { X, Package, CheckCircle2, AlertCircle, Plus } from "lucide-react";
-import styles from "./AddProductModal.module.css";
-import { useFieldArray, useForm, SubmitHandler } from "react-hook-form";
-import {
-  AddProductResult,
-  CATEGORIES,
-  ProductFormInputs,
-  ProductOptionFormInput,
-} from "@/types/customTypes";
-import { useActionState } from "react";
+"use client";
+
+import { startTransition, useActionState } from "react";
+import { useFieldArray, useForm, type SubmitHandler } from "react-hook-form";
+import { AlertCircle, CheckCircle2, Package, Plus, X } from "lucide-react";
+
 import { addProduct } from "@/actions/dashboard/addProduct";
 import OptionFields from "@/components/OptionFields/OptionFields";
+import { useDialog } from "@/hooks/useDialog";
+import {
+  CATEGORIES,
+  type AddProductResult,
+  type ProductFormInputs,
+  type ProductOptionFormInput,
+} from "@/types/customTypes";
 import { getImageDimensions } from "@/utils/imageDimensions";
+import styles from "./AddProductModal.module.css";
+
+// "All Coffee" is a menu filter, not a category a product can have.
+const PRODUCT_CATEGORIES = CATEGORIES.filter((c) => c.id !== "all");
 
 type Props = {
   onClose: () => void;
@@ -31,6 +38,7 @@ export default function AddProductModal({ onClose }: Props) {
     addProduct,
     initialState,
   );
+  const dialogRef = useDialog<HTMLDivElement>(true, onClose);
 
   const {
     register,
@@ -61,20 +69,40 @@ export default function AddProductModal({ onClose }: Props) {
     formData.append("priceRaw", String(data.priceRaw));
     formData.append("imageUrl", data.imageUrl);
     formData.append("blurredImageUrl", data.blurredImageUrl);
-    formData.append("options", JSON.stringify(data.options));
+    // The form takes price changes in percent; products store a fraction.
+    const options = data.options.map((option) => ({
+      ...option,
+      values: option.values.map((value) => ({
+        ...value,
+        priceModifier: Number.isFinite(value.priceModifier)
+          ? value.priceModifier / 100
+          : 0,
+      })),
+    }));
+    formData.append("options", JSON.stringify(options));
 
-    dispatchAction(formData);
+    startTransition(() => dispatchAction(formData));
   };
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+      <div
+        ref={dialogRef}
+        className={styles.modal}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="add-product-title"
+        tabIndex={-1}
+      >
         <div className={styles.header}>
           <div className={styles.headerLeft}>
             <span className={styles.icon}>
-              <Package />
+              <Package aria-hidden="true" />
             </span>
-            <h2 className={styles.title}>Add New Product</h2>
+            <h2 id="add-product-title" className={styles.title}>
+              Add New Product
+            </h2>
           </div>
           <button
             type="button"
@@ -82,7 +110,7 @@ export default function AddProductModal({ onClose }: Props) {
             onClick={onClose}
             aria-label="Close"
           >
-            <X />
+            <X aria-hidden="true" />
           </button>
         </div>
 
@@ -179,7 +207,7 @@ export default function AddProductModal({ onClose }: Props) {
                   })}
                 >
                   <option value="">Select category…</option>
-                  {CATEGORIES.map((c) => (
+                  {PRODUCT_CATEGORIES.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.label}
                     </option>

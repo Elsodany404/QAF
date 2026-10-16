@@ -1,7 +1,12 @@
+import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { signInPath } from "@/lib/redirect";
 import { headers } from "next/headers";
 import { forbidden, redirect } from "next/navigation";
+
+export const metadata: Metadata = {
+  title: "Admin Dashboard",
+};
 
 export default async function AdminDashboardLayout({
   children,

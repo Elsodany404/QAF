@@ -90,7 +90,7 @@ export default function Policies() {
               <article id={id} key={id} className={styles.card}>
                 <div className={styles.cardHeader}>
                   <div className={styles.cardIcon}>
-                    <Icon className="w-6 h-6" />
+                    <Icon aria-hidden="true" />
                   </div>
                   <h2 className={styles.cardTitle}>{title}</h2>
                 </div>

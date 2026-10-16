@@ -61,12 +61,12 @@
 .feedback,
 .success {
   min-height: 1.2rem;
-  color: #b42318;
+  color: var(--danger-700);
   font-size: 0.8rem;
 }
 
 .success {
-  color: #287a4b;
+  color: var(--success-700);
 }
 
 @media (max-width: 480px) {

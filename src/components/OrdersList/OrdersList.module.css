@@ -8,7 +8,7 @@
   padding: 1rem;
   border: 1px solid var(--cream-200);
   border-radius: 8px;
-  background: #fff;
+  background: white;
   box-shadow: var(--shadow-soft);
 }
 
@@ -57,18 +57,18 @@
 }
 
 .statusBadge.delivered {
-  background: #e4f2e9;
-  color: #28613d;
+  background: var(--success-100);
+  color: var(--success-800);
 }
 
 .statusBadge.cancelled {
-  background: #fbe8e5;
-  color: #8f342b;
+  background: var(--danger-100);
+  color: var(--danger-800);
 }
 
 .statusBadge.inProgress {
-  background: #e3edf8;
-  color: #24507f;
+  background: var(--info-100);
+  color: var(--info-800);
 }
 
 .statusNote {
@@ -92,8 +92,8 @@
 }
 
 .statusNoteWarning {
-  background: #fbe8e5;
-  color: #8f342b;
+  background: var(--danger-100);
+  color: var(--danger-800);
 }
 
 .tracking {
@@ -182,7 +182,7 @@
   place-items: center;
   border: 2px solid var(--cream-300);
   border-radius: 50%;
-  background: #fff;
+  background: white;
   font-size: 0.7rem;
   font-weight: 700;
 }
@@ -199,11 +199,11 @@
 .progressActive .progressMarker {
   border-color: var(--gold-500);
   background: var(--gold-500);
-  color: #fff;
+  color: white;
 }
 
 .progressCurrent .progressMarker {
-  background: #fff;
+  background: white;
   color: var(--espresso-800);
   box-shadow: 0 0 0 4px var(--gold-100);
 }
@@ -246,6 +246,7 @@
 
 .itemName {
   overflow-wrap: anywhere;
+  text-transform: capitalize;
 }
 
 .itemQuantity {
@@ -307,7 +308,7 @@
   font-weight: 700;
   text-align: center;
   text-decoration: none;
-  background: #fff;
+  background: white;
   font-family: inherit;
   cursor: pointer;
   transition:
@@ -322,7 +323,7 @@
 }
 
 .cancelButton {
-  color: #8f342b;
+  color: var(--danger-800);
 }
 
 .payButton {
@@ -462,7 +463,7 @@
 }
 
 .emptyTitle {
-  font-family: "Playfair Display", serif;
+  font-family: var(--font-display);
   font-size: 1.05rem;
   font-weight: 700;
   color: var(--charcoal-950);

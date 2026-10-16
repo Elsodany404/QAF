@@ -51,7 +51,7 @@ function OurCollection() {
             <p className="badgeText">Our Collections</p>
           </div>
 
-          <h2 className="title">
+          <h2 className={styles.title}>
             Three Worlds of{" "}
             <span className="titleAccent">Exceptional Coffee</span>
           </h2>

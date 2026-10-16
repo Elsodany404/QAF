@@ -1,7 +1,9 @@
 "use server";
-import { formatDate } from "@/utils/helper";
-import { errorMessage, isAdminUser } from "@/lib/adminAccess";
+import { errorMessage } from "@/lib/actionHelpers";
+import { isAdminUser } from "@/lib/adminAccess";
+import { parseISODate, todayInEgypt } from "@/lib/egyptDate";
 import supabaseAdmin from "@/supabase/admin";
+import { formatDate } from "@/utils/helper";
 
 export type CreatePickupResult =
   | { status: "success"; message: string; pickupID: string }
@@ -42,29 +44,18 @@ export async function createPickup(
     }
     const contactPerson = getPickupContact();
 
-    let pickupDate = new Date();
-    if (scheduledDate) {
-      const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(scheduledDate);
-      if (!match) {
-        throw new Error("Pickup date must use YYYY-MM-DD format");
-      }
-
-      const [, year, month, day] = match.map(Number);
-      pickupDate = new Date(year, month - 1, day);
-      if (
-        pickupDate.getFullYear() !== year ||
-        pickupDate.getMonth() !== month - 1 ||
-        pickupDate.getDate() !== day
-      ) {
-        throw new Error("Pickup date is invalid");
-      }
+    // Dates are Egypt calendar days; the server's own clock runs in UTC.
+    const today = todayInEgypt();
+    const isoDate = scheduledDate ?? today;
+    const date = parseISODate(isoDate);
+    if (!date) {
+      throw new Error("Pickup date must be a real date in YYYY-MM-DD format");
     }
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (pickupDate < today) {
+    // ISO dates compare correctly as strings.
+    if (isoDate < today) {
       throw new Error("Pickup date cannot be in the past");
     }
+    const pickupDate = new Date(date.year, date.month - 1, date.day);
 
     const { count, error: countError } = await supabaseAdmin
       .from("Order")

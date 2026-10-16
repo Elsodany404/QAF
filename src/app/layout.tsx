@@ -5,17 +5,36 @@ import type { Metadata } from "next";
 import styles from "./layout.module.css";
 import { Outfit, Playfair_Display } from "next/font/google";
 
+import { getSiteUrl } from "@/lib/siteUrl";
+
 import "./index.css";
 import { Providers } from "./providers";
 
+const description =
+  "QAF — premium coffee crafted from carefully selected beans and expertly roasted for a rich, distinctive taste.";
+
+/** Base for absolute metadata URLs (Open Graph images, canonical links). */
+function metadataBase(): URL | undefined {
+  try {
+    return new URL(getSiteUrl());
+  } catch {
+    return undefined; // missing NEXT_PUBLIC_SITE_URL is reported elsewhere
+  }
+}
+
 export const metadata: Metadata = {
+  metadataBase: metadataBase(),
   title: {
     default: "QAF Coffee",
     template: "%s | QAF Coffee",
   },
-
-  description:
-    "QAF — premium coffee crafted from carefully selected beans and expertly roasted for a rich, distinctive taste.",
+  description,
+  openGraph: {
+    type: "website",
+    siteName: "QAF Coffee",
+    locale: "en_EG",
+    description,
+  },
 };
 
 const outfit = Outfit({

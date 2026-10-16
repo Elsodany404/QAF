@@ -1,6 +1,5 @@
 .form {
   max-width: 52rem;
-  margin-top: 3rem;
   padding: clamp(1.25rem, 3vw, 2rem);
   border: 1px solid var(--cream-200);
   border-radius: 1rem;
@@ -26,7 +25,7 @@
 }
 
 .title {
-  font-family: "Playfair Display", serif;
+  font-family: var(--font-display);
   font-size: 1.7rem;
   color: var(--charcoal-950);
 }
@@ -98,11 +97,11 @@
 }
 
 .success {
-  color: #28704a;
+  color: var(--success-700);
 }
 
 .error {
-  color: #a04436;
+  color: var(--danger-700);
 }
 
 .submit {

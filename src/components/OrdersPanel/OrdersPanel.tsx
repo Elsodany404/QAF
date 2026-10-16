@@ -142,12 +142,19 @@ function OrdersPanel({ orders }: { orders: OrderQuery[] }) {
     actionMutation.mutate(action);
   }
 
+  // A manual override only edits the record: no courier, refund or email.
   function updateStatus(orderID: number, update: OrderStatusUpdate) {
-    runAction({
-      orderID,
-      run: () => updateOrderStatus(orderID, update),
-      successMessage: "Status updated",
-    });
+    const change = update.shippingStatus
+      ? `shipping status to "${SHIPPING_STATUS_LABELS[update.shippingStatus]}"`
+      : `payment status to "${PAYMENT_STATUS_LABELS[update.paymentStatus!]}"`;
+    runAction(
+      {
+        orderID,
+        run: () => updateOrderStatus(orderID, update),
+        successMessage: "Status updated",
+      },
+      `Set ${formatOrderNumber(orderID)} ${change}?\n\nThis only updates the record. It doesn't cancel or create a Bosta shipment, refund a payment, or email the customer — use the buttons below for those.`,
+    );
   }
 
   return (
@@ -200,7 +207,10 @@ function OrdersPanel({ orders }: { orders: OrderQuery[] }) {
                 <span className={styles.total}>
                   {formatCurrency(order.totalPrice)}
                 </span>
-                <ChevronDown className={isExpanded ? styles.chevronOpen : ""} />
+                <ChevronDown
+                  className={isExpanded ? styles.chevronOpen : ""}
+                  aria-hidden="true"
+                />
               </div>
             </button>
 

@@ -8,7 +8,7 @@ import {
   ShoppingBag,
   Truck,
 } from "lucide-react";
-import styles from "./OrderList.module.css";
+import styles from "./OrdersList.module.css";
 import Link from "next/link";
 import type { OrderQuery } from "@/types/customTypes";
 import {
@@ -44,19 +44,39 @@ const CUSTOMER_STATUS_NOTE: Partial<Record<OrderDisplayStatus, string>> = {
     "Your order was cancelled. Your refund is being processed by our team.",
 };
 
-function estimateDelivery(createdAt: string) {
-  const placedAt = new Date(createdAt);
-  const start = new Date(placedAt);
-  const end = new Date(placedAt);
-  start.setDate(start.getDate() + 3);
-  end.setDate(end.getDate() + 5);
+// Rendered on the server (UTC): show dates as the customer in Egypt sees them.
+const TIME_ZONE = "Africa/Cairo";
+const DAY = 24 * 60 * 60 * 1000;
 
-  const formatter = new Intl.DateTimeFormat("en", {
-    day: "numeric",
-    month: "short",
-  });
-  return `${formatter.format(start)} - ${formatter.format(end)}`;
+const shortDate = new Intl.DateTimeFormat("en", {
+  day: "numeric",
+  month: "short",
+  timeZone: TIME_ZONE,
+});
+
+const fullDate = new Intl.DateTimeFormat("en", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  timeZone: TIME_ZONE,
+});
+
+/**
+ * Delivery window from the delivery policy: dispatched within 24 hours,
+ * delivered 24–48 hours later.
+ */
+function estimateDelivery(createdAt: string) {
+  const placedAt = new Date(createdAt).getTime();
+  return `${shortDate.format(placedAt + DAY)} – ${shortDate.format(placedAt + 3 * DAY)}`;
 }
+
+// Orders on their way, where a delivery estimate means something.
+const ESTIMATE_STATUSES: OrderDisplayStatus[] = [
+  "processing",
+  "ready_for_pickup",
+  "shipped",
+  "out_for_delivery",
+];
 
 function returnRequestLink(orderId: number) {
   const requestText = `Hello Qaf Coffee, I would like to request a return and refund for order ${formatOrderNumber(orderId)}.`;
@@ -76,7 +96,7 @@ function OrdersList({ orders }: { orders: OrderQuery[] }) {
     return (
       <div className={styles.emptyOrders}>
         <div className={styles.emptyIcon}>
-          <ShoppingBag className="w-8 h-8" />
+          <ShoppingBag size={32} aria-hidden="true" />
         </div>
         <p className={styles.emptyTitle}>No orders yet</p>
         <p className={styles.emptyText}>
@@ -84,7 +104,7 @@ function OrdersList({ orders }: { orders: OrderQuery[] }) {
         </p>
         <Link href="/menu" className={styles.shopButton}>
           Browse Our Blends
-          <ArrowRight className="w-4 h-4" />
+          <ArrowRight size={16} aria-hidden="true" />
         </Link>
       </div>
     );
@@ -104,11 +124,7 @@ function OrdersList({ orders }: { orders: OrderQuery[] }) {
         // Percentage of the connecting line that is filled.
         const progress = (activeStep / (TRACKING_STEPS.length - 1)) * 100;
 
-        const placedDate = new Intl.DateTimeFormat("en", {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-        }).format(new Date(order.created_at));
+        const placedDate = fullDate.format(new Date(order.created_at));
 
         return (
           <article className={styles.orderCard} key={order.id}>
@@ -144,18 +160,16 @@ function OrdersList({ orders }: { orders: OrderQuery[] }) {
                     <Truck aria-hidden="true" />
                     Delivery progress
                   </span>
-                  <span className={styles.estimate}>
-                    {status === "delivered" ? (
-                      <>
-                        <PackageCheck aria-hidden="true" /> Delivered
-                      </>
-                    ) : (
-                      <>
-                        <Clock3 aria-hidden="true" /> Est.{" "}
-                        {estimateDelivery(order.created_at)}
-                      </>
-                    )}
-                  </span>
+                  {status === "delivered" ? (
+                    <span className={styles.estimate}>
+                      <PackageCheck aria-hidden="true" /> Delivered
+                    </span>
+                  ) : ESTIMATE_STATUSES.includes(status) ? (
+                    <span className={styles.estimate}>
+                      <Clock3 aria-hidden="true" /> Est.{" "}
+                      {estimateDelivery(order.created_at)}
+                    </span>
+                  ) : null}
                 </div>
 
                 <div className={styles.progressWrap}>

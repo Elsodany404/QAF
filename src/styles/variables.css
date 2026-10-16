@@ -1,8 +1,18 @@
 :root {
-  --font-display: "Playfair Display", serif;
+  /* --font-playfair / --font-outfit come from next/font (app/layout.tsx) and
+     include size-adjusted fallbacks that avoid layout shift while loading. */
+  --font-display: var(--font-playfair, "Playfair Display"), Georgia, serif;
   --font-body:
-    "Outfit", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
+    var(--font-outfit, "Outfit"), system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Height of the fixed navbar. Pages pad their top by this much so content
+     starts (and centres) below it. Navbar.module.css uses the same value. */
+  --nav-height: 5rem;
+  --container-max: 80rem;
+  --section-title-size: clamp(2rem, 3.5vw, 2.8rem);
 
   --charcoal-50: #f4f4f7;
   --charcoal-100: #e6e8ef;
@@ -61,7 +71,44 @@
   --gold-800: #69420a;
   --gold-900: #462f05;
 
+  /* Feedback / status colours (badges, alerts, form errors). */
+  --success-50: #f0fdf4;
+  --success-100: #dcfce7;
+  --success-400: #4ade80;
+  --success-600: #16a34a;
+  --success-700: #15803d;
+  --success-800: #166534;
+
+  --danger-50: #fef2f2;
+  --danger-100: #fee2e2;
+  --danger-200: #fecaca;
+  --danger-300: #fca5a5;
+  --danger-400: #f87171;
+  --danger-500: #ef4444;
+  --danger-600: #dc2626;
+  --danger-700: #b91c1c;
+  --danger-800: #991b1b;
+
+  --info-100: #dbeafe;
+  --info-700: #1d4ed8;
+  --info-800: #1e40af;
+
+  --whatsapp-green: #25d366;
+
   --shadow-soft: 0 20px 40px rgba(17, 16, 31, 0.05);
   --shadow-soft-lg: 0 25px 60px rgba(17, 16, 31, 0.1);
   --shadow-soft-xl: 0 35px 80px rgba(17, 16, 31, 0.12);
+}
+
+/* Keep in sync with .navInner in Navbar.module.css. */
+@media (max-width: 479px) {
+  :root {
+    --nav-height: 4.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --nav-height: 5.25rem;
+  }
 }

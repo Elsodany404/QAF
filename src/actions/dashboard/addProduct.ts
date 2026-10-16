@@ -1,20 +1,23 @@
 "use server";
 
-import {
-  AddProductResult,
-  CATEGORIES,
-  ProductOptionFormInput,
-} from "@/types/customTypes";
-import supabaseAdmin from "@/supabase/admin";
+import { revalidatePath } from "next/cache";
+import sharp from "sharp";
+
 import { isAdminUser } from "@/lib/adminAccess";
 import { isAllowedImageUrl } from "@/lib/imageHosts";
-import sharp from "sharp";
-import { revalidatePath } from "next/cache";
+import supabaseAdmin from "@/supabase/admin";
+import {
+  CATEGORIES,
+  type AddProductResult,
+  type ProductOptionFormInput,
+} from "@/types/customTypes";
+import type { ImageDimensions } from "@/utils/imageDimensions";
 
-type ImageDimensions = {
-  width: number;
-  height: number;
-};
+// An option value changes the price by this fraction of the base price.
+// Below -1 the price would be zero or negative; above 10 (+1000%) it's
+// almost certainly a typo (e.g. 50 meant as +50 EGP).
+const MIN_PRICE_MODIFIER = -0.99;
+const MAX_PRICE_MODIFIER = 10;
 
 async function getImageDimensions(
   url: string,
@@ -105,6 +108,21 @@ export async function addProduct(
       return fail(
         "Every option needs a name, an icon, labelled values and exactly one default value",
       );
+    }
+
+    if (
+      options.some((option) =>
+        option.values.some((value) => {
+          const modifier = Number(value.priceModifier ?? 0);
+          return (
+            !Number.isFinite(modifier) ||
+            modifier < MIN_PRICE_MODIFIER ||
+            modifier > MAX_PRICE_MODIFIER
+          );
+        }),
+      )
+    ) {
+      return fail("Price changes must be between -99% and +1000%");
     }
 
     const imageUrls = [

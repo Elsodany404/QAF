@@ -8,7 +8,7 @@ interface ErrorProps {
   retry?: () => void;
 }
 
-export default function Error({ error, retry }: ErrorProps) {
+export default function ErrorPage({ error, retry }: ErrorProps) {
   return (
     <div className={styles.wrapper}>
       <div className={styles.card}>

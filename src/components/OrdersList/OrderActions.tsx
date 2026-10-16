@@ -8,7 +8,7 @@ import { CreditCard, X } from "lucide-react";
 import { cancelOrder } from "@/actions/order/cancelOrder";
 import { payOrder } from "@/actions/order/payOrder";
 import { formatOrderNumber } from "@/lib/orderStatus";
-import styles from "./OrderList.module.css";
+import styles from "./OrdersList.module.css";
 
 export function CancelOrderButton({
   orderID,

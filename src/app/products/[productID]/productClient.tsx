@@ -1,15 +1,19 @@
 "use client";
 
-import { CreditCard, ShoppingCart } from "lucide-react";
+import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { CreditCard, ShoppingCart } from "lucide-react";
 
-import { useCart } from "@/context/CartContext";
-import { calcPrice, formatCurrency, generateItemID } from "@/utils/helper";
+import { announceAddToCart, useCart } from "@/context/CartContext";
+import type { DataItem } from "@/types/customTypes";
 import type { OptionValue } from "@/types/db";
-
-import { DataItem } from "@/types/customTypes";
+import {
+  calcPrice,
+  categoryLabel,
+  formatCurrency,
+  generateItemID,
+} from "@/utils/helper";
 import styles from "./page.module.css";
 
 interface ProductClientProps {
@@ -18,46 +22,52 @@ interface ProductClientProps {
 
 export default function ProductClient({ data }: ProductClientProps) {
   const router = useRouter();
-  const { addItem } = useCart();
-
+  const { cart, addItem } = useCart();
   const [imageLoading, setImageLoading] = useState(true);
-  const [selections, setSelection] = useState<OptionValue[]>([]);
+  const [chosen, setChosen] = useState<Record<number, OptionValue>>({});
+  const { product, options } = data;
 
-  const defaultSelections = data.options.map((option) => option.defaultValue);
-
-  const effectiveSelections =
-    selections.length > 0 ? selections : defaultSelections;
-
-  const finalPrice = calcPrice(data.product, effectiveSelections);
+  const selections = options
+    .map((option) => chosen[option.id] ?? option.defaultValue)
+    .filter((value): value is OptionValue => value !== undefined);
+  const finalPrice = calcPrice(product, selections);
   const isAvailable =
-    data.product.inStock &&
-    effectiveSelections.every((selection) => selection?.inStock !== false);
+    product.inStock && selections.every((selection) => selection.inStock);
+  const itemID = generateItemID(
+    product.id,
+    selections.map((selection) => selection.id),
+  );
 
-  function handleSelectChange(chosenValue: OptionValue) {
-    setSelection((prev) => {
-      const current = prev.length > 0 ? prev : defaultSelections;
-
-      return current.map((selection) =>
-        selection.optionID === chosenValue.optionID ? chosenValue : selection,
-      );
+  function addToCart() {
+    return addItem({
+      itemID,
+      product,
+      options: selections,
+      quantity: 1,
+      itemPrice: finalPrice,
     });
   }
 
   function handleAdd() {
     if (!isAvailable) return;
-    const item = {
-      itemID: generateItemID(
-        data.product.id,
-        effectiveSelections.map((s) => s.id),
-      ),
-      product: data.product,
-      options: effectiveSelections,
-      quantity: 1,
-      itemPrice: finalPrice,
-    };
-
-    addItem(item);
+    announceAddToCart(addToCart(), product.name);
   }
+
+  // Buy now: put this choice in the cart (once — not one more each click)
+  // and go to checkout.
+  function handleBuyNow() {
+    if (!isAvailable) return;
+    if (!cart.some((item) => item.itemID === itemID)) {
+      const result = addToCart();
+      if (result !== "added") {
+        announceAddToCart(result, product.name);
+        return;
+      }
+    }
+    router.push("/checkout");
+  }
+
+  const optionsWithNotes = options.filter((option) => option.description);
 
   return (
     <div className={styles.Product}>
@@ -67,20 +77,20 @@ export default function ProductClient({ data }: ProductClientProps) {
             <Image
               sizes="(max-width: 768px) 100vw, 280px"
               fill
-              priority
-              src={data.product["blurred-image"]}
-              alt={data.product.name}
-            ></Image>
+              loading="eager"
+              src={product["blurred-image"]}
+              alt=""
+            />
           )}
 
           <Image
-            sizes="(max-width: 768px) 100vw, 1200px"
+            sizes="(max-width: 768px) 100vw, 45vw"
             fill
-            priority
-            src={data.product.imageUrl}
-            onLoad={() => setImageLoading(false)}
-            alt={data.product.name}
             loading="eager"
+            fetchPriority="high"
+            src={product.imageUrl}
+            onLoad={() => setImageLoading(false)}
+            alt={product.name}
             quality={50}
           />
         </div>
@@ -88,46 +98,54 @@ export default function ProductClient({ data }: ProductClientProps) {
 
       <div className={styles["content-box"]}>
         <div>
-          <h3 className={styles.subHeader}>{data.product.category}</h3>
+          <p className={styles.subHeader}>{categoryLabel(product.category)}</p>
 
-          <h1 className={styles.header}>{data.product.name}</h1>
+          <h1 className={styles.header}>{product.name}</h1>
 
-          <div className={styles.description}>{data.product.description}</div>
-          <div className={styles.features}>
-            {data.options.map((option) => (
-              <div key={option.id}>
-                <Image
-                  src={option.icon}
-                  width={40}
-                  height={40}
-                  alt=""
-                  className={styles.iconImage}
-                />
+          <div className={styles.description}>{product.description}</div>
 
-                <span>{option.description}</span>
-              </div>
-            ))}
-          </div>
-          <form className={styles.options}>
-            {data.options.map((option) => (
-              <fieldset key={option.id} className={styles.optionGroup}>
-                <legend>Select {option.name}</legend>
+          {optionsWithNotes.length > 0 && (
+            <div className={styles.features}>
+              {optionsWithNotes.map((option) => (
+                <div key={option.id}>
+                  <Image
+                    src={option.icon}
+                    width={40}
+                    height={40}
+                    alt=""
+                    className={styles.iconImage}
+                  />
+                  <span>{option.description}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
-                <div className={styles.choiceBar}>
-                  {[...option.values]
-                    .sort((a, b) => a.id - b.id)
-                    .map((value) => (
+          <form
+            className={styles.options}
+            onSubmit={(event) => event.preventDefault()}
+          >
+            {options.map((option) => {
+              const active = chosen[option.id] ?? option.defaultValue;
+              return (
+                <fieldset key={option.id} className={styles.optionGroup}>
+                  <legend>Select {option.name}</legend>
+
+                  <div className={styles.choiceBar}>
+                    {option.values.map((value) => (
                       <label key={value.id} className={styles.choice}>
                         <input
                           type="radio"
-                          required
                           name={`option-${option.id}`}
                           value={value.id}
                           disabled={!value.inStock}
-                          checked={effectiveSelections.some(
-                            (selected) => selected.id === value.id,
-                          )}
-                          onChange={() => handleSelectChange(value)}
+                          checked={active?.id === value.id}
+                          onChange={() =>
+                            setChosen((prev) => ({
+                              ...prev,
+                              [option.id]: value,
+                            }))
+                          }
                         />
 
                         <span>
@@ -136,9 +154,10 @@ export default function ProductClient({ data }: ProductClientProps) {
                         </span>
                       </label>
                     ))}
-                </div>
-              </fieldset>
-            ))}
+                  </div>
+                </fieldset>
+              );
+            })}
           </form>
 
           <div className={styles.callToAction}>
@@ -149,7 +168,7 @@ export default function ProductClient({ data }: ProductClientProps) {
                 onClick={handleAdd}
                 disabled={!isAvailable}
               >
-                <ShoppingCart />
+                <ShoppingCart aria-hidden="true" />
                 Add to cart
               </button>
 
@@ -157,21 +176,23 @@ export default function ProductClient({ data }: ProductClientProps) {
                 type="button"
                 className="premium-button premium-button-primary"
                 disabled={!isAvailable}
-                onClick={() => {
-                  handleAdd();
-                  router.push("/checkout");
-                }}
+                onClick={handleBuyNow}
               >
-                <CreditCard />
-                Checkout
+                <CreditCard aria-hidden="true" />
+                Buy now
               </button>
             </div>
             <span className={styles.price}>
-              {isAvailable
-                ? `price : ${formatCurrency(finalPrice)}`
-                : data.product.inStock
-                  ? "This option is sold out"
-                  : "Out of stock"}
+              {isAvailable ? (
+                <>
+                  <span className="srOnly">Price: </span>
+                  {formatCurrency(finalPrice)}
+                </>
+              ) : product.inStock ? (
+                "This option is sold out"
+              ) : (
+                "Out of stock"
+              )}
             </span>
           </div>
         </div>

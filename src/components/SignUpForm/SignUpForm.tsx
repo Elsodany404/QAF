@@ -94,6 +94,8 @@ export default function SignUpForm() {
             <input
               id="name"
               type="text"
+              autoComplete="name"
+              maxLength={80}
               placeholder="Ahmed Al-Rashid"
               className={`${styles.input} ${errors.name ? styles.inputError : ""}`}
               {...register("name", {
@@ -117,6 +119,7 @@ export default function SignUpForm() {
             <input
               id="email"
               type="email"
+              autoComplete="email"
               placeholder="you@example.com"
               className={`${styles.input} ${errors.email ? styles.inputError : ""}`}
               {...register("email", {
@@ -141,6 +144,7 @@ export default function SignUpForm() {
               <input
                 id="password"
                 type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
                 placeholder="••••••••"
                 className={`${styles.input} ${errors.password ? styles.inputError : ""}`}
                 {...register("password", {
@@ -176,6 +180,7 @@ export default function SignUpForm() {
               <input
                 id="confirmPassword"
                 type={showConfirm ? "text" : "password"}
+                autoComplete="new-password"
                 placeholder="••••••••"
                 className={`${styles.input} ${errors.confirmPassword ? styles.inputError : ""}`}
                 {...register("confirmPassword", {

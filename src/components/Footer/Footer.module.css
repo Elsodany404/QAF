@@ -8,7 +8,7 @@
 }
 
 .newsletterInner {
-  max-width: 80rem;
+  max-width: var(--container-max);
   margin: 0 auto;
   padding: 3rem 1rem 4rem;
 }
@@ -31,7 +31,7 @@
 
 .title {
   margin-bottom: 0.75rem;
-  font-family: "Playfair Display", serif;
+  font-family: var(--font-display);
   font-size: 1.9rem;
   font-weight: 700;
   color: white;
@@ -85,7 +85,7 @@
 }
 
 .mainFooter {
-  max-width: 80rem;
+  max-width: var(--container-max);
   margin: 0 auto;
   padding: 4rem 1rem 2rem;
 }
@@ -108,15 +108,12 @@
   margin-bottom: 3rem;
 }
 
+/* Brand on the left, contact details on the right, like the copyright bar
+   below. */
 @media (min-width: 768px) {
   .grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 1024px) {
-  .grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 24rem) auto;
+    justify-content: space-between;
   }
 }
 
@@ -144,7 +141,7 @@
 }
 
 .brandTitle {
-  font-family: "Playfair Display", serif;
+  font-family: var(--font-display);
   font-size: 1.15rem;
   font-weight: 700;
   line-height: 1.1;
@@ -188,6 +185,11 @@
   background: linear-gradient(135deg, var(--espresso-600), var(--mocha-600));
 }
 
+.socialLink svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
 .sectionHeading {
   margin-bottom: 1rem;
   font-size: 0.9rem;
@@ -201,6 +203,9 @@
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .contactItem {
@@ -211,9 +216,15 @@
 }
 
 .contactItem svg {
+  width: 1.25rem;
+  height: 1.25rem;
   margin-top: 0.1rem;
   color: var(--gold-400);
   flex-shrink: 0;
+}
+
+.contactItem a:hover {
+  color: var(--gold-400);
 }
 
 .bottomBar {

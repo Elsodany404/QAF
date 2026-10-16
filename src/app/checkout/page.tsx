@@ -1,32 +1,36 @@
-import styles from "./page.module.css";
-import { signInPath } from "@/lib/redirect";
-import { ArrowLeft } from "lucide-react";
-import OrderSummery from "@/components/OrderSummery/OrderSummery";
-import Form from "@/components/Form/Form";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+
+import Form from "@/components/Form/Form";
+import OrderSummary from "@/components/OrderSummary/OrderSummary";
+import { getCurrentSession } from "@/lib/adminAccess";
+import { signInPath } from "@/lib/redirect";
+import styles from "./page.module.css";
+
+export const metadata: Metadata = {
+  title: "Checkout",
+};
 
 export default async function Checkout() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getCurrentSession();
   if (!session) {
     redirect(signInPath("/checkout"));
   }
+
   return (
     <div className={styles.page}>
       <div className={styles.container}>
         <Link href="/menu" className={styles.backButton}>
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft size={20} aria-hidden="true" />
           Back to Shopping
         </Link>
 
         <h1 className={styles.title}>Checkout</h1>
 
         <div className={styles.grid}>
-          <OrderSummery />
+          <OrderSummary />
           <Form />
         </div>
       </div>

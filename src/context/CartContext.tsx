@@ -9,12 +9,35 @@ import {
   useState,
 } from "react";
 
-import { Cart, CartContextT, Item, PaymentMethod } from "../types/customTypes";
+import { toast } from "react-hot-toast";
+
+import type {
+  AddItemResult,
+  Cart,
+  CartContextT,
+  Item,
+  PaymentMethod,
+} from "../types/customTypes";
 
 import useShippingFees from "@/hooks/useShippingFees";
 import { MAX_CART_LINES, MAX_QUANTITY_PER_ITEM } from "@/utils/cartLimits";
 
 const cartContext = createContext<CartContextT | undefined>(undefined);
+
+/** Toast for the outcome of an "Add to cart" click. */
+export function announceAddToCart(result: AddItemResult, productName: string) {
+  if (result === "added") {
+    toast.success(`${productName} added to your cart`);
+  } else if (result === "max_quantity") {
+    toast.error(
+      `You can order up to ${MAX_QUANTITY_PER_ITEM} of one item. For bulk orders, please contact us.`,
+    );
+  } else {
+    toast.error(
+      `Your cart can hold ${MAX_CART_LINES} different items. Please check out or remove something first.`,
+    );
+  }
+}
 
 const CART_STORAGE_KEY = "cart";
 
@@ -90,19 +113,33 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Total quantity of all products
   const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
 
-  // Total price before shipping/tax
+  // Total price before shipping
   const cartPrice = cart.reduce(
     (total, item) => total + item.itemPrice * item.quantity,
     0,
   );
 
-  const { shippingFees, shippingFeesLoading, taxOnCod } = useShippingFees({
+  const {
+    shippingFees,
+    shippingFeesLoading,
+    shippingFeesError,
+    retryShippingFees,
+  } = useShippingFees({
     cartPrice,
     paymentMethod,
     cityName,
   });
 
-  function addItem(item: Item) {
+  /** Adds one unit. The result says whether it was added or why not. */
+  function addItem(item: Item): AddItemResult {
+    const existing = cart.find((i) => i.itemID === item.itemID);
+    if (existing && existing.quantity >= MAX_QUANTITY_PER_ITEM) {
+      return "max_quantity";
+    }
+    if (!existing && cart.length >= MAX_CART_LINES) {
+      return "cart_full";
+    }
+
     setCart((prevCart) => {
       const existingItem = prevCart.find((i) => i.itemID === item.itemID);
 
@@ -122,6 +159,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (prevCart.length >= MAX_CART_LINES) return prevCart;
       return [...prevCart, item];
     });
+    return "added";
   }
 
   function removeItem(itemID: string) {
@@ -171,11 +209,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
   return (
     <cartContext.Provider
       value={{
+        cityName,
         setCityName,
 
-        taxOnCod,
         shippingFees,
         shippingFeesLoading,
+        shippingFeesError,
+        retryShippingFees,
 
         clearCart,
 

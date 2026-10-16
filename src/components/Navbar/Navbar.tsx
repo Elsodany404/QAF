@@ -1,21 +1,49 @@
 "use client";
-import { useState, useEffect } from "react";
-import { ShoppingCart, Menu, X, Coffee } from "lucide-react";
-import { useCart } from "../../context/CartContext";
-import styles from "./Navbar.module.css";
-import { usePathname, useRouter } from "next/navigation";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useSession } from "@/lib/auth-client";
-import signOut from "@/actions/auth/signOut";
+import { usePathname, useRouter } from "next/navigation";
+import { Coffee, Menu, ShoppingCart, X } from "lucide-react";
 import { toast } from "react-hot-toast";
+
+import signOut from "@/actions/auth/signOut";
+import { useCart } from "@/context/CartContext";
+import { useSession } from "@/lib/auth-client";
+import styles from "./Navbar.module.css";
+
+const LINKS = [
+  { label: "Home", href: "/" },
+  { label: "Shop", href: "/menu" },
+  { label: "About us", href: "/about" },
+  { label: "Contact", href: "/contact" },
+  { label: "Our Policies", href: "/policies" },
+  { label: "Account", href: "/user" },
+];
+
+function isActive(pathname: string, href: string) {
+  if (href === "/") return pathname === "/";
+  // Product pages belong to the shop.
+  if (href === "/menu") {
+    return pathname === "/menu" || pathname.startsWith("/products/");
+  }
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { totalItems, openCart } = useCart();
+  const { data: session, isPending, refetch } = useSession();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const router = useRouter();
-  const { data: session, isPending, refetch } = useSession();
+  const [menuPathname, setMenuPathname] = useState(pathname);
+
+  // Any navigation (a link, the logo, the back button) closes the menu.
+  if (menuPathname !== pathname) {
+    setMenuPathname(pathname);
+    setMobileOpen(false);
+  }
+
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 40);
     handler(); // sync with the real scroll position on mount / route change
@@ -23,26 +51,13 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handler);
   }, [pathname]);
 
-  const navLinks = [
-    { id: "Home", label: "" },
-    { id: "Shop", label: "menu" },
-    { id: "About us", label: "about" },
-    { id: "Contact", label: "contact" },
-    { id: "Our Policies", label: "policies" },
-    { id: "Account", label: "user" },
-  ];
-  if (session?.user?.role === "admin") {
-    navLinks.push({ id: "Dashboard", label: "admin/dashboard" });
-  }
+  const signedIn = Boolean(session?.user?.id);
+  const links =
+    session?.user?.role === "admin"
+      ? [...LINKS, { label: "Dashboard", href: "/admin/dashboard" }]
+      : LINKS;
 
-  const transparentNavBar = pathname === "/";
-  if (mobileOpen && !session?.user?.id) {
-    navLinks.push({ id: "Sign Up", label: "sign-up" });
-    navLinks.push({ id: "Sign In", label: "sign-in" });
-  } else if (mobileOpen && session?.user?.id) {
-    navLinks.push({ id: "Sign Out", label: "sign-out" });
-  }
-  const handleSignOut = async () => {
+  async function handleSignOut() {
     const res = await signOut();
     if (res.status === "success") {
       toast.success(res.message);
@@ -52,37 +67,44 @@ export default function Navbar() {
     } else {
       toast.error(res.message);
     }
-  };
+  }
+
+  const transparentNavBar = pathname === "/";
   const navbarClass = `${styles.nav} ${
     scrolled || mobileOpen ? styles.navScrolled : styles.navTransparent
   } ${!transparentNavBar ? styles["contrast-navbar"] : ""}`;
+
   return (
-    <nav className={navbarClass}>
+    <nav className={navbarClass} aria-label="Main">
       <div className={styles.container}>
         <div className={styles.navInner}>
           <Link href="/" className={styles.logoButton}>
             <div className={styles.logoMark}>
               <div className={styles.logoMarkInner} />
               <div className={styles.logoIcon}>
-                <Coffee />
+                <Coffee aria-hidden="true" />
               </div>
             </div>
-            <div className="text-left">
+            <div>
               <p className={styles.logoTitle}>Qaf</p>
               <p className={styles.logoSubtitle}>Coffee Co.</p>
             </div>
           </Link>
 
           <div className={styles.desktopNav}>
-            {navLinks.map((link) => (
-              <Link
-                key={link.id}
-                href={`/${link.label}`}
-                className={`${styles.navLink} ${pathname === `/${link.label}` ? styles.navLinkActive : ""}`}
-              >
-                {link.id}
-              </Link>
-            ))}
+            {links.map((link) => {
+              const active = isActive(pathname, link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`${styles.navLink} ${active ? styles.navLinkActive : ""}`}
+                  aria-current={active ? "page" : undefined}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
           </div>
 
           <div className={styles.actions}>
@@ -90,34 +112,35 @@ export default function Navbar() {
               type="button"
               onClick={openCart}
               className={styles.cartButton}
-              aria-label="Open cart"
+              aria-label={
+                totalItems > 0
+                  ? `Open cart (${totalItems} item${totalItems === 1 ? "" : "s"})`
+                  : "Open cart"
+              }
             >
-              <div
-                style={{
-                  position: "relative",
-                }}
-              >
-                <ShoppingCart />
+              <span className={styles.cartIcon}>
+                <ShoppingCart aria-hidden="true" />
                 {totalItems > 0 && (
-                  <span className={styles.cartBadge}>
+                  <span className={styles.cartBadge} aria-hidden="true">
                     {totalItems > 9 ? "9+" : totalItems}
                   </span>
                 )}
-              </div>
+              </span>
             </button>
+
             <button
+              type="button"
               className={styles.menuButton}
               onClick={() => setMobileOpen((v) => !v)}
-              aria-label="Toggle menu"
+              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileOpen}
+              aria-controls="mobile-menu"
             >
-              {mobileOpen ? (
-                <X className="w-6 h-6" />
-              ) : (
-                <Menu className="w-6 h-6" />
-              )}
+              {mobileOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
             </button>
+
             <div className={styles.authButtons}>
-              {isPending ? null : !session?.user?.id ? (
+              {isPending ? null : !signedIn ? (
                 <>
                   <Link href="/sign-up" className={styles.signUpButton}>
                     Sign Up
@@ -127,14 +150,13 @@ export default function Navbar() {
                   </Link>
                 </>
               ) : (
-                <>
-                  <button
-                    onClick={handleSignOut}
-                    className={styles.signOutButton}
-                  >
-                    Sign Out
-                  </button>
-                </>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className={styles.signOutButton}
+                >
+                  Sign Out
+                </button>
               )}
             </div>
           </div>
@@ -142,24 +164,52 @@ export default function Navbar() {
       </div>
 
       {mobileOpen && (
-        <div className={styles.mobileMenu}>
+        <div id="mobile-menu" className={styles.mobileMenu}>
           <div className={styles.mobileMenuInner}>
-            {navLinks.map((link) => (
+            {links.map((link) => {
+              const active = isActive(pathname, link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMobileOpen(false)}
+                  className={`${styles.mobileLink} ${active ? styles.mobileLinkActive : styles.mobileLinkDefault}`}
+                  aria-current={active ? "page" : undefined}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+
+            {isPending ? null : signedIn ? (
               <button
-                key={link.id}
+                type="button"
                 onClick={() => {
                   setMobileOpen(false);
-                  if (link.label === "sign-out") {
-                    void handleSignOut();
-                  } else {
-                    router.push(`/${link.label}`);
-                  }
+                  void handleSignOut();
                 }}
-                className={`${styles.mobileLink} ${pathname === `/${link.label}` ? styles.mobileLinkActive : styles.mobileLinkDefault}`}
+                className={`${styles.mobileLink} ${styles.mobileLinkDefault}`}
               >
-                {link.id}
+                Sign Out
               </button>
-            ))}
+            ) : (
+              <>
+                <Link
+                  href="/sign-up"
+                  onClick={() => setMobileOpen(false)}
+                  className={`${styles.mobileLink} ${isActive(pathname, "/sign-up") ? styles.mobileLinkActive : styles.mobileLinkDefault}`}
+                >
+                  Sign Up
+                </Link>
+                <Link
+                  href="/sign-in"
+                  onClick={() => setMobileOpen(false)}
+                  className={`${styles.mobileLink} ${isActive(pathname, "/sign-in") ? styles.mobileLinkActive : styles.mobileLinkDefault}`}
+                >
+                  Sign In
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}

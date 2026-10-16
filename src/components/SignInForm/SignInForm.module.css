@@ -4,7 +4,8 @@
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, var(--cream-50) 0%, var(--mocha-900) 100%);
-  padding: 1.5rem;
+  /* Centre the card in the space below the fixed navbar. */
+  padding: calc(var(--nav-height) + 1.5rem) 1.5rem 1.5rem;
 }
 
 .card {
@@ -139,7 +140,7 @@
 }
 
 .inputError {
-  border-color: #dc2626;
+  border-color: var(--danger-600);
 }
 
 .inputError:focus {
@@ -174,7 +175,7 @@
 .errorText {
   font-size: 0.775rem;
   font-weight: 500;
-  color: #dc2626;
+  color: var(--danger-600);
   padding-left: 0.25rem;
 }
 
@@ -274,9 +275,9 @@
 }
 
 .noticeError {
-  border-color: #fecaca;
-  background: #fef2f2;
-  color: #991b1b;
+  border-color: var(--danger-200);
+  background: var(--danger-50);
+  color: var(--danger-800);
 }
 
 .verifyIcon {

@@ -16,8 +16,7 @@ vi.mock("@/supabase/admin", async () => {
   return { default: mocks.fake.client };
 });
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
-vi.mock("@/lib/adminAccess", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/adminAccess")>()),
+vi.mock("@/lib/adminAccess", () => ({
   getCurrentSession: async () => mocks.session,
 }));
 vi.mock("@/services/Bosta", () => ({

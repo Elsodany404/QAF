@@ -20,7 +20,7 @@ export default function About() {
         <Image
           quality={50}
           loading="eager"
-          priority={true}
+          fetchPriority="high"
           placeholder="blur"
           className={styles.heroImage}
           src={signature_coffee_photo}
@@ -55,7 +55,7 @@ export default function About() {
               <p className={styles.storyText}>
                 Founded in 10th of Ramadan, Qaf Coffee is the culmination of
                 generations of coffee culture and modern roasting science. We
-                source from the world premier growing regions — Ethiopia,
+                source from the world&apos;s premier growing regions — Ethiopia,
                 Colombia, Yemen — and bring those stories to your cup.
               </p>
               <p className={styles.storyText}>
@@ -128,7 +128,7 @@ export default function About() {
                 style={{ animationDelay: `${i * 100}ms` }}
               >
                 <div className={styles.valueIcon}>
-                  <Icon className="w-7 h-7" />
+                  <Icon aria-hidden="true" />
                 </div>
                 <h3 className={styles.valueTitle}>{title}</h3>
                 <p className={styles.valueDesc}>{desc}</p>
@@ -191,13 +191,13 @@ export default function About() {
           <div className={styles.ctaContent}>
             <h2 className={styles.ctaTitle}>Experience the Difference</h2>
             <p className={styles.ctaText}>
-              Taste coffee that been crafted with passion, sourced ethically,
+              Taste coffee that&apos;s been crafted with passion, sourced ethically,
               and roasted to perfection.
             </p>
             <div className={styles.ctaActions}>
               <Link href="/menu" className={styles.ctaButton}>
                 Shop Our Blends
-                <ArrowRight className="w-5 h-5" />
+                <ArrowRight size={20} aria-hidden="true" />
               </Link>
               <Link href="/contact" className={styles.ctaSecondary}>
                 Get in Touch

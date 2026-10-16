@@ -1,31 +1,39 @@
-import { signInPath } from "@/lib/redirect";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
 import {
-  CheckCircle,
   ArrowRight,
+  CheckCircle,
   Clock3,
+  Mail,
   Package,
   Truck,
-  Mail,
   XCircle,
 } from "lucide-react";
-import styles from "./page.module.css";
-import { notFound, redirect } from "next/navigation";
-import Link from "next/link";
-import ClearCart from "./ClearCart";
+
 import { getCurrentSession } from "@/lib/adminAccess";
 import {
   formatOrderNumber,
   isOnlinePayment,
   normalizePaymentStatus,
 } from "@/lib/orderStatus";
+import { signInPath } from "@/lib/redirect";
+import { firstParam } from "@/lib/searchParams";
 import { getOrderWithItems } from "@/services/Order";
+import ClearCart from "./ClearCart";
+import RefreshWhilePending from "./RefreshWhilePending";
+import styles from "./page.module.css";
+
+export const metadata: Metadata = {
+  title: "Your Order",
+};
+
 type OrderSuccessProps = {
   params: Promise<{
     orderID: string;
   }>;
   searchParams: Promise<{
     success?: string | string[];
-    paymentMethod?: string | string[];
   }>;
 };
 
@@ -55,9 +63,7 @@ export default async function OrderSuccess({
   // Paymob appends ?success=true|false on redirect. The webhook is the source
   // of truth but may arrive a moment later, so fall back to the query string.
   const paymentStatus = normalizePaymentStatus(order.paymentStatus);
-  const redirectSuccess = Array.isArray(query.success)
-    ? query.success[0]
-    : query.success;
+  const redirectSuccess = firstParam(query.success);
   const isOnline = isOnlinePayment(order.paymentMethod);
   const state: "confirmed" | "processing" | "failed" =
     !isOnline || paymentStatus === "paid"
@@ -76,7 +82,7 @@ export default async function OrderSuccess({
       Icon: Clock3,
       title: "Payment Processing",
       message:
-        "We're confirming your payment with Paymob. This usually takes a few seconds — your account page will update automatically.",
+        "We're confirming your payment with Paymob. This usually takes a few seconds — this page will update on its own.",
     },
     failed: {
       Icon: XCircle,
@@ -89,6 +95,7 @@ export default async function OrderSuccess({
   return (
     <>
       {state !== "failed" && <ClearCart />}
+      {state === "processing" && <RefreshWhilePending />}
       <div className={styles.page}>
         <div className={styles.card}>
           <div className={styles.header}>
@@ -101,7 +108,7 @@ export default async function OrderSuccess({
                     : ""
               }`}
             >
-              <copy.Icon className="w-12 h-12" />
+              <copy.Icon aria-hidden="true" />
             </div>
 
             <h1 className={styles.title}>{copy.title}</h1>
@@ -117,7 +124,7 @@ export default async function OrderSuccess({
           {state === "failed" && (
             <Link href="/user" className={styles.continueButton}>
               Go to my orders
-              <ArrowRight className="w-5 h-5" />
+              <ArrowRight size={20} aria-hidden="true" />
             </Link>
           )}
 
@@ -128,22 +135,26 @@ export default async function OrderSuccess({
                   {
                     Icon: Mail,
                     title: "Confirmation Email",
-                    desc: `Your receipt is on its way to ${order.customerEmail}`,
+                    desc:
+                      state === "confirmed"
+                        ? `Your receipt is on its way to ${order.customerEmail}`
+                        : `We'll email ${order.customerEmail} as soon as the payment is confirmed`,
                   },
                   {
                     Icon: Package,
                     title: "Roasting & Packaging",
-                    desc: "Freshly roasted within 24 hours",
+                    desc: "Freshly roasted and dispatched within 24 hours on business days",
                   },
                   {
                     Icon: Truck,
                     title: "Fast Delivery",
-                    desc: "Ships within 2-5 business days",
+                    // Matches the delivery policy (/policies).
+                    desc: "Delivered 24–48 hours after dispatch",
                   },
                 ].map(({ Icon, title, desc }) => (
                   <div key={title} className={styles.stepCard}>
                     <div className={styles.stepIcon}>
-                      <Icon className="w-6 h-6" />
+                      <Icon aria-hidden="true" />
                     </div>
                     <div>
                       <p className={styles.stepTitle}>{title}</p>
@@ -169,7 +180,7 @@ export default async function OrderSuccess({
                 </Link>
                 <Link href={"/menu"} className={styles.continueButton}>
                   Continue Shopping
-                  <ArrowRight className="w-5 h-5" />
+                  <ArrowRight size={20} aria-hidden="true" />
                 </Link>
               </div>
             </>

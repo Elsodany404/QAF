@@ -10,7 +10,7 @@ import {
   ShoppingBag,
   UserRound,
 } from "lucide-react";
-import OrdersList from "../OrdersList/OrderList";
+import OrdersList from "../OrdersList/OrdersList";
 import ProfileEditor from "./ProfileEditor";
 import { getDisplayStatus } from "@/lib/orderStatus";
 
@@ -45,7 +45,7 @@ export default function UserPage({
           <h1 className={styles.heroTitle}>
             Welcome back,{" "}
             <span className={styles.heroTitleAccent}>
-              {user.name ?? "Coffee Lover"}
+              {user.name || "Coffee Lover"}
             </span>
           </h1>
         </div>
@@ -57,7 +57,7 @@ export default function UserPage({
           <UserSideBar user={user} />
 
           {/* ── Right column ─────────────────────────────────────────── */}
-          <main className={styles.main}>
+          <div className={styles.main}>
             <section className={styles.overview} aria-label="Account overview">
               <div className={styles.overviewItem}>
                 <ShoppingBag aria-hidden="true" />
@@ -103,7 +103,7 @@ export default function UserPage({
             {/* Orders section */}
             <section className={styles.section}>
               <div className={styles.sectionHeader}>
-                <ShoppingBag className="w-5 h-5" />
+                <ShoppingBag aria-hidden="true" />
                 <h2 className={styles.sectionTitle}>Your Orders</h2>
               </div>
 
@@ -113,12 +113,12 @@ export default function UserPage({
             {/* Contact info section */}
             <section className={styles.section}>
               <div className={styles.sectionHeader}>
-                <Mail className="w-5 h-5" />
+                <Mail aria-hidden="true" />
                 <h2 className={styles.sectionTitle}>Need Help?</h2>
               </div>
               <div className={styles.helpCard}>
                 <p className={styles.helpText}>
-                  For order issues, returns, or any questions reach out to our
+                  For order issues, returns, or any questions, reach out to our
                   team — we respond within one business day.
                 </p>
                 <div className={styles.helpLinks}>
@@ -136,7 +136,7 @@ export default function UserPage({
                 </div>
               </div>
             </section>
-          </main>
+          </div>
         </div>
       </div>
     </div>

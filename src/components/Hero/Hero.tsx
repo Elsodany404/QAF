@@ -14,7 +14,7 @@ export default function Hero() {
           alt="coffee roaster for hero section"
           quality={50}
           loading="eager"
-          priority={true}
+          fetchPriority="high"
         />
         <div className={styles.overlay} />
         <div className={styles.overlayBottom} />
@@ -29,7 +29,7 @@ export default function Hero() {
           </div>
 
           <h1 className={styles.heading}>
-            <span className="block">Elevate Your</span>
+            <span>Elevate Your</span>
             <span className={styles.headingAccent}>Coffee Ritual</span>
           </h1>
 

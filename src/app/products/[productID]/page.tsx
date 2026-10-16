@@ -34,6 +34,12 @@ export async function generateMetadata({
   return {
     title: data.product.name,
     description: data.product.description,
+    // Link previews (WhatsApp, Facebook) show the product photo.
+    openGraph: {
+      title: data.product.name,
+      description: data.product.description,
+      images: [{ url: data.product.imageUrl, alt: data.product.name }],
+    },
   };
 }
 

@@ -94,6 +94,10 @@ export async function signUpAction(
   if (name.length < 2 || !EMAIL_PATTERN.test(email)) {
     return failed("Please enter your name and a valid email");
   }
+  // Same limit as editing the name on the account page.
+  if (name.length > 80) {
+    return failed("Name must be at most 80 characters");
+  }
   if (password.length < MIN_PASSWORD_LENGTH) {
     return failed(
       `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,

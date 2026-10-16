@@ -5,7 +5,7 @@ import styles from "./forbidden.module.css";
 export default function Forbidden() {
   return (
     <div className={styles.page}>
-      <main className={styles.panel}>
+      <div className={styles.panel}>
         <div className={styles.status}>403</div>
         <div className={styles.iconWrap} aria-hidden="true">
           <LockKeyhole className={styles.icon} />
@@ -18,14 +18,14 @@ export default function Forbidden() {
         </p>
         <div className={styles.actions}>
           <Link className={styles.primaryAction} href="/">
-            Return home
             <ArrowLeft aria-hidden="true" />
+            Return home
           </Link>
           <Link className={styles.secondaryAction} href="/sign-in">
             Sign in
           </Link>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

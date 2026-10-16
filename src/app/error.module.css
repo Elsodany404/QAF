@@ -4,12 +4,12 @@
   align-items: center;
   justify-content: center;
   background-color: var(--cream-50);
-  padding: 2rem;
+  padding: calc(var(--nav-height) + 2rem) 2rem 2rem;
   font-family: var(--font-body);
 }
 
 .card {
-  background-color: #ffffff;
+  background-color: white;
   max-width: 520px;
   width: 100%;
   border-radius: 20px;
@@ -67,7 +67,7 @@
   padding: 1rem 1.25rem;
   border-radius: 8px;
   font-size: 0.875rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   overflow-x: auto;
   border: 1px solid var(--charcoal-100);
   margin: 0;
@@ -79,8 +79,7 @@
   justify-content: center;
 }
 
-.btnPrimary,
-.btnSecondary {
+.btnPrimary {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -106,25 +105,13 @@
   box-shadow: var(--shadow-soft);
 }
 
-.btnSecondary {
-  background-color: transparent;
-  color: var(--espresso-800);
-  border: 1px solid var(--espresso-200);
-}
-
-.btnSecondary:hover {
-  background-color: var(--espresso-50);
-  border-color: var(--espresso-300);
-}
-
 /* Mobile Responsiveness */
 @media (max-width: 480px) {
   .actions {
     flex-direction: column;
   }
 
-  .btnPrimary,
-  .btnSecondary {
+  .btnPrimary {
     width: 100%;
     justify-content: center;
   }

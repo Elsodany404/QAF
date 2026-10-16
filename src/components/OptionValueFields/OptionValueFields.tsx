@@ -1,3 +1,5 @@
+"use client";
+
 import { Trash2 } from "lucide-react";
 import type { UseFormRegister } from "react-hook-form";
 
@@ -34,9 +36,9 @@ export default function OptionValueFields({
       <input
         className={styles.input}
         type="number"
-        step="0.01"
-        aria-label={`Value ${valueIndex + 1} price modifier`}
-        placeholder="Price modifier"
+        step="any"
+        aria-label={`Value ${valueIndex + 1} price change in percent`}
+        placeholder="Price change %"
         {...register(
           `options.${optionIndex}.values.${valueIndex}.priceModifier`,
           { valueAsNumber: true },

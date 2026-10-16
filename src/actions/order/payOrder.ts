@@ -1,10 +1,7 @@
 "use server";
 
-import {
-  errorMessage,
-  getCurrentSession,
-  isValidOrderID,
-} from "@/lib/adminAccess";
+import { errorMessage, isValidOrderID } from "@/lib/actionHelpers";
+import { getCurrentSession } from "@/lib/adminAccess";
 import { canPayOrder } from "@/lib/orderStatus";
 import { getOrderWithItems } from "@/services/Order";
 import { createPaymobCheckout } from "@/services/Paymob";

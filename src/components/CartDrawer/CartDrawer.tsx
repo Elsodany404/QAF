@@ -1,17 +1,22 @@
 "use client";
+
+import { useRouter } from "next/navigation";
 import {
-  X,
-  Trash2,
-  Plus,
-  Minus,
-  ShoppingBag,
   ArrowRight,
   Eraser,
+  Minus,
+  Plus,
+  ShoppingBag,
+  Trash2,
+  X,
 } from "lucide-react";
-import { useCart } from "../../context/CartContext";
+
+import { useCart } from "@/context/CartContext";
+import { useDialog } from "@/hooks/useDialog";
+import { MAX_QUANTITY_PER_ITEM } from "@/utils/cartLimits";
+import { formatCurrency } from "@/utils/helper";
 import styles from "./CartDrawer.module.css";
-import { formatCurrency } from "../../utils/helper";
-import { useRouter } from "next/navigation";
+
 export default function CartDrawer() {
   const router = useRouter();
   const {
@@ -25,18 +30,34 @@ export default function CartDrawer() {
     totalItems,
     clearCart,
   } = useCart();
+  const drawerRef = useDialog<HTMLDivElement>(open, closeCart);
 
   return (
     <>
-      {open && <div className={styles.overlay} onClick={closeCart} />}
+      {open && (
+        <div
+          className={styles.overlay}
+          onClick={closeCart}
+          aria-hidden="true"
+        />
+      )}
 
-      <div className={`${styles.drawer} ${open ? styles.open : styles.closed}`}>
+      <div
+        ref={drawerRef}
+        className={`${styles.drawer} ${open ? styles.open : styles.closed}`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cart-drawer-title"
+        tabIndex={-1}
+        // Off-screen: keep it out of the tab order and accessibility tree.
+        inert={!open}
+      >
         <div className={styles.header}>
           <div className={styles.titleWrap}>
             <div className={styles.iconWrap}>
-              <ShoppingBag />
+              <ShoppingBag aria-hidden="true" />
             </div>
-            <h2 className={styles.title}>
+            <h2 id="cart-drawer-title" className={styles.title}>
               Cart
               {totalItems > 0 && (
                 <span className={styles.count}>({totalItems})</span>
@@ -44,8 +65,13 @@ export default function CartDrawer() {
             </h2>
           </div>
 
-          <button onClick={closeCart} className={styles.closeButton}>
-            <X className="w-5 h-5" />
+          <button
+            type="button"
+            onClick={closeCart}
+            className={styles.closeButton}
+            aria-label="Close cart"
+          >
+            <X aria-hidden="true" />
           </button>
         </div>
 
@@ -53,59 +79,67 @@ export default function CartDrawer() {
           {totalItems === 0 ? (
             <div className={styles.emptyState}>
               <div className={styles.emptyIcon}>
-                <ShoppingBag />
+                <ShoppingBag aria-hidden="true" />
               </div>
               <p className={styles.emptyTitle}>Cart is empty</p>
               <p className={styles.emptyText}>
                 Start adding some premium coffee!
               </p>
-              <button onClick={closeCart} className={styles.emptyButton}>
+              <button
+                type="button"
+                onClick={closeCart}
+                className={styles.emptyButton}
+              >
                 Continue Shopping
               </button>
             </div>
           ) : (
-            cart.map((item) => {
-              const key = `${item.product.id}${item.options.map((op) => op.id).join(":")}`;
-              const product = item.product;
-              const options = item.options;
-              return (
-                <div key={key} className={styles.itemCard}>
-                  <div className={styles.itemRow}>
-                    <p className={styles.itemName}>{product.name}</p>
-                    <div className={styles.itemOptions}>
-                      {options.map((op) => (
-                        <span key={op.optionID}>{op.label}</span>
-                      ))}
-                    </div>
-                    <p className={styles.itemPrice}>
-                      {formatCurrency(item.itemPrice)}
-                    </p>
-                    <button
-                      onClick={() => removeItem(item.itemID)}
-                      className={styles.removeButton}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+            cart.map((item) => (
+              <div key={item.itemID} className={styles.itemCard}>
+                <div className={styles.itemRow}>
+                  <p className={styles.itemName}>{item.product.name}</p>
+                  <div className={styles.itemOptions}>
+                    {item.options.map((option) => (
+                      <span key={option.optionID}>{option.label}</span>
+                    ))}
                   </div>
-
-                  <div className={styles.quantityRow}>
-                    <button
-                      onClick={() => decreaseQuantity(item.itemID)}
-                      className={styles.qtyButton}
-                    >
-                      <Minus className="w-3 h-3" />
-                    </button>
-                    <span className={styles.qtyValue}>{item.quantity}</span>
-                    <button
-                      onClick={() => increaseQuantity(item.itemID)}
-                      className={styles.qtyButton}
-                    >
-                      <Plus className="w-3 h-3" />
-                    </button>
-                  </div>
+                  <p className={styles.itemPrice}>
+                    {formatCurrency(item.itemPrice)}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => removeItem(item.itemID)}
+                    className={styles.removeButton}
+                    aria-label={`Remove ${item.product.name} from the cart`}
+                  >
+                    <Trash2 aria-hidden="true" />
+                  </button>
                 </div>
-              );
-            })
+
+                <div className={styles.quantityRow}>
+                  <button
+                    type="button"
+                    onClick={() => decreaseQuantity(item.itemID)}
+                    className={styles.qtyButton}
+                    aria-label={`Decrease quantity of ${item.product.name}`}
+                  >
+                    <Minus aria-hidden="true" />
+                  </button>
+                  <span className={styles.qtyValue} aria-live="polite">
+                    {item.quantity}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => increaseQuantity(item.itemID)}
+                    className={styles.qtyButton}
+                    disabled={item.quantity >= MAX_QUANTITY_PER_ITEM}
+                    aria-label={`Increase quantity of ${item.product.name}`}
+                  >
+                    <Plus aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+            ))
           )}
         </div>
 
@@ -117,21 +151,21 @@ export default function CartDrawer() {
                 {formatCurrency(cartPrice)}
               </span>
             </div>
-            <p className={styles.helperText}>Shipping & taxes at checkout</p>
+            <p className={styles.helperText}>Shipping calculated at checkout</p>
             <div className={styles.footerButtons}>
               <button
+                type="button"
                 onClick={() => {
                   clearCart();
-                  setTimeout(() => {
-                    closeCart();
-                  }, 300);
+                  setTimeout(closeCart, 300);
                 }}
                 className={styles.clearButton}
               >
                 Clear Cart
-                <Eraser className="w-5 h-5" />
+                <Eraser size={20} aria-hidden="true" />
               </button>
               <button
+                type="button"
                 onClick={() => {
                   closeCart();
                   router.push("/checkout");
@@ -139,7 +173,7 @@ export default function CartDrawer() {
                 className={styles.checkoutButton}
               >
                 Checkout
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight size={16} aria-hidden="true" />
               </button>
             </div>
           </div>

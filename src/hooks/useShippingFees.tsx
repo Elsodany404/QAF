@@ -1,5 +1,5 @@
-import { PaymentMethod } from "@/types/customTypes";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import type { PaymentMethod } from "@/types/customTypes";
 
 type UseShippingFeesProps = {
   paymentMethod: PaymentMethod;
@@ -7,89 +7,67 @@ type UseShippingFeesProps = {
   cityName: string | null;
 };
 
+type Quote = { key: string; fees: number | null; error: string | null };
+
+/**
+ * Live Bosta shipping quote for the checkout. `shippingFees` stays null until
+ * a real price is known, so the UI never shows (or charges against) a made-up
+ * zero: no city yet, a request in flight, or a failed lookup all look
+ * different from "free shipping".
+ */
 export default function useShippingFees({
   cityName,
   cartPrice,
   paymentMethod,
 }: UseShippingFeesProps) {
-  const [shippingFees, setShippingFees] = useState(0);
-  const [taxOnCod, setTaxOnCod] = useState(0);
-  const [shippingFeesLoading, setShippingFeesLoading] = useState(false);
+  // Bosta prices cash-on-delivery shipments by the amount collected, so the
+  // cart total only matters for COD.
+  const cod = paymentMethod === "cash_on_delivery" ? cartPrice : 0;
+  const [attempt, setAttempt] = useState(0);
+  const [quote, setQuote] = useState<Quote | null>(null);
+
+  const key = cityName ? `${cityName}|${cod}|${attempt}` : null;
 
   useEffect(() => {
+    if (!key || !cityName) return;
     const controller = new AbortController();
 
-    async function fetchShippingFees() {
-      if (!cityName) {
-        setShippingFees(0);
-        setTaxOnCod(0);
-        setShippingFeesLoading(false);
-        return;
-      }
-
-      setShippingFeesLoading(true);
-
-      try {
-        const cod =
-          paymentMethod === "cash_on_delivery" ? Number(cartPrice) : 0;
-
-        const response = await fetch(
-          `/api/payment-fees?dropOffCity=${encodeURIComponent(cityName)}&cod=${cod}`,
-          {
-            signal: controller.signal,
-            cache: "no-store",
-          },
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
+    fetch(
+      `/api/payment-fees?dropOffCity=${encodeURIComponent(cityName)}&cod=${cod}`,
+      { signal: controller.signal, cache: "no-store" },
+    )
+      .then(async (response) => {
+        const data = await response.json().catch(() => null);
+        const fees = Number(data?.shippingFees);
+        if (!response.ok || !data?.success || !Number.isFinite(fees) || fees < 0) {
           throw new Error(
-            data?.error ||
-              `Payment fees API returned status ${response.status}`,
+            typeof data?.error === "string" ? data.error : `HTTP ${response.status}`,
           );
         }
-
-        if (!data?.success) {
-          throw new Error(data?.error || "Failed to determine shipping fees");
-        }
-
-        const fees = Number(data.shippingFees);
-
-        if (!Number.isFinite(fees) || fees < 0) {
-          throw new Error("Invalid shipping fees returned by API");
-        }
-
-        setShippingFees(fees);
-
-        // Your current Bosta API response doesn't expose a COD tax.
-        setTaxOnCod(0);
-      } catch (error) {
-        if (error instanceof Error && error.name === "AbortError") {
-          return;
-        }
-
+        setQuote({ key, fees, error: null });
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
         console.error("Shipping fee request failed:", error);
+        setQuote({
+          key,
+          fees: null,
+          error: "We couldn't calculate shipping to this city. Please try again.",
+        });
+      });
 
-        setShippingFees(0);
-        setTaxOnCod(0);
-      } finally {
-        if (!controller.signal.aborted) {
-          setShippingFeesLoading(false);
-        }
-      }
-    }
+    return () => controller.abort();
+  }, [key, cityName, cod]);
 
-    fetchShippingFees();
+  const retryShippingFees = useCallback(() => setAttempt((n) => n + 1), []);
 
-    return () => {
-      controller.abort();
-    };
-  }, [cityName, paymentMethod, cartPrice]);
+  // A quote only counts for the city/amount it was fetched for.
+  const current = quote && quote.key === key ? quote : null;
 
   return {
-    shippingFees,
-    shippingFeesLoading,
-    taxOnCod,
+    shippingFees: current?.fees ?? null,
+    shippingFeesLoading: key !== null && current === null,
+    shippingFeesError: current?.error ?? null,
+    retryShippingFees,
   };
 }

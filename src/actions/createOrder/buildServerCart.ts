@@ -3,7 +3,11 @@ import type { OptionValue } from "@/types/db";
 
 import supabaseAdmin from "@/supabase/admin";
 
-import { constructData } from "@/utils/constructAPI";
+import {
+  PRODUCT_WITH_OPTIONS,
+  toDataItem,
+  type ProductRow,
+} from "@/utils/constructAPI";
 import { MAX_CART_LINES, MAX_QUANTITY_PER_ITEM } from "@/utils/cartLimits";
 import { calcPrice, generateItemID } from "@/utils/helper";
 
@@ -74,17 +78,7 @@ export async function buildServerCart(
 
   const { data, error } = await supabaseAdmin
     .from("Product")
-    .select(
-      `
-        *,
-        ProductOptions(
-          optionID(
-            *,
-            OptionValues(*)
-          )
-        )
-      `,
-    )
+    .select(PRODUCT_WITH_OPTIONS)
     .in("id", productIDs);
 
   if (error) {
@@ -113,19 +107,7 @@ export async function buildServerCart(
    * =========================================================
    */
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const dataItems: DataItem[] = data.map((item: any) => {
-    const { ProductOptions, ...product } = item;
-
-    const rawData = {
-      ...product,
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      options: ProductOptions?.map((opt: any) => opt.optionID) ?? [],
-    };
-
-    return constructData(rawData);
-  });
+  const dataItems: DataItem[] = (data as ProductRow[]).map(toDataItem);
 
   /*
    * =========================================================

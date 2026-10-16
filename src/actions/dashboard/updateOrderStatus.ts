@@ -1,6 +1,7 @@
 "use server";
 
-import { isAdminUser, isValidOrderID } from "@/lib/adminAccess";
+import { isValidOrderID } from "@/lib/actionHelpers";
+import { isAdminUser } from "@/lib/adminAccess";
 import {
   isShippingStatus,
   MANUAL_PAYMENT_STATUSES,

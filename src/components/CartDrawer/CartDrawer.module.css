@@ -32,16 +32,23 @@
   border-left: 1px solid rgba(91, 65, 45, 0.08);
   box-shadow: -12px 0 40px rgba(50, 35, 25, 0.12);
 
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 }
 
 .open {
   transform: translateX(0);
+  visibility: visible;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Hidden once it has slid away: otherwise its shadow shows as a strip along
+   the right edge of every page. */
 .closed {
   transform: translateX(100%);
+  visibility: hidden;
+  transition:
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    visibility 0s linear 0.3s;
 }
 
 /* =========================
@@ -93,7 +100,7 @@
 .title {
   margin: 0;
 
-  font-family: "Playfair Display", serif;
+  font-family: var(--font-display);
   font-size: 1.3rem;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -139,6 +146,11 @@
   background: var(--cream-200);
   color: var(--charcoal-800);
   transform: rotate(90deg);
+}
+
+.closeButton svg {
+  width: 1.25rem;
+  height: 1.25rem;
 }
 .clearButton {
   display: flex;
@@ -258,6 +270,7 @@
   font-size: 1rem;
   font-weight: 700;
   line-height: 1.35;
+  text-transform: capitalize;
 
   color: var(--charcoal-900);
 }
@@ -309,8 +322,8 @@
 }
 
 .removeButton:hover {
-  color: #b42318;
-  background: #fef0ef;
+  color: var(--danger-700);
+  background: var(--danger-50);
 }
 
 .removeButton svg {
@@ -336,24 +349,19 @@
 
   padding-top: 0.15rem;
 
-  font-family: "Courier New", monospace;
-
-  font-size: 0.78rem;
-  font-style: italic;
+  font-size: 0.8rem;
   font-weight: 500;
-
-  letter-spacing: 0.02em;
+  /* "250g", "Medium" — the same casing as the product pages. */
+  text-transform: capitalize;
 
   color: var(--charcoal-500);
 }
 
-/* Adds × between options, but NOT after the last one */
-
+/* A dot between options (an "×" read like a quantity). */
 .itemOptions span + span::before {
-  content: "×";
+  content: "·";
   margin-right: 0.85rem;
 
-  font-style: normal;
   color: var(--espresso-400);
 }
 
@@ -397,15 +405,20 @@
     transform 0.18s ease;
 }
 
-.qtyButton:hover {
+.qtyButton:hover:not(:disabled) {
   background: var(--espresso-600);
   color: white;
 
   transform: translateY(-1px);
 }
 
-.qtyButton:active {
+.qtyButton:active:not(:disabled) {
   transform: scale(0.94);
+}
+
+.qtyButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .qtyButton svg {
@@ -470,7 +483,7 @@
 .emptyTitle {
   margin: 0 0 0.4rem;
 
-  font-family: "Playfair Display", serif;
+  font-family: var(--font-display);
 
   font-size: 1.2rem;
   font-weight: 700;
@@ -549,7 +562,7 @@
 }
 
 .subtotalValue {
-  font-family: "Playfair Display", serif;
+  font-family: var(--font-display);
 
   font-size: 1.35rem;
   font-weight: 700;

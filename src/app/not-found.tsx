@@ -5,7 +5,7 @@ import styles from "./not-found.module.css";
 export default function NotFound() {
   return (
     <div className={styles.page}>
-      <main className={styles.panel}>
+      <div className={styles.panel}>
         <div className={styles.iconWrap} aria-hidden="true">
           <Compass className={styles.icon} />
         </div>
@@ -19,7 +19,7 @@ export default function NotFound() {
           <ArrowLeft aria-hidden="true" />
           Back to QAF Coffee
         </Link>
-      </main>
+      </div>
     </div>
   );
 }

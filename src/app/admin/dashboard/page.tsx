@@ -16,7 +16,7 @@ import {
 import { formatCurrency } from "@/utils/helper";
 import styles from "./page.module.css";
 import { getAdminOrders } from "@/actions/dashboard/getAdminOrders";
-import OrderList from "@/components/OrderList/OrdersPanel";
+import OrdersPanel from "@/components/OrdersPanel/OrdersPanel";
 import SchedulePickupModal from "@/components/SchedulePickupModal/SchedulePickupModal";
 import CreateOrderModal from "@/components/CreateOrderModal/CreateOrderModal";
 import AddProductModal from "@/components/AddProductModal/AddProductModal";
@@ -108,7 +108,7 @@ export default function Dashboard() {
 
   return (
     <div className={styles.page}>
-      <main className={styles.shell}>
+      <div className={styles.shell}>
         {/* ── Header ── */}
         <div className={styles.header}>
           <div>
@@ -209,15 +209,18 @@ export default function Dashboard() {
           <div className={styles.searchBox}>
             <Search />
             <input
+              type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search order, customer, phone, tracking..."
+              aria-label="Search orders"
             />
           </div>
 
           <div className={styles.filterWrap}>
             <Filter />
             <select
+              aria-label="Filter by status"
               value={statusFilter}
               onChange={(event) =>
                 setStatusFilter(event.target.value as StatusFilter)
@@ -256,12 +259,12 @@ export default function Dashboard() {
               No orders match your filters.
             </div>
           ) : (
-            <OrderList orders={filteredOrders} />
+            <OrdersPanel orders={filteredOrders} />
           )}
         </section>
-      </main>
+      </div>
 
-      {/* ── Modals (portaled above everything) ── */}
+      {/* ── Modals (fixed overlays above the page) ── */}
       {showPickup && (
         <SchedulePickupModal onClose={() => setShowPickup(false)} />
       )}

@@ -3,6 +3,10 @@
   inset: 0 0 auto;
   z-index: 50;
   width: 100%;
+  /* The logo and button shadows would otherwise smudge the page just below
+     the bar. The bar's own shadow is not affected. */
+  overflow: hidden;
+  overflow: clip;
 
   transition:
     background-color 0.3s ease,
@@ -18,11 +22,11 @@
 
     &.contrast-navbar {
       background-color: var(--espresso-700);
-      color: #fff;
+      color: white;
 
       .menuButton,
       .cartButton {
-        color: #fff;
+        color: white;
       }
 
       .logoTitle,
@@ -58,7 +62,7 @@
 
   .container {
     width: 100%;
-    max-width: 80rem;
+    max-width: var(--container-max);
     margin-inline: auto;
     padding-inline: 1rem;
 
@@ -79,22 +83,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    min-height: 5rem;
-
-    /* Small Mobile */
-    @media (max-width: 479px) {
-      min-height: 4.5rem;
-    }
-
-    /* Desktop */
-    @media (min-width: 891px) {
-      min-height: 5rem;
-    }
-
-    /* Large Desktop */
-    @media (min-width: 1024px) {
-      min-height: 5.25rem;
-    }
+    /* 4.5rem on small phones, 5rem, 5.25rem from 1024px (variables.css). */
+    min-height: var(--nav-height);
   }
 
   /* =========================
@@ -151,7 +141,7 @@
   .logoTitle {
     margin: 0 0 0.3rem;
 
-    font-family: "Playfair Display", serif;
+    font-family: var(--font-display);
     font-size: 1.25rem;
     font-weight: 700;
     line-height: 1.1;
@@ -316,6 +306,11 @@
      Cart Badge
      ========================= */
 
+  .cartIcon {
+    position: relative;
+    display: inline-flex;
+  }
+
   .cartBadge {
     position: absolute;
     top: -0.25rem;
@@ -377,7 +372,7 @@
   .mobileLinkActive {
     background: linear-gradient(90deg, var(--espresso-600), var(--mocha-600));
 
-    color: #fff;
+    color: white;
   }
 
   .mobileLinkDefault {

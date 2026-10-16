@@ -54,7 +54,7 @@
 }
 
 .title {
-  font-family: "Playfair Display", serif;
+  font-family: var(--font-display);
   font-size: 1.25rem;
   font-weight: 800;
   color: var(--charcoal-950);
@@ -264,13 +264,13 @@
 }
 
 .successBox {
-  background: #dcfce7;
-  color: #166534;
+  background: var(--success-100);
+  color: var(--success-800);
 }
 
 .errorBox {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: var(--danger-100);
+  color: var(--danger-700);
   margin-bottom: 0.25rem;
 }
 
@@ -342,4 +342,11 @@
     width: 100%;
     min-height: 2.8rem;
   }
+}
+
+.errorText {
+  min-height: 1rem;
+  color: var(--danger-700);
+  font-size: 0.75rem;
+  font-weight: 700;
 }

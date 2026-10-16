@@ -2,7 +2,6 @@ import type {
   Tables,
   TablesInsert,
   TablesUpdate,
-  Enums,
 } from "../supabase/database.types";
 
 // Rows
@@ -28,6 +27,3 @@ export type OptionUpdate = TablesUpdate<"Options">;
 export type OptionValueUpdate = TablesUpdate<"OptionValues">;
 export type OrderUpdate = TablesUpdate<"Order">;
 export type OrderItemUpdate = TablesUpdate<"OrderItem">;
-
-// Enums
-export type OrderStatus = Enums<"orderStatus">;

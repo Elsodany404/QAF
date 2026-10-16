@@ -2,7 +2,8 @@
 import { useCallback, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-function useParams() {
+/** Reads and updates the menu's ?search= and ?category= filters. */
+function useMenuFilters() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -55,4 +56,4 @@ function useParams() {
   };
 }
 
-export default useParams;
+export default useMenuFilters;

@@ -27,20 +27,21 @@ export function Providers({ children }: { children: React.ReactNode }) {
         toastOptions={{
           duration: 3000,
           style: {
-            background: "#fff",
-            color: "#111",
-            border: "1px solid #e5e7eb",
+            background: "white",
+            color: "var(--charcoal-900)",
+            border: "1px solid var(--cream-200)",
+            fontFamily: "var(--font-body)",
           },
           success: {
             iconTheme: {
-              primary: "#22c55e",
-              secondary: "#fff",
+              primary: "var(--success-600)",
+              secondary: "white",
             },
           },
           error: {
             iconTheme: {
-              primary: "#ef4444",
-              secondary: "#fff",
+              primary: "var(--danger-500)",
+              secondary: "white",
             },
           },
         }}

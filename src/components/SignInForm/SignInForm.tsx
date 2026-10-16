@@ -94,6 +94,7 @@ export default function SignInForm({ redirectTo }: { redirectTo: string }) {
             <input
               id="email"
               type="email"
+              autoComplete="email"
               placeholder="you@example.com"
               className={`${styles.input} ${errors.email ? styles.inputError : ""}`}
               {...register("email", {
@@ -122,6 +123,7 @@ export default function SignInForm({ redirectTo }: { redirectTo: string }) {
               <input
                 id="password"
                 type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
                 placeholder="••••••••"
                 className={`${styles.input} ${errors.password ? styles.inputError : ""}`}
                 {...register("password", {

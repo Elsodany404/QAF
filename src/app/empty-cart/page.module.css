@@ -3,7 +3,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 70vh;
+  min-height: 100vh;
+  /* Centre the message in the space below the fixed navbar. */
+  padding: calc(var(--nav-height) + 2rem) 1rem 3rem;
   text-align: center;
 }
 
@@ -26,7 +28,7 @@
 
 .emptyTitle {
   margin-bottom: 0.5rem;
-  font-family: "Playfair Display", serif;
+  font-family: var(--font-display);
   font-size: 1.8rem;
   font-weight: 700;
   color: var(--charcoal-900);
