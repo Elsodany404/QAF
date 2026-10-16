@@ -13,7 +13,7 @@ import {
 
 const BOSTA_API_URL = "https://app.bosta.co/api/v2";
 // Bosta's documented upper bound for cash collected on delivery.
-const MAX_COD_AMOUNT = 30000;
+export const MAX_COD_AMOUNT = 30000;
 
 function getBostaApiKey() {
   const apiKey = process.env.BOSTA_API_KEY;

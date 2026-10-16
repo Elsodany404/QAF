@@ -18,9 +18,10 @@ export default function Navbar() {
   const { data: session, isPending, refetch } = useSession();
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 40);
-    window.addEventListener("scroll", handler);
+    handler(); // sync with the real scroll position on mount / route change
+    window.addEventListener("scroll", handler, { passive: true });
     return () => window.removeEventListener("scroll", handler);
-  }, []);
+  }, [pathname]);
 
   const navLinks = [
     { id: "Home", label: "" },

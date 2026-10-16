@@ -61,11 +61,6 @@ function OrderSummery() {
               {formatCurrency(shippingFees)}
             </span>
           </div>
-          {/* {shippingFees > 0 && (
-            <p className="text-xs text-espresso-600 font-medium">
-              Free shipping on orders over 1000 EGP
-            </p>
-          )} */}
           <div className={styles.summaryTotal}>
             <span>
               {shippingFeesLoading

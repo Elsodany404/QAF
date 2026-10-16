@@ -4,7 +4,10 @@ import styles from "./Form.module.css";
 import { CreditCard, Lock, Smartphone, Wallet } from "lucide-react";
 import { formatCurrency } from "../../utils/helper";
 import { useCart } from "../../context/CartContext";
-import bostaAddresses from "@/assets/data/bostaDistricts.json";
+import {
+  DELIVERY_CITIES,
+  normalizeEgyptianMobile,
+} from "@/lib/bostaLocations";
 
 import {
   FormValues,
@@ -14,7 +17,7 @@ import {
 import { useSession } from "@/lib/auth-client";
 import { useActionState, useEffect, useTransition } from "react";
 import createOrder from "@/actions/createOrder";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
@@ -71,7 +74,7 @@ function Form() {
   );
   const [, startTransition] = useTransition();
 
-  const { register, watch, handleSubmit, formState, getValues, setValue } =
+  const { register, control, handleSubmit, formState, getValues, setValue } =
     useForm<FormValues>({
       defaultValues: {
         name: "",
@@ -98,20 +101,16 @@ function Form() {
     }
   }, [orderState]);
 
-  const availableCities = bostaAddresses.data.filter(
-    (c) => c.dropOffAvailability,
-  );
-  const selectedCity = watch("city");
+  const selectedCity = useWatch({ control, name: "city" });
+  const city = DELIVERY_CITIES.find((c) => c.cityName === selectedCity) ?? null;
+  const availableDistricts = city?.districts ?? [];
 
-  const city = availableCities.find((c) => c.cityName === selectedCity) || null;
-
-  const availableDistricts =
-    city?.districts.filter((d) => d.dropOffAvailability) ?? [];
-
-  const selectedDistrict = watch("district");
-
+  // The district select holds the district ID: some cities have two
+  // districts with the same name.
+  const selectedDistrictID = useWatch({ control, name: "district" });
   const district =
-    availableDistricts.find((d) => d.districtName === selectedDistrict) || null;
+    availableDistricts.find((d) => d.districtId === selectedDistrictID) ??
+    null;
 
   const secureCart: SecureCart = cart.map((item) => ({
     productID: item.product.id,
@@ -120,15 +119,18 @@ function Form() {
     quantity: item.quantity,
   }));
   function onValid(data: FormValues) {
-    if (!city?.cityId || !district?.districtId) return;
+    if (!city || !district) {
+      toast.error("Please choose your city and district");
+      return;
+    }
     const formData = new FormData();
     formData.append("name", data.name);
     formData.append("email", data.email);
     formData.append("phone", data.phone);
     formData.append("street", data.street);
     formData.append("apartment", data.apartment);
-    formData.append("city", data.city);
-    formData.append("district", data.district);
+    formData.append("city", city.cityName);
+    formData.append("district", district.districtName);
 
     formData.append("cityID", city.cityId);
     formData.append("districtID", district.districtId);
@@ -160,6 +162,7 @@ function Form() {
               className={styles.input}
               type="text"
               placeholder="John smith..."
+              maxLength={100}
               {...register("name", {
                 required: "this field is required",
               })}
@@ -177,8 +180,13 @@ function Form() {
               className={styles.input}
               type="text"
               placeholder="johnsmith@example.com"
+              maxLength={254}
               {...register("email", {
                 required: "this field is required",
+                pattern: {
+                  value: /^\s*[^\s@]+@[^\s@]+\.[^\s@]+\s*$/,
+                  message: "please insert a valid email",
+                },
               })}
             />
           </div>
@@ -196,14 +204,9 @@ function Form() {
               placeholder="01xxxxxx"
               {...register("phone", {
                 required: "this field is required",
-                validate: (value) => {
-                  const cleanPhone = value.replace(/[\s-]/g, "");
-                  const regex = /^01[0125]\d{8}$/;
-
-                  return (
-                    regex.test(cleanPhone) || "please insert valid phone number"
-                  );
-                },
+                validate: (value) =>
+                  normalizeEgyptianMobile(value) !== null ||
+                  "please insert valid phone number",
               })}
             />
           </div>
@@ -224,12 +227,16 @@ function Form() {
             <select
               {...register("city", {
                 required: "اختر المدينة",
-                onChange: (e) => setCityName(e.target.value),
+                onChange: (e) => {
+                  setCityName(e.target.value);
+                  // The chosen district belonged to the previous city.
+                  setValue("district", "");
+                },
               })}
             >
               <option value="">اختر المدينة</option>
 
-              {availableCities.map((c) => (
+              {DELIVERY_CITIES.map((c) => (
                 <option key={c.cityId} value={c.cityName}>
                   {c.cityOtherName}
                 </option>
@@ -251,13 +258,11 @@ function Form() {
               disabled={!city}
             >
               <option value="">أختر الحي السكني</option>
-              {availableDistricts &&
-                city &&
-                availableDistricts.map((d) => (
-                  <option key={d.districtId} value={d.districtName}>
-                    {d.districtOtherName}
-                  </option>
-                ))}
+              {availableDistricts.map((d) => (
+                <option key={d.districtId} value={d.districtId}>
+                  {d.districtOtherName}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -273,6 +278,7 @@ function Form() {
               className={styles.input}
               type="text"
               placeholder="123 Main Street"
+              maxLength={200}
               {...register("street", {
                 required: "this field is required",
               })}
@@ -291,6 +297,7 @@ function Form() {
               className={styles.input}
               type="text"
               placeholder="apartment label/number"
+              maxLength={100}
               {...register("apartment", {
                 required: "this field is required",
               })}
@@ -350,9 +357,10 @@ function Form() {
 
       <button
         type="submit"
-        disabled={isPending}
+        // Wait for the shipping fee so the total shown is the one charged.
+        disabled={isPending || shippingFeesLoading}
         className={`${styles.submitButton} ${
-          isPending ? styles.submitButtonDisabled : ""
+          isPending || shippingFeesLoading ? styles.submitButtonDisabled : ""
         }`}
       >
         {isPending

@@ -14,6 +14,14 @@ describe("calcPrice", () => {
     expect(calcPrice(product, options)).toBe(319);
   });
 
+  it("doesn't round floating-point noise up to an extra pound", () => {
+    const product = makeProduct({ price: 200 });
+    // 200 * (1 + 0.1) === 220.00000000000003 in floating point
+    expect(calcPrice(product, [makeOptionValue({ priceModifier: 0.1 })])).toBe(
+      220,
+    );
+  });
+
   it("returns the base price without options", () => {
     expect(calcPrice(makeProduct({ price: 250 }), [])).toBe(250);
   });

@@ -17,7 +17,7 @@ import {
 import { getAllProducts } from "@/services/Product";
 import { formatCurrency } from "@/utils/helper";
 import type { PaymentMethod } from "@/types/customTypes";
-import bostaAddresses from "@/assets/data/bostaDistricts.json";
+import { DELIVERY_CITIES } from "@/lib/bostaLocations";
 import styles from "./CreateOrderModal.module.css";
 
 interface Props {
@@ -49,19 +49,14 @@ export default function CreateOrderModal({ onClose }: Props) {
     queryFn: getAllProducts,
   });
 
-  // Derived city/district state for Bosta dropdowns
-  const [selectedCity, setSelectedCity] = useState("");
-  const [selectedDistrict, setSelectedDistrict] = useState("");
+  // Bosta city/district dropdowns, keyed by Bosta ID
+  const [selectedCityID, setSelectedCityID] = useState("");
+  const [selectedDistrictID, setSelectedDistrictID] = useState("");
 
-  const availableCities = bostaAddresses.data.filter(
-    (c) => c.dropOffAvailability,
-  );
-  const city =
-    availableCities.find((c) => c.cityOtherName === selectedCity) ?? null;
-  const availableDistricts =
-    city?.districts.filter((d) => d.dropOffAvailability) ?? [];
+  const city = DELIVERY_CITIES.find((c) => c.cityId === selectedCityID) ?? null;
+  const availableDistricts = city?.districts ?? [];
   const district =
-    availableDistricts.find((d) => d.districtOtherName === selectedDistrict) ??
+    availableDistricts.find((d) => d.districtId === selectedDistrictID) ??
     null;
   const selectedProduct = products.find(
     (item) => item.product.id === Number(selectedProductID),
@@ -93,9 +88,9 @@ export default function CreateOrderModal({ onClose }: Props) {
       customerName: String(fd.get("customerName") ?? ""),
       customerEmail: String(fd.get("customerEmail") ?? ""),
       customerPhone: String(fd.get("customerPhone") ?? ""),
-      city: selectedCity,
+      city: city.cityName,
       cityID: city.cityId,
-      district: selectedDistrict,
+      district: district.districtName,
       districtID: district.districtId,
       street: String(fd.get("street") ?? ""),
       apartment: String(fd.get("apartment") ?? ""),
@@ -264,16 +259,16 @@ export default function CreateOrderModal({ onClose }: Props) {
                     id="co-city"
                     name="city"
                     className={styles.select}
-                    value={selectedCity}
+                    value={selectedCityID}
                     onChange={(e) => {
-                      setSelectedCity(e.target.value);
-                      setSelectedDistrict("");
+                      setSelectedCityID(e.target.value);
+                      setSelectedDistrictID("");
                     }}
                     required
                   >
                     <option value="">Select city…</option>
-                    {availableCities.map((c) => (
-                      <option key={c.cityId} value={c.cityOtherName}>
+                    {DELIVERY_CITIES.map((c) => (
+                      <option key={c.cityId} value={c.cityId}>
                         {c.cityOtherName}
                       </option>
                     ))}
@@ -288,14 +283,14 @@ export default function CreateOrderModal({ onClose }: Props) {
                     id="co-district"
                     name="district"
                     className={styles.select}
-                    value={selectedDistrict}
-                    onChange={(e) => setSelectedDistrict(e.target.value)}
-                    disabled={!selectedCity}
+                    value={selectedDistrictID}
+                    onChange={(e) => setSelectedDistrictID(e.target.value)}
+                    disabled={!city}
                     required
                   >
                     <option value="">Select district…</option>
                     {availableDistricts.map((d) => (
-                      <option key={d.districtId} value={d.districtOtherName}>
+                      <option key={d.districtId} value={d.districtId}>
                         {d.districtOtherName}
                       </option>
                     ))}

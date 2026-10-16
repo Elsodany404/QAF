@@ -7,7 +7,8 @@ const eslintConfig = defineConfig([
   ...nextTs,
   {
     rules: {
-      "no-console": "warn",
+      // console.error / console.warn are the app's server-side error logs.
+      "no-console": ["warn", { allow: ["warn", "error"] }],
     },
   },
   // Override default ignores of eslint-config-next.

@@ -88,11 +88,11 @@ export async function buildServerCart(
     .in("id", productIDs);
 
   if (error) {
-    console.error("failed creating order: error fetching products");
+    console.error("failed creating order: error fetching products", error);
 
     return {
       success: false,
-      error: `Error fetching products: ${error.message}`,
+      error: "We couldn't load your cart's products. Please try again.",
     };
   }
 

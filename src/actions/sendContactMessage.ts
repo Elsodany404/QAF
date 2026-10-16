@@ -1,9 +1,8 @@
 "use server";
 
-import { Resend } from "resend";
+import { sendEmail, SHOP_EMAIL } from "@/lib/email";
+import { HONEYPOT_FIELD } from "@/lib/honeypot";
 import type { ActionState } from "@/types/customTypes";
-
-const recipient = "sales@qafcoffee.store";
 
 export default async function sendContactMessage(
   _previousState: ActionState,
@@ -13,6 +12,11 @@ export default async function sendContactMessage(
   const email = formData.get("email");
   const subject = formData.get("subject");
   const message = formData.get("message");
+
+  // Pretend it worked so bots don't learn to skip the field.
+  if (formData.get(HONEYPOT_FIELD)) {
+    return { status: "success", message: "Thanks. Your message has been sent." };
+  }
 
   if (
     typeof name !== "string" ||
@@ -36,46 +40,25 @@ export default async function sendContactMessage(
     return { status: "failed", message: "Your message is too long." };
   }
 
-  if (!/^\S+@\S+\.\S+$/.test(email)) {
+  if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
     return { status: "failed", message: "Please enter a valid email address." };
   }
 
-  if (!process.env.RESEND_API_KEY) {
-    console.error("RESEND_API_KEY is not configured");
-    return { status: "failed", message: "Email service is not configured." };
-  }
+  const sent = await sendEmail({
+    to: SHOP_EMAIL,
+    replyTo: email.trim(),
+    // Keep the subject on one line.
+    subject: `[Website contact] ${subject.replace(/\s+/g, " ").trim()}`,
+    text: [
+      `Name: ${name.trim()}`,
+      `Email: ${email.trim()}`,
+      `Subject: ${subject.trim()}`,
+      "",
+      message.trim(),
+    ].join("\n"),
+  });
 
-  try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    const { error } = await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL!,
-      to: recipient,
-      replyTo: email.trim(),
-      subject: `[Website contact] ${subject.trim()}`,
-      text: [
-        `Name: ${name.trim()}`,
-        `Email: ${email.trim()}`,
-        `Subject: ${subject.trim()}`,
-        "",
-        message.trim(),
-      ].join("\n"),
-    });
-
-    if (error) {
-      console.error("Contact email error:", {
-        name: error.name,
-        message: error.message,
-        recipient,
-      });
-      return { status: "failed", message: "Unable to send your message." };
-    }
-
-    return {
-      status: "success",
-      message: "Thanks. Your message has been sent.",
-    };
-  } catch (error) {
-    console.error("Contact email error:", error);
-    return { status: "failed", message: "Unable to send your message." };
-  }
+  return sent
+    ? { status: "success", message: "Thanks. Your message has been sent." }
+    : { status: "failed", message: "Unable to send your message." };
 }

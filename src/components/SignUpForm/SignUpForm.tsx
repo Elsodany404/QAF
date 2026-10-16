@@ -35,7 +35,6 @@ export default function SignUpForm() {
 
   const {
     register,
-    watch,
     getValues,
     handleSubmit,
     formState: { errors },
@@ -53,8 +52,6 @@ export default function SignUpForm() {
     // so depending on the whole object here is intentional
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
-
-  const passwordValue = watch("password");
 
   function onValid(data: SignUpFields) {
     const formData = new FormData();
@@ -184,7 +181,7 @@ export default function SignUpForm() {
                 {...register("confirmPassword", {
                   required: "Please confirm your password",
                   validate: (val) =>
-                    val === passwordValue || "Passwords do not match",
+                    val === getValues("password") || "Passwords do not match",
                 })}
               />
               <button

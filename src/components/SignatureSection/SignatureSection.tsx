@@ -59,7 +59,7 @@ function SignatureSection() {
               ))}
             </div>
 
-            <Link type="button" href={"/menu"} className={styles.viewAllButton}>
+            <Link href={"/menu"} className={styles.viewAllButton}>
               <span>Shop Turkish Coffee</span>
               <ArrowRight className={styles.viewAllIcon} />
             </Link>

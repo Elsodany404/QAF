@@ -131,14 +131,15 @@ export default function AddProductModal({ onClose }: Props) {
                 <input
                   id="priceRaw"
                   type="number"
-                  step="0.01"
+                  step="1"
+                  min="1"
                   className={styles.input}
                   placeholder="e.g. 120"
                   {...register("priceRaw", {
-                    minLength: {
-                      value: 1,
-                      message: "not valid number",
-                    },
+                    required: "please insert a price",
+                    validate: (value) =>
+                      (Number.isInteger(Number(value)) && Number(value) > 0) ||
+                      "price must be a whole number greater than zero",
                   })}
                 />
                 <span className={styles.errorText}>

@@ -63,6 +63,8 @@ export default function ProductCard({ dataItem }: ProductCardProps) {
   }
 
   const link = `/products/${product.id}`;
+  // Turkish blends are named "Turkish coffee | <Blend>"; badge the blend.
+  const blendName = product.name?.split("|")[1]?.trim();
 
   return (
     <Link href={link} className={styles.cardLink}>
@@ -87,9 +89,9 @@ export default function ProductCard({ dataItem }: ProductCardProps) {
             onLoad={() => setImageLoading(false)}
           />
           <div className={styles.overlay} />
-          {product.category === "turkish" ? (
+          {product.category === "turkish" && blendName ? (
             <div className={`${styles.badges} ${styles.badgeAlt}`}>
-              {product.name?.split("|")[1].toUpperCase()}
+              {blendName.toUpperCase()}
             </div>
           ) : (
             <div className={`${styles.badges} ${styles.badge}`}>
@@ -119,7 +121,7 @@ export default function ProductCard({ dataItem }: ProductCardProps) {
 
           {sizeOption && (
             <div className={styles.weightRow}>
-              {sizeOption?.values
+              {[...sizeOption.values]
                 .sort((a, b) => a.id - b.id)
                 .map((s: OptionValue) => (
                   <button
@@ -139,7 +141,7 @@ export default function ProductCard({ dataItem }: ProductCardProps) {
 
           {roastOption && (
             <div className={styles.weightRow}>
-              {roastOption.values
+              {[...roastOption.values]
                 .sort((a, b) => a.id - b.id)
                 .map((value: OptionValue) => {
                   return (

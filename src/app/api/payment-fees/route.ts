@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { findDeliveryCity } from "@/lib/bostaLocations";
 import { getBostaFees } from "@/services/Bosta";
 
 export async function GET(request: NextRequest) {
   const dropOffCity = request.nextUrl.searchParams.get("dropOffCity");
   const cod = Number(request.nextUrl.searchParams.get("cod") || 0);
 
-  if (!dropOffCity) {
+  // Public endpoint backed by our Bosta API key: only price real delivery
+  // cities.
+  if (!dropOffCity || !findDeliveryCity(dropOffCity)) {
     return NextResponse.json(
-      { error: "dropOffCity is required" },
+      { error: "Choose a city we deliver to" },
       { status: 400 },
     );
   }
@@ -24,12 +27,10 @@ export async function GET(request: NextRequest) {
       shippingFees,
     });
   } catch (error) {
+    console.error("Shipping fee lookup failed:", error);
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Unexpected error happened",
-      },
-      { status: 500 },
+      { error: "Couldn't calculate shipping right now" },
+      { status: 502 },
     );
   }
 }

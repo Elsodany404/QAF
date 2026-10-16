@@ -18,6 +18,30 @@ const cartContext = createContext<CartContextT | undefined>(undefined);
 
 const CART_STORAGE_KEY = "cart";
 
+/**
+ * Carts are saved in the browser, possibly by an older version of the site.
+ * Entries that don't match the current shape would crash the cart UI.
+ */
+function isCartItem(value: unknown): value is Item {
+  if (typeof value !== "object" || value === null) return false;
+  const item = value as Partial<Item>;
+  return (
+    typeof item.itemID === "string" &&
+    typeof item.product?.id === "number" &&
+    typeof item.product.name === "string" &&
+    typeof item.product.imageUrl === "string" &&
+    Array.isArray(item.options) &&
+    item.options.every(
+      (option) =>
+        typeof option?.id === "number" && typeof option.optionID === "number",
+    ) &&
+    typeof item.quantity === "number" &&
+    Number.isInteger(item.quantity) &&
+    item.quantity > 0 &&
+    Number.isFinite(item.itemPrice)
+  );
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<Cart>([]);
   const [cartLoaded, setCartLoaded] = useState(false);
@@ -34,13 +58,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const savedCart = localStorage.getItem(CART_STORAGE_KEY);
 
       if (savedCart) {
-        const parsedCart: Cart = JSON.parse(savedCart);
+        const parsedCart: unknown = JSON.parse(savedCart);
 
         if (Array.isArray(parsedCart)) {
           // localStorage only exists after mount; reading it during render
           // would make the server and client HTML differ.
           // eslint-disable-next-line react-hooks/set-state-in-effect
-          setCart(parsedCart);
+          setCart(parsedCart.filter(isCartItem).slice(0, MAX_CART_LINES));
         }
       }
     } catch (error) {

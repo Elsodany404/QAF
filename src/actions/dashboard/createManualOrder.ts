@@ -2,7 +2,11 @@
 
 import supabaseAdmin from "@/supabase/admin";
 import { errorMessage, isAdminUser } from "@/lib/adminAccess";
-import { createBostaDelivery } from "@/services/Bosta";
+import {
+  findDeliveryAddress,
+  normalizeEgyptianMobile,
+} from "@/lib/bostaLocations";
+import { createBostaDelivery, MAX_COD_AMOUNT } from "@/services/Bosta";
 import { getOrderWithItems } from "@/services/Order";
 import { sendOrderConfirmation } from "@/services/OrderEmails";
 import { createPaymobCheckout } from "@/services/Paymob";
@@ -70,6 +74,18 @@ export async function adminCreateOrder(
       return { status: "failed", message: "Invalid manual order details" };
     }
 
+    const phone = normalizeEgyptianMobile(payload.customerPhone);
+    if (!phone) {
+      return {
+        status: "failed",
+        message: "Enter a valid Egyptian mobile number (01xxxxxxxxx)",
+      };
+    }
+    const address = findDeliveryAddress(payload.cityID, payload.districtID);
+    if (!address) {
+      return { status: "failed", message: "Bosta doesn't deliver there" };
+    }
+
     const productIDs = [
       ...new Set(payload.items.map((item) => item.productID)),
     ];
@@ -89,10 +105,11 @@ export async function adminCreateOrder(
     const productByID = new Map(
       products.map((product) => [product.id, product]),
     );
+    // Better Auth stores emails lowercased.
     const { data: customer, error: customerError } = await supabaseAdmin
       .from("user")
       .select("id")
-      .ilike("email", payload.customerEmail.trim())
+      .eq("email", payload.customerEmail.trim().toLowerCase())
       .maybeSingle();
 
     if (customerError || !customer) {
@@ -123,17 +140,27 @@ export async function adminCreateOrder(
     });
     const subTotal = items.reduce((acc, item) => acc + item.totalPrice, 0);
 
+    if (
+      payload.paymentMethod === "cash_on_delivery" &&
+      subTotal + payload.shippingFees > MAX_COD_AMOUNT
+    ) {
+      return {
+        status: "failed",
+        message: `Cash on delivery is limited to ${MAX_COD_AMOUNT} EGP`,
+      };
+    }
+
     const { data: orderID, error } = await supabaseAdmin.rpc("create_order", {
       p_customer_id: customer.id,
       p_customer_name: payload.customerName,
       p_customer_email: payload.customerEmail.trim(),
-      p_customer_phone: payload.customerPhone,
+      p_customer_phone: phone,
       p_apartment: payload.apartment,
       p_street: payload.street,
-      p_city: payload.city,
-      p_cityid: payload.cityID,
-      p_district: payload.district,
-      p_districtid: payload.districtID,
+      p_city: address.city.cityName,
+      p_cityid: address.city.cityId,
+      p_district: address.district.districtName,
+      p_districtid: address.district.districtId,
       p_subtotal: subTotal,
       p_shipping_fees: payload.shippingFees,
       p_payment_method: payload.paymentMethod,

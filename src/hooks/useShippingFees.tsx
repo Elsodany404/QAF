@@ -34,7 +34,7 @@ export default function useShippingFees({
           paymentMethod === "cash_on_delivery" ? Number(cartPrice) : 0;
 
         const response = await fetch(
-          `/api/payment-fees?dropOffCity=${cityName}&cod=${cod}`,
+          `/api/payment-fees?dropOffCity=${encodeURIComponent(cityName)}&cod=${cod}`,
           {
             signal: controller.signal,
             cache: "no-store",

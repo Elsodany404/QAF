@@ -16,7 +16,9 @@ export function calcPrice(product: Product, options: OptionValue[]) {
   );
   const finalPrice = basePrice * (1 + priceModifier);
 
-  return Math.ceil(finalPrice);
+  // Drop floating-point noise before rounding up: 200 * (1 + 0.1) is
+  // 220.00000000000003, which Math.ceil alone would turn into 221.
+  return Math.ceil(Math.round(finalPrice * 100) / 100);
 }
 export function generateItemID(productID: number, optionsIDs: number[]) {
   return `${productID}:${optionsIDs.join(":")}`;

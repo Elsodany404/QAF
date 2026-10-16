@@ -6,6 +6,9 @@ import { Resend } from "resend";
  * break checkout, payments or sign-in.
  */
 
+/** The shop's inbox: contact-form messages and newsletter sign-ups land here. */
+export const SHOP_EMAIL = "sales@qafcoffee.store";
+
 let client: Resend | null = null;
 
 function getClient() {
@@ -72,7 +75,7 @@ export function emailLayout(title: string, bodyHtml: string) {
       </tr>
       <tr>
         <td style="padding:16px 28px;border-top:1px solid #f8efe0;font-size:12px;color:#5b5876;">
-          Questions? Reply to this email or write to sales@qafcoffee.store.
+          Questions? Reply to this email or write to ${SHOP_EMAIL}.
         </td>
       </tr>
     </table>

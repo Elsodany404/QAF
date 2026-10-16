@@ -7,6 +7,7 @@ import {
 } from "@/types/customTypes";
 import supabaseAdmin from "@/supabase/admin";
 import { isAdminUser } from "@/lib/adminAccess";
+import { isAllowedImageUrl } from "@/lib/imageHosts";
 import sharp from "sharp";
 import { revalidatePath } from "next/cache";
 
@@ -106,6 +107,27 @@ export async function addProduct(
       );
     }
 
+    const imageUrls = [
+      imageUrl,
+      blurredImageUrl,
+      ...options.map((option) => option.icon.trim()),
+    ];
+    // next/image can only render images from the configured hosts; anything
+    // else would break every page that lists the product.
+    if (!imageUrls.every(isAllowedImageUrl)) {
+      return fail(
+        "Images must be https links to this project's Supabase storage",
+      );
+    }
+    // Signed storage links expire, and the images would break with them.
+    if (
+      imageUrls.some((url) =>
+        new URL(url).pathname.startsWith("/storage/v1/object/sign/"),
+      )
+    ) {
+      return fail("Use the image's public URL; signed links expire");
+    }
+
     const productDimensions = await getImageDimensions(imageUrl);
     const blurredDimensions = await getImageDimensions(blurredImageUrl);
 
@@ -137,9 +159,10 @@ export async function addProduct(
       return fail("Option icons must be 512×512 images");
     }
 
+    // Product.price is an integer column (whole pounds).
     const price = Number(priceRaw);
-    if (!Number.isFinite(price) || price <= 0) {
-      return fail("Price must be greater than zero");
+    if (!Number.isInteger(price) || price <= 0) {
+      return fail("Price must be a whole number of EGP greater than zero");
     }
 
     const validCategories = CATEGORIES.filter((c) => c.id !== "all").map(

@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
+import { after } from "next/server";
 import { Pool } from "pg";
 import { linkEmail, sendEmail } from "@/lib/email";
 import { getSiteUrl } from "@/lib/siteUrl";
@@ -37,6 +38,14 @@ export const auth = betterAuth({
 
   plugins: [nextCookies()],
 
+  // Auth emails run in the background so response times don't reveal
+  // whether an account exists. after() keeps the work alive once the
+  // response is sent; serverless hosts would otherwise freeze the function
+  // and drop the email.
+  advanced: {
+    backgroundTasks: { handler: (task) => after(task) },
+  },
+
   // Brute-force protection. Only applies to requests through /api/auth, so
   // the auth forms must call authClient, not auth.api from a server action.
   // Counters live in the database because in-memory counters reset on every
@@ -55,8 +64,6 @@ export const auth = betterAuth({
     },
   },
 
-  // Emails are not awaited so response times don't reveal whether an
-  // account exists.
   emailVerification: {
     sendOnSignUp: true,
     // Unverified users who try to sign in get a fresh link.
@@ -64,7 +71,7 @@ export const auth = betterAuth({
     autoSignInAfterVerification: true,
 
     sendVerificationEmail: async ({ user, url }) => {
-      void linkEmail({
+      await linkEmail({
         to: user.email,
         subject: "Verify your email address",
         intro: `Hi ${user.name}, welcome to Qaf Coffee! Confirm your email address to activate your account.`,
@@ -90,7 +97,7 @@ export const auth = betterAuth({
     revokeSessionsOnPasswordReset: true,
 
     sendResetPassword: async ({ user, url }) => {
-      void linkEmail({
+      await linkEmail({
         to: user.email,
         subject: "Reset your password",
         intro: `Hi ${user.name}, we received a request to reset your Qaf Coffee password. This link is valid for 1 hour.`,
@@ -102,7 +109,7 @@ export const auth = betterAuth({
     },
 
     onExistingUserSignUp: async ({ user }) => {
-      void sendEmail({
+      await sendEmail({
         to: user.email,
         subject: "Sign-up attempt with your email",
         text: "Someone tried to create an account using your email address. If this was you, try signing in instead — or use “Forgot password” if you can't remember it. If not, you can safely ignore this email.",

@@ -9,10 +9,16 @@ interface Props {
   onClose: () => void;
 }
 
+/** Today's date in the admin's time zone, as YYYY-MM-DD. */
+function localISODate() {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
 export default function SchedulePickupModal({ onClose }: Props) {
-  const [date, setDate] = useState(
-    () => new Date().toISOString().split("T")[0],
-  );
+  const [date, setDate] = useState(localISODate);
   const [result, setResult] = useState<{
     type: "success" | "error";
     message: string;
@@ -40,7 +46,7 @@ export default function SchedulePickupModal({ onClose }: Props) {
   }
 
   // Minimum date = today
-  const todayISO = new Date().toISOString().split("T")[0];
+  const todayISO = localISODate();
 
   return (
     <div className={styles.backdrop} onClick={onClose}>

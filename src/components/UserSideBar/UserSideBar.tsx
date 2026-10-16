@@ -15,9 +15,11 @@ import {
   MessageCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "@/lib/auth-client";
 
 function UserSideBar({ user }: { user: User }) {
   const router = useRouter();
+  const { refetch } = useSession();
 
   async function handleSignOut() {
     const res = await signOut();
@@ -26,6 +28,7 @@ function UserSideBar({ user }: { user: User }) {
       return;
     }
     toast.success(res.message);
+    await refetch(); // the navbar reads the session through useSession()
     router.replace("/");
     router.refresh();
   }

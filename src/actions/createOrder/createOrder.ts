@@ -1,5 +1,5 @@
 import { postOrder } from "@/services/Order";
-import { getBostaFees } from "@/services/Bosta";
+import { getBostaFees, MAX_COD_AMOUNT } from "@/services/Bosta";
 
 import { buildServerCart } from "./buildServerCart";
 import { calculateCartTotal } from "./calculateCartTotal";
@@ -91,6 +91,17 @@ export async function createOrder({
     return {
       success: false,
       error: "Invalid shipping fee",
+    };
+  }
+
+  // The courier can't collect more than this, so the order could never ship.
+  if (
+    input.paymentMethod === "cash_on_delivery" &&
+    cartTotal + shippingFees > MAX_COD_AMOUNT
+  ) {
+    return {
+      success: false,
+      error: `Cash on delivery is limited to ${MAX_COD_AMOUNT} EGP. Please pay online or split your order.`,
     };
   }
 

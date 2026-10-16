@@ -1,3 +1,7 @@
+import {
+  findDeliveryAddress,
+  normalizeEgyptianMobile,
+} from "@/lib/bostaLocations";
 import type {
   orderPayloadT,
   PaymentMethod,
@@ -51,16 +55,38 @@ export function parseCreateOrderForm(
       paymentMethod,
     ) ||
     !customerName.trim() ||
-    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail) ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim()) ||
     !customerPhone.trim() ||
     !city.trim() ||
     !cityID.trim() ||
     !district.trim() ||
     !districtID.trim() ||
     !street.trim() ||
-    !apartment.trim()
+    !apartment.trim() ||
+    customerName.length > 100 ||
+    customerEmail.length > 254 ||
+    street.length > 200 ||
+    apartment.length > 100
   ) {
     return { success: false, error: "Invalid order form data" };
+  }
+
+  const phone = normalizeEgyptianMobile(customerPhone);
+  if (!phone) {
+    return {
+      success: false,
+      error: "Please enter a valid Egyptian mobile number",
+    };
+  }
+
+  // Shipping is priced by city name but booked by ID, so the names are taken
+  // from the IDs rather than trusted from the client.
+  const address = findDeliveryAddress(cityID.trim(), districtID.trim());
+  if (!address) {
+    return {
+      success: false,
+      error: "We don't deliver to the selected area. Please choose another.",
+    };
   }
 
   const secureCartValue = formData.get("secureCart");
@@ -101,11 +127,11 @@ export function parseCreateOrderForm(
       paymentMethod: paymentMethod as PaymentMethod,
       customerName: customerName.trim(),
       customerEmail: customerEmail.trim(),
-      customerPhone: customerPhone.trim(),
-      city: city.trim(),
-      cityID: cityID.trim(),
-      district: district.trim(),
-      districtID: districtID.trim(),
+      customerPhone: phone,
+      city: address.city.cityName,
+      cityID: address.city.cityId,
+      district: address.district.districtName,
+      districtID: address.district.districtId,
       street: street.trim(),
       apartment: apartment.trim(),
       secureCart,

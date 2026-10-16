@@ -4,10 +4,11 @@ import styles from "./error.module.css";
 
 interface ErrorProps {
   error?: Error & { digest?: string };
-  reset?: () => void;
+  // Re-fetches the failed segment; reset() would only re-render it.
+  retry?: () => void;
 }
 
-export default function Error({ error, reset }: ErrorProps) {
+export default function Error({ error, retry }: ErrorProps) {
   return (
     <div className={styles.wrapper}>
       <div className={styles.card}>
@@ -35,8 +36,8 @@ export default function Error({ error, reset }: ErrorProps) {
         ) : null}
 
         <div className={styles.actions}>
-          {reset && (
-            <button onClick={reset} className={styles.btnPrimary}>
+          {retry && (
+            <button onClick={() => retry()} className={styles.btnPrimary}>
               <RefreshCcw size={18} />
               Try Again
             </button>

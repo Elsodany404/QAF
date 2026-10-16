@@ -1,8 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import styles from "./FeaturedSection.module.css";
-
-// Keep your existing query/imports here.
 import ProductList from "../ProductList/ProductList";
 import { Suspense } from "react";
 import ListSkeleton from "../ListSkeleton/ListSkeleton";
