@@ -15,7 +15,12 @@ export const auth = betterAuth({
   // Every auth link (email verification, password reset) is built from
   // NEXT_PUBLIC_SITE_URL, and only that origin may call /api/auth.
   baseURL: getSiteUrl(),
-  trustedOrigins: [getSiteUrl()],
+  // Dev also accepts 127.0.0.1 and the LAN address phones use (see
+  // allowedDevOrigins in next.config.ts).
+  trustedOrigins:
+    process.env.NODE_ENV === "development"
+      ? [getSiteUrl(), "http://127.0.0.1:3000", "http://192.168.1.11:3000"]
+      : [getSiteUrl()],
   user: {
     additionalFields: {
       role: {

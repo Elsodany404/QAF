@@ -4,3 +4,9 @@
   background: var(--cream-50);
 }
 
+/* At least a full screen tall, so the footer stays below the fold while the
+   page content is loading, redirecting (sign in / sign out) or empty. */
+.main {
+  min-height: 100vh;
+  min-height: 100dvh;
+}

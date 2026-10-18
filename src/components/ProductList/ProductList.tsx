@@ -28,9 +28,11 @@ async function ProductList({
     // A short featured list is centred rather than left with empty columns.
     <div className={isFeatured ? "productGridCentered" : "productGrid"}>
       {dataItems.map((item, index) => (
-        <div key={item.product.id}>
-          <ProductCard dataItem={item} eager={index < EAGER_CARDS} />
-        </div>
+        <ProductCard
+          key={item.product.id}
+          dataItem={item}
+          eager={index < EAGER_CARDS}
+        />
       ))}
     </div>
   );

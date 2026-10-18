@@ -30,6 +30,9 @@ export default function ProductCard({ dataItem, eager = false }: ProductCardProp
   const [imageLoading, setImageLoading] = useState(true);
   const [chosen, setChosen] = useState<Record<number, OptionValue>>({});
   const { product, options } = dataItem;
+  const cardOptions = options.filter((option) =>
+    CARD_OPTIONS.includes(option.name),
+  );
 
   const selectedValues = options
     .map((option) => chosen[option.id] ?? option.defaultValue)
@@ -113,14 +116,13 @@ export default function ProductCard({ dataItem, eager = false }: ProductCardProp
           </Link>
         </h3>
 
-        {options
-          .filter((option) => CARD_OPTIONS.includes(option.name))
-          .map((option) => {
+        <div className={styles.options}>
+          {cardOptions.map((option) => {
             const active = chosen[option.id] ?? option.defaultValue;
             return (
               <div
                 key={option.id}
-                className={styles.weightRow}
+                className={`${styles.weightRow} ${cardOptions.length === 1 ? styles.weightRowSingle : ""}`}
                 role="group"
                 aria-label={option.name}
               >
@@ -142,6 +144,7 @@ export default function ProductCard({ dataItem, eager = false }: ProductCardProp
               </div>
             );
           })}
+        </div>
 
         <div className={styles.footer}>
           <div className={styles.priceWrap}>

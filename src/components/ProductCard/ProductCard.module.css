@@ -2,7 +2,6 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  height: 100%;
   overflow: hidden;
   border: 1px solid var(--cream-100);
   border-radius: 1.5rem;
@@ -132,6 +131,23 @@
   padding: 1.25rem 1.4rem 1.4rem;
 }
 
+/* On the menu grid each card spans four of the grid's rows (photo, title,
+   options, footer) and shares them with the cards beside it, so titles,
+   option lists and footers line up across the row. */
+:global(.productGrid) > .card {
+  display: grid;
+  grid-row: span 4;
+  grid-template-rows: subgrid;
+  row-gap: 0;
+}
+
+:global(.productGrid) > .card .content {
+  display: grid;
+  grid-row: span 3;
+  grid-template-rows: subgrid;
+  row-gap: 0;
+}
+
 .title {
   margin-bottom: 1rem;
   font-family: var(--font-display);
@@ -168,6 +184,13 @@
 .titleLink:focus-visible::after {
   outline: 3px solid var(--gold-400);
   outline-offset: -3px;
+}
+
+/* Takes the height down to the footer (the row's height on the menu grid). */
+.options {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
 }
 
 .weightRow,
@@ -209,6 +232,18 @@
   opacity: 0.45;
   text-decoration: line-through;
   cursor: not-allowed;
+}
+
+/* A card with only one option list shows it two per line at full width,
+   so it takes as many lines as a card with Size + Roast, and spreads those
+   lines over the height so the last one ends level with that card's. */
+.weightRowSingle {
+  flex-grow: 1;
+  align-content: space-between;
+}
+
+.weightRowSingle .weightButton {
+  flex: 1 1 calc(50% - 0.5rem);
 }
 
 .footer {
@@ -418,5 +453,17 @@
 
   .weightButton {
     flex-basis: 40%;
+  }
+
+  /* Size + Roast take four lines here, so a lone list goes one per line. */
+  .weightRowSingle .weightButton {
+    flex-basis: 100%;
+  }
+}
+
+/* One card per row leaves nothing to line up with: back to two per line. */
+@media (max-width: 350px) {
+  .weightRowSingle .weightButton {
+    flex-basis: calc(50% - 0.5rem);
   }
 }

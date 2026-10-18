@@ -28,6 +28,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Dev only: lets phones on the LAN load the dev server's scripts via the
+  // machine's network address, otherwise the page never becomes interactive.
+  allowedDevOrigins: ["192.168.1.11"],
   experimental: {
     serverActions: { allowedOrigins: serverActionOrigins() },
     // Required by forbidden() in the admin pages.
