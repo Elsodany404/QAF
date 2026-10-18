@@ -37,12 +37,28 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuPathname, setMenuPathname] = useState(pathname);
+  const [instant, setInstant] = useState(false);
 
-  // Any navigation (a link, the logo, the back button) closes the menu.
+  // Any navigation (a link, the logo, the back button) closes the menu and
+  // swaps the bar's look without the scroll fade.
   if (menuPathname !== pathname) {
     setMenuPathname(pathname);
     setMobileOpen(false);
+    setInstant(true);
   }
+
+  useEffect(() => {
+    if (!instant) return;
+    // Two frames so the new background is painted before the fade comes back.
+    let inner = 0;
+    const outer = requestAnimationFrame(() => {
+      inner = requestAnimationFrame(() => setInstant(false));
+    });
+    return () => {
+      cancelAnimationFrame(outer);
+      cancelAnimationFrame(inner);
+    };
+  }, [instant]);
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 40);
@@ -72,7 +88,9 @@ export default function Navbar() {
   const transparentNavBar = pathname === "/";
   const navbarClass = `${styles.nav} ${
     scrolled || mobileOpen ? styles.navScrolled : styles.navTransparent
-  } ${!transparentNavBar ? styles["contrast-navbar"] : ""}`;
+  } ${!transparentNavBar ? styles["contrast-navbar"] : ""} ${
+    instant ? styles.navInstant : ""
+  }`;
 
   return (
     <nav className={navbarClass} aria-label="Main">

@@ -17,6 +17,12 @@
      Navbar States
      ========================= */
 
+  /* Set for one frame after a route change: the fade is for scrolling, so
+     arriving on the home page shouldn't fade out of the espresso bar. */
+  &.navInstant {
+    transition: none;
+  }
+
   &.navTransparent {
     background-color: transparent;
 
