@@ -30,7 +30,10 @@ function isActive(pathname: string, href: string) {
 }
 
 export default function Navbar() {
-  const pathname = usePathname();
+  // Vercel's ISR re-render of the home page reports "/index", which would
+  // bake the solid bar into the cached HTML.
+  const rawPathname = usePathname();
+  const pathname = rawPathname === "/index" ? "/" : rawPathname;
   const router = useRouter();
   const { totalItems, openCart } = useCart();
   const { data: session, isPending, refetch } = useSession();
