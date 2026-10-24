@@ -325,3 +325,23 @@
   height: 1rem;
   flex-shrink: 0;
 }
+
+/* Refund the Bosta courier pays the customer for an approved return. */
+.refundField {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--charcoal-600);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.refundInput {
+  width: 7rem;
+  min-height: 2.4rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--cream-200);
+  border-radius: 0.65rem;
+  background: white;
+  font: inherit;
+}

@@ -36,7 +36,14 @@ const statusOptions = Object.keys(DISPLAY_STATUS_META) as OrderDisplayStatus[];
 /** Orders the admin has to do something about. */
 function needsAction(order: OrderQuery) {
   const status = getDisplayStatus(order);
-  if (status === "refund_due" || status === "exception") return true;
+  if (
+    status === "refund_due" ||
+    status === "exception" ||
+    status === "return_requested" ||
+    status === "return_issue"
+  ) {
+    return true;
+  }
   // Ready to ship but no Bosta shipment yet (e.g. the courier API failed).
   return (
     status === "processing" &&
@@ -85,6 +92,7 @@ export default function Dashboard() {
         order.customerEmail.toLowerCase().includes(q) ||
         order.customerPhone.toLowerCase().includes(q) ||
         (order.bostaTrackingNumber ?? "").toLowerCase().includes(q) ||
+        (order.bostaReturnTrackingNumber ?? "").toLowerCase().includes(q) ||
         (order.paymobTransactionID ?? "").toLowerCase().includes(q);
 
       return matchesStatus && matchesSearch;

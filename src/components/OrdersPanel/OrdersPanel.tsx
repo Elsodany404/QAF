@@ -26,22 +26,30 @@ import { cancelOrder } from "@/actions/order/cancelOrder";
 import { createDelivery } from "@/actions/shipping/createDelivery";
 import { cancelDelivery } from "@/actions/shipping/cancelDelivery";
 import { createRefund } from "@/actions/payment/createRefund";
+import { approveReturn } from "@/actions/shipping/approveReturn";
+import { rejectReturn } from "@/actions/shipping/rejectReturn";
 import {
+  bostaTrackingUrl,
   canCancelOrder,
   canRefundOrder,
+  canReviewReturn,
   CANCELLABLE_SHIPPING_STATUSES,
   DISPLAY_STATUS_META,
   formatOrderNumber,
   getDisplayStatus,
+  hasRefundablePayment,
   isOnlinePayment,
   MANUAL_PAYMENT_STATUSES,
   normalizePaymentStatus,
+  normalizeReturnStatus,
   normalizeShippingStatus,
   orderTrackingUrl,
   PAYMENT_STATUS_LABELS,
+  RETURN_STATUS_LABELS,
   SHIPPING_STATUS_LABELS,
   SHIPPING_STATUSES,
   type PaymentStatus,
+  type ReturnStatus,
   type ShippingStatus,
   type StatusTone,
 } from "@/lib/orderStatus";
@@ -66,6 +74,13 @@ function shippingTone(status: ShippingStatus): StatusTone {
     return "danger";
   if (status === "processing") return "pending";
   return "info";
+}
+
+function returnTone(status: ReturnStatus): StatusTone {
+  if (status === "returned" || status === "picked_up") return "success";
+  if (status === "rejected" || status === "pickup_failed") return "danger";
+  if (status === "pickup_scheduled") return "info";
+  return "pending";
 }
 
 function paymentLabel(method?: string | null) {
@@ -104,6 +119,8 @@ function OrdersPanel({ orders }: { orders: OrderQuery[] }) {
   const queryClient = useQueryClient();
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<Record<number, Feedback | null>>({});
+  // Refund typed in for each order's return; starts at the order total.
+  const [refundDrafts, setRefundDrafts] = useState<Record<number, string>>({});
 
   const setOrderFeedback = (id: number, fb: Feedback | null) =>
     setFeedback((prev) => ({ ...prev, [id]: fb }));
@@ -178,6 +195,11 @@ function OrdersPanel({ orders }: { orders: OrderQuery[] }) {
           CANCELLABLE_SHIPPING_STATUSES.includes(shippingStatus);
         const canCancel = canCancelOrder(order);
         const canRefund = canRefundOrder(order);
+        const returnStatus = normalizeReturnStatus(order.returnStatus);
+        const canReview = canReviewReturn(order);
+        const refundDraft =
+          refundDrafts[order.id] ??
+          String(order.refundAmount ?? Math.round(order.totalPrice));
 
         return (
           <article key={order.id} className={styles.orderCard}>
@@ -304,6 +326,50 @@ function OrdersPanel({ orders }: { orders: OrderQuery[] }) {
                       </a>
                     )}
                   </div>
+
+                  {/* Return (Bosta pickup with a cash refund) */}
+                  {returnStatus && (
+                    <div className={styles.detailBlock}>
+                      <p className={styles.detailLabel}>Return</p>
+                      <span
+                        className={`${styles.badge} ${toneClass[returnTone(returnStatus)]}`}
+                      >
+                        {RETURN_STATUS_LABELS[returnStatus]}
+                      </span>
+                      {order.returnReason && (
+                        <p className={styles.detailValue}>
+                          &ldquo;{order.returnReason}&rdquo;
+                        </p>
+                      )}
+                      {order.returnRequestedAt && (
+                        <p className={styles.detailMuted}>
+                          Requested{" "}
+                          {new Date(order.returnRequestedAt).toLocaleString(
+                            "en-GB",
+                            { dateStyle: "medium", timeStyle: "short" },
+                          )}
+                        </p>
+                      )}
+                      {order.refundAmount != null && (
+                        <p className={styles.detailMuted}>
+                          Cash refund {formatCurrency(order.refundAmount)}
+                        </p>
+                      )}
+                      {order.bostaReturnTrackingNumber && (
+                        <a
+                          href={bostaTrackingUrl(
+                            order.bostaReturnTrackingNumber,
+                          )}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={styles.externalLink}
+                        >
+                          Track return {order.bostaReturnTrackingNumber}
+                          <ExternalLink />
+                        </a>
+                      )}
+                    </div>
+                  )}
 
                   {/* Manual overrides */}
                   <div className={styles.detailBlock}>
@@ -439,6 +505,66 @@ function OrdersPanel({ orders }: { orders: OrderQuery[] }) {
                     </button>
                   )}
 
+                  {canReview && (
+                    <>
+                      <label className={styles.refundField}>
+                        Cash refund (EGP)
+                        <input
+                          type="number"
+                          min="1"
+                          max={Math.round(order.totalPrice)}
+                          step="1"
+                          value={refundDraft}
+                          onChange={(e) =>
+                            setRefundDrafts((prev) => ({
+                              ...prev,
+                              [order.id]: e.target.value,
+                            }))
+                          }
+                          className={styles.refundInput}
+                          disabled={isBusy}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        className={styles.actionBtnPrimary}
+                        disabled={isBusy}
+                        onClick={() => {
+                          const refund = Number(refundDraft);
+                          runAction(
+                            {
+                              orderID: order.id,
+                              run: () => approveReturn(order.id, refund),
+                              successMessage: "Return pickup booked",
+                            },
+                            `Approve the return of ${orderNumber}?\n\nBosta will collect the items from ${order.customerName} and the courier will pay them ${formatCurrency(refund)} in cash.`,
+                          );
+                        }}
+                      >
+                        <RotateCcw />
+                        Approve &amp; book Bosta pickup
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.actionBtnSecondary}
+                        disabled={isBusy}
+                        onClick={() =>
+                          runAction(
+                            {
+                              orderID: order.id,
+                              run: () => rejectReturn(order.id),
+                              successMessage: "Return declined",
+                            },
+                            `Decline the return of ${orderNumber}?`,
+                          )
+                        }
+                      >
+                        <XCircle />
+                        Decline return
+                      </button>
+                    </>
+                  )}
+
                   {canCancel && (
                     <button
                       type="button"
@@ -452,7 +578,9 @@ function OrdersPanel({ orders }: { orders: OrderQuery[] }) {
                             successMessage: "Order cancelled",
                           },
                           `Cancel order ${orderNumber}? Any Bosta shipment will be terminated${
-                            canRefund ? " and the payment refunded" : ""
+                            hasRefundablePayment(order)
+                              ? " and the payment refunded"
+                              : ""
                           }.`,
                         )
                       }

@@ -1,20 +1,64 @@
+import nodemailer from "nodemailer";
 import { Resend } from "resend";
 
 /*
  * Server-only transactional email. Every send is best-effort: failures are
  * logged and reported to the caller, never thrown, so an email outage cannot
  * break checkout, payments or sign-in.
+ *
+ * Two senders, picked by which variables are set:
+ *   - SMTP (SMTP_HOST, SMTP_USER, SMTP_PASS; optional SMTP_PORT, SMTP_FROM):
+ *     any mailbox with SMTP access, e.g. a Gmail account with an app
+ *     password. It delivers to any address without verifying a domain, so
+ *     it's what test builds use. It wins when configured.
+ *   - Resend (RESEND_API_KEY, RESEND_FROM_EMAIL): only emails other people
+ *     once the sending domain is verified in Resend.
  */
 
-/** The shop's inbox: contact-form messages and newsletter sign-ups land here. */
+/** The shop's inbox: contact-form messages and return requests land here. */
 export const SHOP_EMAIL = "sales@qafcoffee.store";
 
-let client: Resend | null = null;
+/** Sends one message; throws if the provider refuses it. */
+type Sender = (message: EmailMessage) => Promise<void>;
 
-function getClient() {
-  if (!process.env.RESEND_API_KEY) return null;
-  client ??= new Resend(process.env.RESEND_API_KEY);
-  return client;
+function smtpSender(): Sender | null {
+  const host = process.env.SMTP_HOST?.trim();
+  const user = process.env.SMTP_USER?.trim();
+  const pass = process.env.SMTP_PASS;
+  if (!host || !user || !pass) return null;
+
+  const port = Number(process.env.SMTP_PORT) || 465;
+  // Gmail and most providers only send as the signed-in mailbox.
+  const from = process.env.SMTP_FROM?.trim() || user;
+  const transporter = nodemailer.createTransport({
+    host,
+    port,
+    // 465 speaks TLS from the start; 587 upgrades with STARTTLS.
+    secure: port === 465,
+    auth: { user, pass },
+    // A slow mail server must not hold up checkout or a webhook for minutes.
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 20_000,
+  });
+
+  return async (message) => {
+    await transporter.sendMail({ from, ...message });
+  };
+}
+
+let resendClient: Resend | null = null;
+
+function resendSender(): Sender | null {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.RESEND_FROM_EMAIL;
+  if (!apiKey || !from) return null;
+
+  const resend = (resendClient ??= new Resend(apiKey));
+  return async (message) => {
+    const { error } = await resend.emails.send({ from, ...message });
+    if (error) throw new Error(error.message);
+  };
 }
 
 export function escapeHtml(value: string) {
@@ -35,23 +79,23 @@ export type EmailMessage = {
 };
 
 export async function sendEmail(message: EmailMessage): Promise<boolean> {
-  const resend = getClient();
-  const from = process.env.RESEND_FROM_EMAIL;
+  const send = smtpSender() ?? resendSender();
 
-  if (!resend || !from) {
-    console.error("Email not sent: RESEND_API_KEY / RESEND_FROM_EMAIL missing");
+  if (!send) {
+    console.error(
+      "Email not sent: set SMTP_HOST / SMTP_USER / SMTP_PASS, or RESEND_API_KEY / RESEND_FROM_EMAIL",
+    );
     return false;
   }
 
   try {
-    const { error } = await resend.emails.send({ from, ...message });
-    if (error) {
-      console.error(`Email "${message.subject}" failed:`, error.message);
-      return false;
-    }
+    await send(message);
     return true;
   } catch (error) {
-    console.error(`Email "${message.subject}" failed:`, error);
+    console.error(
+      `Email "${message.subject}" failed:`,
+      error instanceof Error ? error.message : error,
+    );
     return false;
   }
 }

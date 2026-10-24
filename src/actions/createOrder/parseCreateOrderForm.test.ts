@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { FULL_NAME_MESSAGE } from "@/lib/fullName";
 import { parseCreateOrderForm } from "./parseCreateOrderForm";
 
 function form(overrides: Record<string, string | null> = {}) {
@@ -44,6 +45,21 @@ describe("parseCreateOrderForm", () => {
     });
   });
 
+  it.each(["Sara", "  Sara  ", "S A", "Sara 2"])(
+    "asks for a first and last name instead of %j",
+    (name) => {
+      expect(parseCreateOrderForm(form({ name }))).toEqual({
+        success: false,
+        error: FULL_NAME_MESSAGE,
+      });
+    },
+  );
+
+  it("accepts Arabic full names", () => {
+    const result = parseCreateOrderForm(form({ name: " سارة أحمد " }));
+    expect(result.success && result.data.customerName).toBe("سارة أحمد");
+  });
+
   it("rejects invalid emails and blank fields", () => {
     expect(parseCreateOrderForm(form({ email: "nope" })).success).toBe(false);
     expect(parseCreateOrderForm(form({ street: "   " })).success).toBe(false);
@@ -51,15 +67,79 @@ describe("parseCreateOrderForm", () => {
   });
 
   it("normalizes the phone and rejects numbers that aren't Egyptian mobiles", () => {
-    const result = parseCreateOrderForm(form({ phone: "010 0000-0000" }));
-    expect(result.success && result.data.customerPhone).toBe("01000000000");
+    // Browser autofill fills in the international +20 form.
+    for (const phone of ["010 0000-0000", "+201000000000", "٠١٠٠٠٠٠٠٠٠٠"]) {
+      const result = parseCreateOrderForm(form({ phone }));
+      expect(result.success && result.data.customerPhone).toBe("01000000000");
+    }
 
-    for (const phone of ["0100000000", "02000000000", "+201000000000"]) {
+    for (const phone of ["0100000000", "02000000000", "+441000000000"]) {
       expect(parseCreateOrderForm(form({ phone }))).toEqual({
         success: false,
         error: "Please enter a valid Egyptian mobile number",
       });
     }
+  });
+
+  it.each([
+    ["name", "x".repeat(101)],
+    ["email", `${"x".repeat(250)}@a.co`],
+    ["street", "x".repeat(201)],
+    ["apartment", "x".repeat(101)],
+    ["name", "   "],
+    ["apartment", ""],
+    ["cityID", " "],
+  ])("rejects a %s that's blank or too long", (field, value) => {
+    expect(parseCreateOrderForm(form({ [field]: value }))).toMatchObject({
+      success: false,
+    });
+  });
+
+  it.each(["paymentMethod", "email", "city", "districtID", "apartment"])(
+    "rejects a form without %s",
+    (field) => {
+      expect(parseCreateOrderForm(form({ [field]: null }))).toEqual({
+        success: false,
+        error: "Invalid order form data",
+      });
+    },
+  );
+
+  it("rejects fields sent as files instead of text", () => {
+    const data = form();
+    data.set("name", new Blob(["Sara"]));
+    expect(parseCreateOrderForm(data)).toMatchObject({ success: false });
+  });
+
+  it("rejects a cart that isn't a list", () => {
+    expect(
+      parseCreateOrderForm(form({ secureCart: '{"productID":1}' })),
+    ).toMatchObject({ error: "Invalid cart structure" });
+    expect(parseCreateOrderForm(form({ secureCart: "null" }))).toMatchObject({
+      error: "Invalid cart structure",
+    });
+  });
+
+  describe("expected total", () => {
+    it("is optional", () => {
+      const result = parseCreateOrderForm(form());
+      expect(result.success && result.data.expectedTotal).toBeUndefined();
+    });
+
+    it("is read as a number", () => {
+      const result = parseCreateOrderForm(form({ expectedTotal: "984.5" }));
+      expect(result.success && result.data.expectedTotal).toBe(984.5);
+    });
+
+    it.each(["", " ", "abc", "-1", "Infinity", "1e400"])(
+      "rejects %j",
+      (expectedTotal) => {
+        expect(parseCreateOrderForm(form({ expectedTotal }))).toEqual({
+          success: false,
+          error: "Invalid order form data",
+        });
+      },
+    );
   });
 
   it("takes city and district names from the IDs, not from the client", () => {

@@ -2,16 +2,21 @@
 
 import { useEffect } from "react";
 import { useCart } from "@/context/CartContext";
+import { claimCartClear } from "./clearCartOnce";
 
-export default function ClearCart() {
-  const { clearCart, cart } = useCart();
+/**
+ * Empties the cart the order was placed with. Only the first time this
+ * order's confirmation is shown: opening it again (Back button, Paymob
+ * sending the customer back, an old link) must not wipe a new cart.
+ */
+export default function ClearCart({ orderID }: { orderID: number }) {
+  const { clearCart, cartLoaded } = useCart();
 
-  // Clear the cart when the component mounts
   useEffect(() => {
-    if (cart.length > 0) {
+    if (cartLoaded && claimCartClear(orderID)) {
       clearCart();
     }
-  }, [cart, clearCart]);
+  }, [cartLoaded, clearCart, orderID]);
 
   return null;
 }

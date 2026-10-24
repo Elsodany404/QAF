@@ -3,22 +3,19 @@ import { getBostaFees, MAX_COD_AMOUNT } from "@/services/Bosta";
 
 import { buildServerCart } from "./buildServerCart";
 import { calculateCartTotal } from "./calculateCartTotal";
+import type { CreateOrderInput } from "./parseCreateOrderForm";
 import { processOrderPayment } from "./processOrderPayment";
-import type {
-  orderPayloadT,
-  PaymentMethod,
-  SecureCart,
-} from "@/types/customTypes";
 
 type CreateOrderParams = {
   customerID: string;
-  input: Omit<
-    orderPayloadT,
-    "cart" | "customerID" | "shippingFees" | "paymentMethod"
-  > & {
-    paymentMethod: PaymentMethod;
-    secureCart: SecureCart;
-  };
+  input: CreateOrderInput;
+};
+
+export type CreateOrderFailure = {
+  success: false;
+  error: string;
+  /** "price_changed": the cart must be re-priced before ordering again. */
+  code?: "price_changed";
 };
 
 type CreateOrderResult =
@@ -26,10 +23,7 @@ type CreateOrderResult =
       success: true;
       redirectUrl: string;
     }
-  | {
-      success: false;
-      error: string;
-    };
+  | CreateOrderFailure;
 
 export async function createOrder({
   customerID,
@@ -91,6 +85,22 @@ export async function createOrder({
     return {
       success: false,
       error: "Invalid shipping fee",
+    };
+  }
+
+  // Never charge something other than the total the customer agreed to,
+  // e.g. when a price changed after the item went into their cart.
+  if (
+    input.expectedTotal !== undefined &&
+    // Compared in piastres so floating-point noise can't cause a mismatch.
+    Math.round(input.expectedTotal * 100) !==
+      Math.round((cartTotal + shippingFees) * 100)
+  ) {
+    return {
+      success: false,
+      error:
+        "Prices changed since you added these items. Please check the new total and place your order again.",
+      code: "price_changed",
     };
   }
 

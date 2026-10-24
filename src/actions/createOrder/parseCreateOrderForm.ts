@@ -2,21 +2,25 @@ import {
   findDeliveryAddress,
   normalizeEgyptianMobile,
 } from "@/lib/bostaLocations";
+import { FULL_NAME_MESSAGE, isFullName } from "@/lib/fullName";
 import type {
   orderPayloadT,
   PaymentMethod,
   SecureCart,
 } from "@/types/customTypes";
 
+export type CreateOrderInput = Omit<
+  orderPayloadT,
+  "cart" | "customerID" | "shippingFees" | "paymentMethod"
+> & {
+  paymentMethod: PaymentMethod;
+  secureCart: SecureCart;
+  /** The total (items + shipping) the customer was shown, if sent. */
+  expectedTotal?: number;
+};
+
 type ParseCreateOrderFormResult =
-  | {
-      success: true;
-      data: Omit<
-        orderPayloadT,
-        "cart" | "customerID" | "shippingFees" | "paymentMethod"
-      > & { paymentMethod: PaymentMethod; secureCart: SecureCart };
-    }
-  | { success: false; error: string };
+  { success: true; data: CreateOrderInput } | { success: false; error: string };
 
 export function parseCreateOrderForm(
   formData: FormData,
@@ -71,6 +75,11 @@ export function parseCreateOrderForm(
     return { success: false, error: "Invalid order form data" };
   }
 
+  // The checkout form checks this too; the server never trusts it.
+  if (!isFullName(customerName)) {
+    return { success: false, error: FULL_NAME_MESSAGE };
+  }
+
   const phone = normalizeEgyptianMobile(customerPhone);
   if (!phone) {
     return {
@@ -121,6 +130,19 @@ export function parseCreateOrderForm(
     };
   }
 
+  // Optional: older checkout pages didn't send it.
+  const expectedTotalValue = formData.get("expectedTotal");
+  let expectedTotal: number | undefined;
+  if (expectedTotalValue !== null) {
+    expectedTotal =
+      typeof expectedTotalValue === "string" && expectedTotalValue.trim()
+        ? Number(expectedTotalValue)
+        : NaN;
+    if (!Number.isFinite(expectedTotal) || expectedTotal < 0) {
+      return { success: false, error: "Invalid order form data" };
+    }
+  }
+
   return {
     success: true,
     data: {
@@ -135,6 +157,7 @@ export function parseCreateOrderForm(
       street: street.trim(),
       apartment: apartment.trim(),
       secureCart,
+      expectedTotal,
     },
   };
 }

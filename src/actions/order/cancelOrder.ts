@@ -6,7 +6,7 @@ import { errorMessage, isValidOrderID } from "@/lib/actionHelpers";
 import { getCurrentSession } from "@/lib/adminAccess";
 import {
   canCancelOrder,
-  canRefundOrder,
+  hasRefundablePayment,
   normalizeShippingStatus,
 } from "@/lib/orderStatus";
 import { terminateBostaDelivery } from "@/services/Bosta";
@@ -86,7 +86,8 @@ export async function cancelOrder(orderID: number): Promise<ActionReturnType> {
     }
 
     let message = "Order cancelled";
-    if (canRefundOrder(order)) {
+    // `order` is the row as it was before cancelling.
+    if (hasRefundablePayment(order)) {
       try {
         await refundPaymobOrder(orderID);
         message = "Order cancelled and your payment has been refunded";

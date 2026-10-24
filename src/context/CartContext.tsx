@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useCallback,
+  useRef,
   useState,
 } from "react";
 
@@ -19,7 +20,16 @@ import type {
   PaymentMethod,
 } from "../types/customTypes";
 
+import { refreshCart } from "@/actions/cart/refreshCart";
 import useShippingFees from "@/hooks/useShippingFees";
+import {
+  addToCart,
+  applyCartRefresh,
+  cartTotals,
+  changeQuantity,
+  restoreCart,
+  toSecureCart,
+} from "@/utils/cart";
 import { MAX_CART_LINES, MAX_QUANTITY_PER_ITEM } from "@/utils/cartLimits";
 
 const cartContext = createContext<CartContextT | undefined>(undefined);
@@ -41,28 +51,18 @@ export function announceAddToCart(result: AddItemResult, productName: string) {
 
 const CART_STORAGE_KEY = "cart";
 
-/**
- * Carts are saved in the browser, possibly by an older version of the site.
- * Entries that don't match the current shape would crash the cart UI.
- */
-function isCartItem(value: unknown): value is Item {
-  if (typeof value !== "object" || value === null) return false;
-  const item = value as Partial<Item>;
-  return (
-    typeof item.itemID === "string" &&
-    typeof item.product?.id === "number" &&
-    typeof item.product.name === "string" &&
-    typeof item.product.imageUrl === "string" &&
-    Array.isArray(item.options) &&
-    item.options.every(
-      (option) =>
-        typeof option?.id === "number" && typeof option.optionID === "number",
-    ) &&
-    typeof item.quantity === "number" &&
-    Number.isInteger(item.quantity) &&
-    item.quantity > 0 &&
-    Number.isFinite(item.itemPrice)
-  );
+/** Toasts for lines a refresh removed or re-priced. */
+function announceCartRefresh(removed: Item[], repriced: Item[]) {
+  for (const item of removed) {
+    toast.error(
+      `${item.product.name} can no longer be ordered with the options you chose, so it was removed from your cart.`,
+    );
+  }
+  if (repriced.length > 0) {
+    toast(
+      "Some prices changed since you added these items. Your cart shows the current prices.",
+    );
+  }
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
@@ -75,20 +75,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [paymentMethod, setPaymentMethod] =
     useState<PaymentMethod>("cash_on_delivery");
 
+  // The refresh reads the latest cart without re-subscribing to it.
+  const cartRef = useRef(cart);
+  useEffect(() => {
+    cartRef.current = cart;
+  }, [cart]);
+
   // Load cart from localStorage when the provider mounts
   useEffect(() => {
     try {
       const savedCart = localStorage.getItem(CART_STORAGE_KEY);
 
       if (savedCart) {
-        const parsedCart: unknown = JSON.parse(savedCart);
-
-        if (Array.isArray(parsedCart)) {
-          // localStorage only exists after mount; reading it during render
-          // would make the server and client HTML differ.
-          // eslint-disable-next-line react-hooks/set-state-in-effect
-          setCart(parsedCart.filter(isCartItem).slice(0, MAX_CART_LINES));
-        }
+        // localStorage only exists after mount; reading it during render
+        // would make the server and client HTML differ.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setCart(restoreCart(JSON.parse(savedCart)));
       }
     } catch (error) {
       console.error("Failed to load cart from localStorage:", error);
@@ -98,6 +100,29 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setCartLoaded(true);
     }
   }, []);
+
+  /**
+   * Re-prices the cart with today's products. A saved cart keeps the prices
+   * from when each item was added, and checkout would otherwise show a total
+   * the server no longer charges.
+   */
+  const refreshCartPrices = useCallback(async () => {
+    const sent = cartRef.current;
+    if (sent.length === 0) return;
+
+    const fresh = await refreshCart(toSecureCart(sent)).catch(() => null);
+    if (!fresh) return;
+
+    // Applied to the cart as it is now: items may have changed meanwhile.
+    setCart((current) => applyCartRefresh(current, sent, fresh).cart);
+    const { removed, repriced } = applyCartRefresh(sent, sent, fresh);
+    announceCartRefresh(removed, repriced);
+  }, []);
+
+  // Once per visit, as soon as the saved cart is loaded.
+  useEffect(() => {
+    if (cartLoaded) void refreshCartPrices();
+  }, [cartLoaded, refreshCartPrices]);
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
@@ -110,14 +135,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [cart, cartLoaded]);
 
-  // Total quantity of all products
-  const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
-
-  // Total price before shipping
-  const cartPrice = cart.reduce(
-    (total, item) => total + item.itemPrice * item.quantity,
-    0,
-  );
+  const { totalItems, cartPrice } = cartTotals(cart);
 
   const {
     shippingFees,
@@ -132,34 +150,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   /** Adds one unit. The result says whether it was added or why not. */
   function addItem(item: Item): AddItemResult {
-    const existing = cart.find((i) => i.itemID === item.itemID);
-    if (existing && existing.quantity >= MAX_QUANTITY_PER_ITEM) {
-      return "max_quantity";
+    const { result } = addToCart(cart, item);
+    if (result === "added") {
+      setCart((prevCart) => addToCart(prevCart, item).cart);
     }
-    if (!existing && cart.length >= MAX_CART_LINES) {
-      return "cart_full";
-    }
-
-    setCart((prevCart) => {
-      const existingItem = prevCart.find((i) => i.itemID === item.itemID);
-
-      // Product already exists → increase quantity
-      if (existingItem) {
-        return prevCart.map((i) =>
-          i.itemID === item.itemID
-            ? {
-                ...i,
-                quantity: Math.min(i.quantity + 1, MAX_QUANTITY_PER_ITEM),
-              }
-            : i,
-        );
-      }
-
-      // Product doesn't exist → add it
-      if (prevCart.length >= MAX_CART_LINES) return prevCart;
-      return [...prevCart, item];
-    });
-    return "added";
+    return result;
   }
 
   function removeItem(itemID: string) {
@@ -167,31 +162,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }
 
   function increaseQuantity(itemID: string) {
-    setCart((prevCart) =>
-      prevCart.map((item) =>
-        item.itemID === itemID
-          ? {
-              ...item,
-              quantity: Math.min(item.quantity + 1, MAX_QUANTITY_PER_ITEM),
-            }
-          : item,
-      ),
-    );
+    setCart((prevCart) => changeQuantity(prevCart, itemID, 1));
   }
 
   function decreaseQuantity(itemID: string) {
-    setCart((prevCart) =>
-      prevCart
-        .map((item) =>
-          item.itemID === itemID
-            ? {
-                ...item,
-                quantity: item.quantity - 1,
-              }
-            : item,
-        )
-        .filter((item) => item.quantity > 0),
-    );
+    setCart((prevCart) => changeQuantity(prevCart, itemID, -1));
   }
 
   const clearCart = useCallback(() => {
@@ -218,6 +193,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         retryShippingFees,
 
         clearCart,
+        refreshCartPrices,
 
         cart,
         open,

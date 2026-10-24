@@ -13,6 +13,7 @@ import {
   getBostaFees,
   MAX_COD_AMOUNT,
 } from "@/services/Bosta";
+import { ORDERS_DISABLED_MESSAGE, TEST_BUILD } from "@/lib/testBuild";
 import { getOrderWithItems, postOrder } from "@/services/Order";
 import { sendOrderConfirmation } from "@/services/OrderEmails";
 import { createPaymobCheckout } from "@/services/Paymob";
@@ -66,6 +67,9 @@ export async function adminCreateOrder(
   try {
     if (!(await isAdminUser())) {
       return { status: "failed", message: "Not authorized to create orders" };
+    }
+    if (TEST_BUILD) {
+      return { status: "failed", message: ORDERS_DISABLED_MESSAGE };
     }
 
     const customerName = String(payload.customerName ?? "").trim();

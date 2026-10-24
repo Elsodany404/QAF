@@ -104,6 +104,7 @@ describe("refundPaymobOrder", () => {
     totalPrice: 460,
     paymentStatus: "paid",
     paymobTransactionID: "tx-1",
+    shippingStatus: "cancelled",
   };
 
   it("claims the order, refunds, then marks it refunded", async () => {
@@ -155,9 +156,46 @@ describe("refundPaymobOrder", () => {
     ).toEqual([{ paymentStatus: "refunding" }, { paymentStatus: "paid" }]);
   });
 
-  it("refuses to refund more than the order total", async () => {
-    fake().queue("Order", { data: paidOrder });
-    await expect(refundPaymobOrder(42, 1000)).rejects.toThrow("Refund amount");
+  it.each(["processing", "shipped", "delivered", "returned"])(
+    "only refunds cancelled orders, not %s ones (returns go through Bosta)",
+    async (shippingStatus) => {
+      fake().queue("Order", { data: { ...paidOrder, shippingStatus } });
+
+      await expect(refundPaymobOrder(42)).rejects.toThrow(
+        "Only cancelled orders are refunded through Paymob",
+      );
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(fake().updates("Order")).toHaveLength(0);
+    },
+  );
+
+  it("always refunds the full order total", async () => {
+    fake().queue(
+      "Order",
+      { data: { ...paidOrder, totalPrice: 984.5 } },
+      { data: { id: 42 } },
+      { data: null },
+    );
+    fetchMock.mockResolvedValue(jsonResponse({ success: true }));
+
+    await refundPaymobOrder(42);
+
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).amount_cents).toBe(
+      "98450",
+    );
+  });
+
+  it("leaves the order refunding when Paymob doesn't answer", async () => {
+    fake().queue("Order", { data: paidOrder }, { data: { id: 42 } });
+    fetchMock.mockRejectedValue(new TypeError("fetch failed"));
+
+    await expect(refundPaymobOrder(42)).rejects.toThrow("uncertain");
+    // Not released: a human checks Paymob before anyone refunds again.
+    expect(
+      fake()
+        .updates("Order")
+        .map((u) => u.payload),
+    ).toEqual([{ paymentStatus: "refunding" }]);
   });
 
   it("refuses unpaid orders", async () => {

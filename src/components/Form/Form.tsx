@@ -22,12 +22,10 @@ import {
   districtsByZone,
   normalizeEgyptianMobile,
 } from "@/lib/bostaLocations";
+import { FULL_NAME_MESSAGE, isFullName } from "@/lib/fullName";
 import { isOnlinePayment } from "@/lib/orderStatus";
-import type {
-  FormValues,
-  PaymentOptionsT,
-  SecureCart,
-} from "@/types/customTypes";
+import type { FormValues, PaymentOptionsT } from "@/types/customTypes";
+import { toSecureCart } from "@/utils/cart";
 import { formatCurrency } from "@/utils/helper";
 import styles from "./Form.module.css";
 
@@ -64,6 +62,7 @@ function Form() {
     shippingFeesLoading,
     shippingFeesError,
     retryShippingFees,
+    refreshCartPrices,
     cartLoaded,
   } = useCart();
 
@@ -112,8 +111,13 @@ function Form() {
   useEffect(() => {
     if (orderState && !orderState.success) {
       toast.error(orderState.error);
+      // Show the customer the prices and shipping the server now charges.
+      if (orderState.code === "price_changed") {
+        void refreshCartPrices();
+        retryShippingFees();
+      }
     }
-  }, [orderState]);
+  }, [orderState, refreshCartPrices, retryShippingFees]);
 
   const selectedCity = useWatch({ control, name: "city" });
   const city = DELIVERY_CITIES.find((c) => c.cityName === selectedCity) ?? null;
@@ -140,13 +144,6 @@ function Form() {
       return;
     }
 
-    const secureCart: SecureCart = cart.map((item) => ({
-      productID: item.product.id,
-      optionsIDs: item.options.map((op) => op.optionID),
-      valuesIDs: item.options.map((op) => op.id),
-      quantity: item.quantity,
-    }));
-
     const formData = new FormData();
     formData.append("name", data.name);
     formData.append("email", data.email);
@@ -158,7 +155,9 @@ function Form() {
     formData.append("cityID", city.cityId);
     formData.append("districtID", district.districtId);
     formData.append("paymentMethod", paymentMethod);
-    formData.append("secureCart", JSON.stringify(secureCart));
+    formData.append("secureCart", JSON.stringify(toSecureCart(cart)));
+    // The server refuses the order if its total differs from this one.
+    formData.append("expectedTotal", String(total));
 
     startTransition(() => {
       formAction(formData);
@@ -194,9 +193,9 @@ function Form() {
               placeholder="e.g. Ahmed Hassan"
               maxLength={100}
               {...register("name", {
-                required: "Please enter your full name",
-                validate: (value) =>
-                  value.trim().length > 0 || "Please enter your full name",
+                required: FULL_NAME_MESSAGE,
+                // Checked here so a one-word name never reaches the server.
+                validate: (value) => isFullName(value) || FULL_NAME_MESSAGE,
               })}
             />
           </div>

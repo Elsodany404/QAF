@@ -1,82 +1,11 @@
-"use client";
-
-import { startTransition, useActionState, useEffect, useRef } from "react";
-import { Coffee, Mail, Phone, MapPin, ArrowRight } from "lucide-react";
+import { Coffee, Mail, Phone, MapPin } from "lucide-react";
 import styles from "./Footer.module.css";
 import { SiInstagram, SiFacebook } from "@icons-pack/react-simple-icons";
 import Link from "next/link";
-import subscribeToNewsletter from "@/actions/subscribeToNewsletter";
-import { HONEYPOT_FIELD } from "@/lib/honeypot";
-import type { ActionState } from "@/types/customTypes";
-
-const initialState: ActionState = { status: "idle", message: "" };
 
 export default function Footer() {
-  const [state, formAction, isPending] = useActionState(
-    subscribeToNewsletter,
-    initialState,
-  );
-  const formRef = useRef<HTMLFormElement>(null);
-
-  useEffect(() => {
-    if (state.status === "success") formRef.current?.reset();
-  }, [state]);
-
-  function handleSubscribe(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    startTransition(() => formAction(formData));
-  }
-
   return (
     <footer className={styles.footer}>
-      <div className={styles.newsletterSection}>
-        <div className={styles.newsletterInner}>
-          <div className={styles.newsletterCopy}>
-            <h3 className={styles.title}>Join Our Coffee Community</h3>
-            <p className={styles.description}>
-              Get exclusive blends, brewing tips, and roasting stories
-              delivered to your inbox.
-            </p>
-            <form
-              ref={formRef}
-              className={styles.form}
-              onSubmit={handleSubscribe}
-            >
-              <input
-                type="email"
-                name="email"
-                placeholder="Enter your email"
-                className={styles.input}
-                aria-label="Your email address"
-                autoComplete="email"
-                maxLength={254}
-                required
-              />
-              <input
-                type="text"
-                name={HONEYPOT_FIELD}
-                className={styles.honeypot}
-                tabIndex={-1}
-                autoComplete="off"
-                aria-hidden="true"
-              />
-              <button
-                type="submit"
-                className={styles.button}
-                aria-label="Join the newsletter"
-                disabled={isPending}
-              >
-                <ArrowRight size={20} aria-hidden="true" />
-              </button>
-            </form>
-            <p className={styles.formMessage} role="status">
-              {state.message}
-            </p>
-          </div>
-        </div>
-      </div>
-
       <div className={styles.mainFooter}>
         <div className={styles.grid}>
           <div>

@@ -4,7 +4,6 @@ import {
   Check,
   Clock3,
   PackageCheck,
-  RotateCcw,
   ShoppingBag,
   Truck,
 } from "lucide-react";
@@ -12,37 +11,70 @@ import styles from "./OrdersList.module.css";
 import Link from "next/link";
 import type { OrderQuery } from "@/types/customTypes";
 import {
+  bostaTrackingUrl,
   canCancelOrder,
   canPayOrder,
-  canRefundOrder,
+  canRequestReturn,
   DISPLAY_STATUS_META,
   formatOrderNumber,
   getDisplayStatus,
   getTrackingStepIndex,
+  hasRefundablePayment,
+  normalizeReturnStatus,
   orderTrackingUrl,
   type OrderDisplayStatus,
   TRACKING_STEPS,
 } from "@/lib/orderStatus";
 import { formatCurrency } from "@/utils/helper";
-import { CancelOrderButton, PayOrderButton } from "./OrderActions";
+import {
+  CancelOrderButton,
+  PayOrderButton,
+  RequestReturnButton,
+} from "./OrderActions";
 
 // Statuses where the tracking bar no longer makes sense.
 const CLOSED_STATUSES: OrderDisplayStatus[] = [
   "cancelled",
   "refund_due",
   "returned",
+  "return_refunded",
 ];
 
-const CUSTOMER_STATUS_NOTE: Partial<Record<OrderDisplayStatus, string>> = {
-  awaiting_payment:
-    "We haven't received your payment yet. Complete it to start preparing your order.",
-  payment_failed:
-    "Your last payment attempt didn't go through. You can try again below.",
-  exception:
-    "There's an issue with your delivery. Our team is on it and will contact you shortly.",
-  refund_due:
-    "Your order was cancelled. Your refund is being processed by our team.",
-};
+// Shown in the warning colour.
+const WARNING_STATUSES: OrderDisplayStatus[] = [
+  "exception",
+  "payment_failed",
+  "return_issue",
+];
+
+/** What the customer should know about where their order stands. */
+function statusNote(order: OrderQuery, status: OrderDisplayStatus) {
+  const refund = formatCurrency(order.refundAmount ?? 0);
+  switch (status) {
+    case "awaiting_payment":
+      return "We haven't received your payment yet. Complete it to start preparing your order.";
+    case "payment_failed":
+      return "Your last payment attempt didn't go through. You can try again below.";
+    case "exception":
+      return "There's an issue with your delivery. Our team is on it and will contact you shortly.";
+    case "refund_due":
+      return "Your order was cancelled. Your refund is being processed by our team.";
+    case "return_requested":
+      return "We've received your return request and will review it shortly. Once it's approved, a Bosta courier will collect the items and refund you in cash.";
+    case "return_scheduled":
+      return `Your return is approved. A Bosta courier will collect the items and pay you ${refund} in cash.`;
+    case "return_refunded":
+      return `The courier collected your return and refunded you ${refund} in cash.`;
+    case "return_issue":
+      return "The courier couldn't collect your return. We'll contact you to arrange a new pickup.";
+    case "delivered":
+      return normalizeReturnStatus(order.returnStatus) === "rejected"
+        ? "Your return request was declined. Please contact us if you have any questions."
+        : null;
+    default:
+      return null;
+  }
+}
 
 // Rendered on the server (UTC): show dates as the customer in Egypt sees them.
 const TIME_ZONE = "Africa/Cairo";
@@ -78,11 +110,6 @@ const ESTIMATE_STATUSES: OrderDisplayStatus[] = [
   "out_for_delivery",
 ];
 
-function returnRequestLink(orderId: number) {
-  const requestText = `Hello Qaf Coffee, I would like to request a return and refund for order ${formatOrderNumber(orderId)}.`;
-  return `https://wa.me/201031200143?text=${encodeURIComponent(requestText)}`;
-}
-
 function badgeClass(status: OrderDisplayStatus) {
   const tone = DISPLAY_STATUS_META[status].tone;
   if (tone === "success") return styles.delivered;
@@ -117,10 +144,10 @@ function OrdersList({ orders }: { orders: OrderQuery[] }) {
         const trackingUrl = orderTrackingUrl(order);
         const isClosed = CLOSED_STATUSES.includes(status);
         const activeStep = getTrackingStepIndex(order);
-        const note = CUSTOMER_STATUS_NOTE[status];
+        const note = statusNote(order, status);
         const showCancel = canCancelOrder(order);
         const showPay = canPayOrder(order);
-        const showReturn = status === "delivered";
+        const showReturn = canRequestReturn(order);
         // Percentage of the connecting line that is filled.
         const progress = (activeStep / (TRACKING_STEPS.length - 1)) * 100;
 
@@ -143,7 +170,7 @@ function OrdersList({ orders }: { orders: OrderQuery[] }) {
             {note && (
               <p
                 className={`${styles.statusNote} ${
-                  status === "exception" || status === "payment_failed"
+                  WARNING_STATUSES.includes(status)
                     ? styles.statusNoteWarning
                     : ""
                 }`}
@@ -240,25 +267,28 @@ function OrdersList({ orders }: { orders: OrderQuery[] }) {
               </a>
             )}
 
+            {order.bostaReturnTrackingNumber && (
+              <a
+                className={styles.trackingLink}
+                href={bostaTrackingUrl(order.bostaReturnTrackingNumber)}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Track return pickup ({order.bostaReturnTrackingNumber}){" "}
+                <ArrowRight aria-hidden="true" />
+              </a>
+            )}
+
             {(showPay || showCancel || showReturn) && (
               <footer className={styles.actions}>
                 {showPay && <PayOrderButton orderID={order.id} />}
                 {showCancel && (
                   <CancelOrderButton
                     orderID={order.id}
-                    willRefund={canRefundOrder(order)}
+                    willRefund={hasRefundablePayment(order)}
                   />
                 )}
-                {showReturn && (
-                  <a
-                    className={styles.returnButton}
-                    href={returnRequestLink(order.id)}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <RotateCcw aria-hidden="true" /> Request a return
-                  </a>
-                )}
+                {showReturn && <RequestReturnButton orderID={order.id} />}
               </footer>
             )}
           </article>

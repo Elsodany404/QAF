@@ -16,12 +16,31 @@ describe("safeRedirectPath", () => {
     "/\\evil.example",
     "javascript:alert(1)",
     "",
-  ])("rejects %s", (value) => {
+    // Browsers drop tabs and newlines, which turns these into "//evil.example".
+    "/\t/evil.example",
+    "/\n/evil.example",
+    "/\r\n/evil.example",
+    "/\\\t\\evil.example",
+    "\t//evil.example",
+    "evil.example",
+  ])("rejects %j", (value) => {
     expect(safeRedirectPath(value)).toBe("/user");
+  });
+
+  it("keeps the query and fragment", () => {
+    expect(safeRedirectPath("/menu?category=espresso#top")).toBe(
+      "/menu?category=espresso#top",
+    );
+  });
+
+  it("returns the path the browser would actually open", () => {
+    expect(safeRedirectPath("/a/../checkout")).toBe("/checkout");
+    expect(safeRedirectPath("/%2F%2Fevil.example")).toBe("/%2F%2Fevil.example");
   });
 
   it("falls back when missing", () => {
     expect(safeRedirectPath(undefined, "/menu")).toBe("/menu");
+    expect(safeRedirectPath(["/checkout"], "/menu")).toBe("/menu");
   });
 });
 

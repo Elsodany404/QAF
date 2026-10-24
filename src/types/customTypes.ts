@@ -102,6 +102,8 @@ export type CartContextT = {
   closeCart: () => void;
   openCart: () => void;
   clearCart: () => void;
+  /** Re-prices the cart with today's products (prices, stock, names). */
+  refreshCartPrices: () => Promise<void>;
   addItem: (item: Item) => AddItemResult;
   removeItem: (itemID: string) => void;
   increaseQuantity: (itemID: string) => void;

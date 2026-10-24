@@ -1,3 +1,4 @@
+import { normalizeShippingStatus } from "@/lib/orderStatus";
 import { siteUrl } from "@/lib/siteUrl";
 import supabaseAdmin from "@/supabase/admin";
 import type { OrderQuery } from "@/types/customTypes";
@@ -131,17 +132,20 @@ export async function createPaymobCheckout(order: OrderQuery): Promise<string> {
 }
 
 /**
- * Refunds a paid Paymob order. The order row is claimed with a
- * "refunding" status first so two concurrent refunds cannot both go through.
- * Defaults to refunding the full order total.
+ * Refunds a cancelled, paid Paymob order in full. Returns of delivered
+ * orders are refunded in cash by Bosta instead (see createBostaReturnPickup).
+ * The order row is claimed with a "refunding" status first so two
+ * concurrent refunds cannot both go through.
  */
-export async function refundPaymobOrder(orderID: number, amount?: number) {
+export async function refundPaymobOrder(orderID: number) {
   const secretKey = process.env.PAYMOB_SECRET_KEY;
   if (!secretKey) throw new Error("Paymob secret key is not configured");
 
   const { data: order, error: orderError } = await supabaseAdmin
     .from("Order")
-    .select("id, totalPrice, paymentStatus, paymobTransactionID")
+    .select(
+      "id, totalPrice, paymentStatus, paymobTransactionID, shippingStatus",
+    )
     .eq("id", orderID)
     .single();
 
@@ -151,10 +155,15 @@ export async function refundPaymobOrder(orderID: number, amount?: number) {
   if (order.paymentStatus !== "paid" || !order.paymobTransactionID) {
     throw new Error("Order has no successful Paymob payment");
   }
+  if (normalizeShippingStatus(order.shippingStatus) !== "cancelled") {
+    throw new Error(
+      "Only cancelled orders are refunded through Paymob. Returns are refunded in cash by Bosta.",
+    );
+  }
 
-  const amountCents = toCents(amount ?? order.totalPrice);
-  if (amountCents <= 0 || amountCents > toCents(order.totalPrice)) {
-    throw new Error("Refund amount must be between 0 and the order total");
+  const amountCents = toCents(order.totalPrice);
+  if (amountCents <= 0) {
+    throw new Error("This order has nothing to refund");
   }
 
   const { data: claimed, error: claimError } = await supabaseAdmin

@@ -8,7 +8,7 @@ accounts, and an admin dashboard for orders.
 - **Better Auth** for accounts (email and password, email verification)
 - **Paymob** for card and mobile-wallet payments
 - **Bosta** for shipping rates, deliveries and pickups
-- **Resend** for transactional email
+- **Resend** or any **SMTP** mailbox (e.g. Gmail) for transactional email
 
 ## Local development
 
@@ -43,8 +43,10 @@ Railway, a VPS with `npm run build && npm start`, ...).
    Paymob callbacks and allowed origins are all built from it.
 2. **Database.** Apply the migrations in `supabase/migrations` to the
    production project (`npx supabase db push`).
-3. **Email.** Verify the sending domain of `RESEND_FROM_EMAIL` in Resend, or
-   verification and order emails will not be delivered.
+3. **Email.** Either verify the sending domain of `RESEND_FROM_EMAIL` in
+   Resend, or set the `SMTP_*` variables to a mailbox (see `.env.example`).
+   Without one of them, verification and order emails are not delivered and
+   nobody can finish signing up.
 4. **Bosta webhook.** In the Bosta dashboard, point the delivery webhook to
    `https://<your-domain>/api/webhooks/bosta` and set its Authorization header
    to the value of `BOSTA_SECRET_KEY`.
@@ -61,6 +63,24 @@ Railway, a VPS with `npm run build && npm start`, ...).
 
    The dashboard is at `/admin/dashboard`.
 
+### Returns
+
+A customer requests a return on a delivered order from their account (with
+a reason); the request emails the shop inbox and appears under "Needs
+action" in the dashboard. Approving it there, with the refund amount, books
+a Bosta customer return pickup: the courier collects the items and pays the
+customer the refund in cash, and the Bosta webhook marks the order refunded
+and then returned. Paymob refunds are only for orders cancelled before they
+shipped. Apply `supabase/migrations/20261024142108_order_returns.sql` first.
+
+### Test build
+
+`TEST_BUILD` in `src/lib/testBuild.ts` is currently `true`. People can sign
+up, verify their email, browse and go through checkout, but no order can be
+created: checkout, admin manual orders and the order insert itself refuse,
+and the checkout and sign-up pages say it's a test build. Set it to `false`
+for the production build.
+
 ### Notes
 
 - Product images must be **public** URLs from this project's Supabase storage
@@ -69,5 +89,5 @@ Railway, a VPS with `npm run build && npm start`, ...).
   signed links, which expire.
 - When running more than one server instance, set
   `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` to the same value on every instance.
-- Pickup dates use the server's clock; setting `TZ=Africa/Cairo` on the host
-  keeps "today" aligned with Egyptian time.
+- Pickup dates are Egyptian calendar days (`Africa/Cairo`) whatever the
+  server's time zone.

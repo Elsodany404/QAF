@@ -16,7 +16,7 @@ const policies = [
     title: "Privacy Policy",
     content: [
       "We collect the name, email, phone number, and delivery address needed to process and deliver orders, plus the account details you choose to create. We use this information for payment confirmation, preparation, delivery, order updates by email, support, and legal requirements. We do not sell customer information.",
-      "Online card payments are handled by our payment provider, Paymob, and card details are never stored by Qaf Coffee. Your name, phone number, and address are shared with our courier, Bosta, only to deliver your order. If you join our newsletter, we keep your email address to send you coffee news and offers, and you can ask us to remove it at any time.",
+      "Online card payments are handled by our payment provider, Paymob, and card details are never stored by Qaf Coffee. Your name, phone number, and address are shared with our courier, Bosta, only to deliver your order.",
       "Signing in uses a cookie to keep your session active for up to 30 days. It is required for your account to work and is not used for advertising.",
       <>
         Privacy questions, or requests to view or delete your data, can be sent
@@ -47,19 +47,22 @@ const policies = [
         no longer be cancelled, but you can request a return.
       </>,
       <>
-        To request a return, contact us on{" "}
+        To request a return, open the delivered order in{" "}
+        <Link href="/user">your account</Link>, tap &ldquo;Request a
+        return&rdquo; and tell us what went wrong. For damaged, incorrect, or
+        materially different orders, please request it within 48 hours of
+        delivery. If you have photos of the problem, send them with your order
+        number on{" "}
         <a
-          href="https://wa.me/201031200143?text=Hello%20Qaf%20Coffee%2C%20I%20would%20like%20to%20request%20a%20return."
+          href="https://wa.me/201031200143?text=Hello%20Qaf%20Coffee%2C%20I%20requested%20a%20return."
           target="_blank"
           rel="noreferrer"
         >
           WhatsApp at +20 103 120 0143
-        </a>{" "}
-        and include your order number and photos when relevant. For damaged,
-        incorrect, or materially different orders, please contact us within 48
-        hours of delivery.
+        </a>
+        .
       </>,
-      "We will check the order and review the return request. If it is approved, we will refund the customer through the original payment method. Cash on delivery orders are refunded by a method we agree on with you.",
+      "We review every return request. If it is approved, a courier from our delivery partner, Bosta, collects the items from your address and refunds you in cash on the spot, however you paid.",
     ],
   },
 ] as const;

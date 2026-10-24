@@ -7,6 +7,7 @@ import type { AdminCreateOrderPayload } from "./createManualOrder";
 
 const mocks = vi.hoisted(() => ({
   fake: null as ReturnType<typeof createFakeSupabase> | null,
+  testBuild: false,
   isAdmin: true,
   getBostaFees: vi.fn(),
   createBostaDelivery: vi.fn(),
@@ -21,6 +22,12 @@ vi.mock("@/supabase/admin", async () => {
 });
 vi.mock("@/lib/adminAccess", () => ({
   isAdminUser: async () => mocks.isAdmin,
+}));
+vi.mock("@/lib/testBuild", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/testBuild")>()),
+  get TEST_BUILD() {
+    return mocks.testBuild;
+  },
 }));
 vi.mock("@/services/Bosta", () => ({
   MAX_COD_AMOUNT: 30000,
@@ -106,6 +113,7 @@ function payload(
 
 beforeEach(() => {
   fake().reset();
+  mocks.testBuild = false;
   mocks.isAdmin = true;
   mocks.getBostaFees.mockReset().mockResolvedValue(85);
   mocks.createBostaDelivery.mockReset().mockResolvedValue({ trackingNumber: "T1" });
@@ -120,6 +128,19 @@ describe("adminCreateOrder", () => {
       status: "failed",
     });
     expect(fake().queries).toHaveLength(0);
+  });
+
+  it("creates no orders in a test build", async () => {
+    mocks.testBuild = true;
+    const { ORDERS_DISABLED_MESSAGE } = await import("@/lib/testBuild");
+
+    expect(await adminCreateOrder(payload())).toEqual({
+      status: "failed",
+      message: ORDERS_DISABLED_MESSAGE,
+    });
+    expect(fake().queries).toHaveLength(0);
+    expect(mocks.getBostaFees).not.toHaveBeenCalled();
+    expect(mocks.createPaymobCheckout).not.toHaveBeenCalled();
   });
 
   it("prices the chosen options on the server and charges Bosta's fee", async () => {
@@ -229,5 +250,90 @@ describe("adminCreateOrder", () => {
       message: "Bosta doesn't deliver there",
     });
     expect(fake().queries).toHaveLength(0);
+  });
+
+  it.each([
+    ["a blank name", { customerName: "   " }],
+    ["a name over 100 characters", { customerName: "x".repeat(101) }],
+    ["an invalid email", { customerEmail: "sara@" }],
+    ["a blank street", { street: " " }],
+    ["an apartment over 100 characters", { apartment: "x".repeat(101) }],
+    ["an unknown payment method", { paymentMethod: "bitcoin" }],
+    ["a negative shipping fee", { shippingFees: -1 }],
+    ["a shipping fee that isn't a number", { shippingFees: Number.NaN }],
+    ["no items", { items: [] }],
+    ["items that aren't a list", { items: "1x espresso" }],
+  ])("rejects %s before touching anything", async (_, overrides) => {
+    const result = await adminCreateOrder(payload(overrides as never));
+
+    expect(result).toEqual({
+      status: "failed",
+      message: "Invalid manual order details",
+    });
+    expect(fake().queries).toHaveLength(0);
+  });
+
+  it("rejects numbers that aren't Egyptian mobiles", async () => {
+    expect(
+      await adminCreateOrder(payload({ customerPhone: "02 2345 6789" })),
+    ).toMatchObject({
+      status: "failed",
+      message: expect.stringContaining("mobile"),
+    });
+  });
+
+  it("accepts the customer's number in international form", async () => {
+    fake().queue("Product", { data: [productRow()] });
+    fake().queue("user", { data: { id: "user-9" } });
+    fake().queue("create_order", { data: 77 });
+
+    await adminCreateOrder(payload({ customerPhone: "+20 10 1234 5678" }));
+
+    const rpc = fake().queries.find((q) => q.operation === "rpc");
+    expect(rpc?.payload).toMatchObject({ p_customer_phone: "01012345678" });
+  });
+
+  it("lets the admin enter shipping when Bosta can't price it", async () => {
+    fake().queue("Product", { data: [productRow()] });
+    fake().queue("user", { data: { id: "user-9" } });
+    mocks.getBostaFees.mockRejectedValue(new Error("Bosta down"));
+
+    const result = await adminCreateOrder(payload());
+
+    expect(result).toMatchObject({
+      status: "failed",
+      message: expect.stringContaining("enter the shipping fee yourself"),
+    });
+    expect(fake().queries.some((q) => q.operation === "rpc")).toBe(false);
+  });
+
+  it("keeps the order and warns when the courier booking fails", async () => {
+    fake().queue("Product", { data: [productRow()] });
+    fake().queue("user", { data: { id: "user-9" } });
+    fake().queue("create_order", { data: 77 });
+    mocks.createBostaDelivery.mockRejectedValue(new Error("Invalid district"));
+
+    expect(await adminCreateOrder(payload())).toEqual({
+      status: "success",
+      orderID: 77,
+      warning: "Order created, but the Bosta delivery failed: Invalid district",
+    });
+  });
+
+  it("keeps the order and warns when the payment link fails", async () => {
+    fake().queue("Product", { data: [productRow()] });
+    fake().queue("user", { data: { id: "user-9" } });
+    fake().queue("create_order", { data: 77 });
+    fake().queue("Order", { data: makeOrder({ id: 77 }) });
+    mocks.createPaymobCheckout.mockRejectedValue(new Error("bad phone"));
+
+    expect(
+      await adminCreateOrder(payload({ paymentMethod: "mobile_wallet" })),
+    ).toEqual({
+      status: "success",
+      orderID: 77,
+      warning: "Order created, but the payment link failed: bad phone",
+    });
+    expect(mocks.sendOrderConfirmation).not.toHaveBeenCalled();
   });
 });

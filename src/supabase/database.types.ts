@@ -133,6 +133,8 @@ export type Database = {
         Row: {
           apartment: string
           bostaOrderID: string | null
+          bostaReturnID: string | null
+          bostaReturnTrackingNumber: string | null
           bostaTrackingNumber: string | null
           bostaTrackingUrl: string | null
           city: string
@@ -149,6 +151,10 @@ export type Database = {
           paymentStatus: string
           paymobOrderID: string | null
           paymobTransactionID: string | null
+          refundAmount: number | null
+          returnReason: string | null
+          returnRequestedAt: string | null
+          returnStatus: string | null
           shippingFees: number
           shippingStatus: string
           street: string
@@ -158,6 +164,8 @@ export type Database = {
         Insert: {
           apartment: string
           bostaOrderID?: string | null
+          bostaReturnID?: string | null
+          bostaReturnTrackingNumber?: string | null
           bostaTrackingNumber?: string | null
           bostaTrackingUrl?: string | null
           city: string
@@ -174,6 +182,10 @@ export type Database = {
           paymentStatus?: string
           paymobOrderID?: string | null
           paymobTransactionID?: string | null
+          refundAmount?: number | null
+          returnReason?: string | null
+          returnRequestedAt?: string | null
+          returnStatus?: string | null
           shippingFees: number
           shippingStatus?: string
           street: string
@@ -183,6 +195,8 @@ export type Database = {
         Update: {
           apartment?: string
           bostaOrderID?: string | null
+          bostaReturnID?: string | null
+          bostaReturnTrackingNumber?: string | null
           bostaTrackingNumber?: string | null
           bostaTrackingUrl?: string | null
           city?: string
@@ -199,6 +213,10 @@ export type Database = {
           paymentStatus?: string
           paymobOrderID?: string | null
           paymobTransactionID?: string | null
+          refundAmount?: number | null
+          returnReason?: string | null
+          returnRequestedAt?: string | null
+          returnStatus?: string | null
           shippingFees?: number
           shippingStatus?: string
           street?: string

@@ -1,4 +1,10 @@
-import type { Cart, DataItem, Item, SecureCart } from "@/types/customTypes";
+import type {
+  Cart,
+  DataItem,
+  Item,
+  SecureCart,
+  SecureItem,
+} from "@/types/customTypes";
 import type { OptionValue } from "@/types/db";
 
 import supabaseAdmin from "@/supabase/admin";
@@ -21,323 +27,253 @@ type BuildServerCartResult =
       error: string;
     };
 
-export async function buildServerCart(
-  secureCart: SecureCart,
-): Promise<BuildServerCartResult> {
-  /*
-   * =========================================================
-   * VALIDATE BASIC CART STRUCTURE
-   * =========================================================
-   */
+type PricedLine =
+  { success: true; item: Item } | { success: false; error: string };
 
-  if (secureCart.length > MAX_CART_LINES) {
-    return { success: false, error: "Too many items in the cart" };
-  }
+const isPositiveInteger = (value: unknown): value is number =>
+  Number.isSafeInteger(value) && (value as number) > 0;
 
-  for (const secureCartItem of secureCart) {
+/**
+ * Structural checks on what the browser sent, before anything touches the
+ * database. Returns the problem, or null when the cart is well formed.
+ */
+function checkCartShape(secureCart: unknown): string | null {
+  if (!Array.isArray(secureCart)) return "Invalid cart item";
+  if (secureCart.length > MAX_CART_LINES) return "Too many items in the cart";
+
+  for (const line of secureCart) {
     if (
-      !secureCartItem ||
-      typeof secureCartItem !== "object" ||
-      !Number.isInteger(secureCartItem.productID) ||
-      !Array.isArray(secureCartItem.optionsIDs) ||
-      !Array.isArray(secureCartItem.valuesIDs) ||
-      !Number.isInteger(secureCartItem.quantity) ||
-      secureCartItem.quantity <= 0 ||
-      secureCartItem.quantity > MAX_QUANTITY_PER_ITEM
+      !line ||
+      typeof line !== "object" ||
+      !isPositiveInteger(line.productID) ||
+      !Array.isArray(line.optionsIDs) ||
+      !Array.isArray(line.valuesIDs) ||
+      !isPositiveInteger(line.quantity) ||
+      line.quantity > MAX_QUANTITY_PER_ITEM
     ) {
-      console.error("failed creating order: invalid cart item");
-
-      return {
-        success: false,
-        error: "Invalid cart item",
-      };
+      return "Invalid cart item";
     }
 
     if (
-      !secureCartItem.optionsIDs.every(
-        (id) => Number.isInteger(id) && id > 0,
-      ) ||
-      !secureCartItem.valuesIDs.every((id) => Number.isInteger(id) && id > 0)
+      !line.optionsIDs.every(isPositiveInteger) ||
+      !line.valuesIDs.every(isPositiveInteger)
     ) {
-      console.error("failed creating order: invalid option or value selection");
-
-      return {
-        success: false,
-        error: "Invalid option or value selection",
-      };
+      return "Invalid option or value selection";
     }
   }
+  return null;
+}
 
-  /*
-   * =========================================================
-   * FETCH PRODUCTS
-   * =========================================================
-   */
+/**
+ * Lines for the same product and choices count as one line, so sending the
+ * same item twice can't get around the per-item limit.
+ */
+function mergeDuplicateLines(secureCart: SecureCart): SecureCart {
+  const sortedIDs = (ids: number[]) => [...ids].sort((a, b) => a - b).join(":");
+  const merged = new Map<string, SecureItem>();
 
-  const productIDs = [...new Set(secureCart.map((item) => item.productID))];
+  for (const line of secureCart) {
+    const key = [
+      line.productID,
+      sortedIDs(line.optionsIDs),
+      sortedIDs(line.valuesIDs),
+    ].join("|");
+    const existing = merged.get(key);
+    merged.set(
+      key,
+      existing
+        ? { ...existing, quantity: existing.quantity + line.quantity }
+        : line,
+    );
+  }
+  return [...merged.values()];
+}
 
+/** The products with their options and values; null if the query failed. */
+async function loadProducts(productIDs: number[]): Promise<DataItem[] | null> {
   const { data, error } = await supabaseAdmin
     .from("Product")
     .select(PRODUCT_WITH_OPTIONS)
     .in("id", productIDs);
 
-  if (error) {
-    console.error("failed creating order: error fetching products", error);
+  if (error || !data) {
+    console.error("Cart: error fetching products", error);
+    return null;
+  }
+  return (data as ProductRow[]).map(toDataItem);
+}
 
+const uniqueProductIDs = (secureCart: SecureCart) => [
+  ...new Set(secureCart.map((line) => line.productID)),
+];
+
+/**
+ * Checks one cart line against its product (stock, options, values) and
+ * prices one unit with the same formula as the storefront, so the customer
+ * is charged exactly what they saw.
+ */
+export function priceCartLine(
+  dataItem: DataItem | undefined,
+  line: SecureItem,
+): PricedLine {
+  if (!dataItem) {
+    return { success: false, error: `Product ${line.productID} not found` };
+  }
+
+  const { product, options } = dataItem;
+
+  if (!product.inStock) {
+    return {
+      success: false,
+      error: `Product ${product.name} is out of stock`,
+    };
+  }
+
+  // The line must pick exactly this product's options, each once...
+  const optionIDs = new Set(options.map((option) => option.id));
+  if (
+    new Set(line.optionsIDs).size !== line.optionsIDs.length ||
+    line.optionsIDs.length !== optionIDs.size ||
+    line.optionsIDs.some((optionID) => !optionIDs.has(optionID))
+  ) {
+    return {
+      success: false,
+      error: `Invalid option selection for product ${product.id}`,
+    };
+  }
+
+  // ...and one in-stock value of this product for each of them.
+  const selectedValues: OptionValue[] = [];
+
+  for (const valueID of line.valuesIDs) {
+    const value = options
+      .flatMap((option) => option.values)
+      .find((optionValue) => optionValue.id === valueID);
+
+    if (!value) {
+      return {
+        success: false,
+        error: `Value ${valueID} does not belong to product ${product.id}`,
+      };
+    }
+    if (!value.inStock) {
+      return {
+        success: false,
+        error: `Selected option value ${valueID} is out of stock`,
+      };
+    }
+    selectedValues.push(value);
+  }
+
+  for (const option of options) {
+    const valuesForOption = selectedValues.filter((selected) =>
+      option.values.some((optionValue) => optionValue.id === selected.id),
+    );
+
+    if (valuesForOption.length !== 1) {
+      return {
+        success: false,
+        error: `Invalid value selection for option ${option.id}`,
+      };
+    }
+  }
+
+  // Final price for ONE unit of this cart item.
+  const itemPrice = calcPrice(product, selectedValues);
+
+  if (!Number.isFinite(itemPrice) || itemPrice <= 0) {
+    return {
+      success: false,
+      error: `Invalid price for product ${product.id}`,
+    };
+  }
+
+  return {
+    success: true,
+    item: {
+      itemID: generateItemID(product.id, line.valuesIDs),
+      product,
+      options: selectedValues,
+      quantity: line.quantity,
+      itemPrice,
+    },
+  };
+}
+
+/** The cart an order is placed for, built only from database prices. */
+export async function buildServerCart(
+  secureCart: SecureCart,
+): Promise<BuildServerCartResult> {
+  const shapeError = checkCartShape(secureCart);
+  if (shapeError) {
+    return { success: false, error: shapeError };
+  }
+  if (secureCart.length === 0) {
+    return { success: false, error: "Your cart is empty" };
+  }
+
+  const lines = mergeDuplicateLines(secureCart);
+  if (lines.some((line) => line.quantity > MAX_QUANTITY_PER_ITEM)) {
+    return {
+      success: false,
+      error: `You can order up to ${MAX_QUANTITY_PER_ITEM} of one item`,
+    };
+  }
+
+  const productIDs = uniqueProductIDs(lines);
+  const dataItems = await loadProducts(productIDs);
+
+  if (!dataItems) {
     return {
       success: false,
       error: "We couldn't load your cart's products. Please try again.",
     };
   }
 
-  if (!data || data.length !== productIDs.length) {
-    console.error(
-      "failed creating order: one or more products are no longer available",
-    );
-
+  if (dataItems.length !== productIDs.length) {
     return {
       success: false,
       error: "One or more products are no longer available",
     };
   }
 
-  /*
-   * =========================================================
-   * TRANSFORM PRODUCTS
-   * =========================================================
-   */
-
-  const dataItems: DataItem[] = (data as ProductRow[]).map(toDataItem);
-
-  /*
-   * =========================================================
-   * BUILD SERVER-TRUSTED CART
-   * =========================================================
-   */
-
   const cart: Cart = [];
 
-  for (const secureCartItem of secureCart) {
-    /*
-     * -------------------------------------------------------
-     * Find product
-     * -------------------------------------------------------
-     */
-
-    const dataItem = dataItems.filter(
-      (item) => item.product.id === secureCartItem.productID,
-    )[0];
-
-    if (!dataItem) {
-      console.error(
-        `failed creating order: Product ${secureCartItem.productID} not found`,
-      );
-
-      return {
-        success: false,
-        error: `Product ${secureCartItem.productID} not found`,
-      };
-    }
-
-    if (!dataItem.product.inStock) {
-      return {
-        success: false,
-        error: `Product ${dataItem.product.name} is out of stock`,
-      };
-    }
-
-    /*
-     * -------------------------------------------------------
-     * Validate options
-     * -------------------------------------------------------
-     */
-
-    const availableOptionIDs = new Set(
-      dataItem.options.map((option) => option.id),
+  for (const line of lines) {
+    const priced = priceCartLine(
+      dataItems.find((item) => item.product.id === line.productID),
+      line,
     );
-
-    if (
-      new Set(secureCartItem.optionsIDs).size !==
-        secureCartItem.optionsIDs.length ||
-      secureCartItem.optionsIDs.length !== availableOptionIDs.size ||
-      [...availableOptionIDs].some(
-        (optionID) => !secureCartItem.optionsIDs.includes(optionID),
-      )
-    ) {
-      return {
-        success: false,
-        error: `Invalid option selection for product ${dataItem.product.id}`,
-      };
-    }
-
-    for (const optionID of secureCartItem.optionsIDs) {
-      if (!availableOptionIDs.has(optionID)) {
-        console.error(
-          `failed creating order: Option ${optionID} does not belong to product ${dataItem.product.id}`,
-        );
-
-        return {
-          success: false,
-          error: `Option ${optionID} does not belong to product ${dataItem.product.id}`,
-        };
-      }
-    }
-
-    /*
-     * -------------------------------------------------------
-     * Validate selected values
-     * -------------------------------------------------------
-     */
-
-    const selectedValues: OptionValue[] = [];
-
-    for (const valueID of secureCartItem.valuesIDs) {
-      let selectedValue: OptionValue | undefined;
-      let selectedOptionID: number | undefined;
-
-      for (const option of dataItem.options) {
-        const value = option.values.find(
-          (optionValue) => optionValue.id === valueID,
-        );
-
-        if (value) {
-          selectedValue = value;
-          selectedOptionID = option.id;
-          break;
-        }
-      }
-
-      /*
-       * Value does not belong to this product.
-       */
-
-      if (!selectedValue) {
-        console.error(
-          `failed creating order: Value ${valueID} does not belong to product ${dataItem.product.id}`,
-        );
-
-        return {
-          success: false,
-          error: `Value ${valueID} does not belong to product ${dataItem.product.id}`,
-        };
-      }
-
-      if (!selectedValue.inStock) {
-        return {
-          success: false,
-          error: `Selected option value ${valueID} is out of stock`,
-        };
-      }
-
-      /*
-       * Value must belong to one of the selected options.
-       */
-
-      if (
-        selectedOptionID === undefined ||
-        !secureCartItem.optionsIDs.includes(selectedOptionID)
-      ) {
-        console.error(
-          `failed creating order: Value ${valueID} is not valid for the selected options`,
-        );
-
-        return {
-          success: false,
-          error: `Value ${valueID} is not valid for the selected options`,
-        };
-      }
-
-      selectedValues.push(selectedValue);
-    }
-
-    /*
-     * -------------------------------------------------------
-     * Prevent duplicate values
-     * -------------------------------------------------------
-     */
-
-    const uniqueValueIDs = new Set(selectedValues.map((value) => value.id));
-
-    if (uniqueValueIDs.size !== selectedValues.length) {
-      console.error(
-        `failed creating order: Duplicate option value selected for product ${dataItem.product.id}`,
-      );
-
-      return {
-        success: false,
-        error: `Duplicate option value selected for product ${dataItem.product.id}`,
-      };
-    }
-
-    /*
-     * -------------------------------------------------------
-     * Every selected option must have exactly one value
-     * -------------------------------------------------------
-     */
-
-    for (const optionID of secureCartItem.optionsIDs) {
-      const option = dataItem.options.find((item) => item.id === optionID);
-
-      if (!option) {
-        console.error(`failed creating order: Option ${optionID} not found`);
-
-        return {
-          success: false,
-          error: `Option ${optionID} not found`,
-        };
-      }
-
-      const valuesForOption = selectedValues.filter((selectedValue) =>
-        option.values.some(
-          (optionValue) => optionValue.id === selectedValue.id,
-        ),
-      );
-
-      if (valuesForOption.length !== 1) {
-        console.error(
-          `failed creating order: Invalid value selection for option ${optionID}`,
-        );
-
-        return {
-          success: false,
-          error: `Invalid value selection for option ${optionID}`,
-        };
-      }
-    }
-
-    /*
-     * Final price for ONE unit of this cart item. Uses the same formula as
-     * the storefront so the customer is charged exactly what they saw.
-     */
-
-    const itemPrice = calcPrice(dataItem.product, selectedValues);
-
-    if (!Number.isFinite(itemPrice) || itemPrice <= 0) {
-      return {
-        success: false,
-        error: `Invalid price for product ${dataItem.product.id}`,
-      };
-    }
-
-    /*
-     * =========================================================
-     * CREATE ITEM
-     * =========================================================
-     */
-
-    const cartItem: Item = {
-      itemID: generateItemID(dataItem.product.id, secureCartItem.valuesIDs),
-      product: dataItem.product,
-      options: selectedValues,
-      quantity: secureCartItem.quantity,
-      itemPrice,
-    };
-
-    cart.push(cartItem);
+    if (!priced.success) return priced;
+    cart.push(priced.item);
   }
 
   return {
     success: true,
     cart,
   };
+}
+
+/**
+ * Re-prices a saved cart line by line with today's products and prices: each
+ * entry is the line as it would be ordered now, or null when it can't be
+ * ordered any more (removed, sold out, options changed). Null overall when
+ * the cart is malformed or the products couldn't be loaded.
+ */
+export async function repriceCart(
+  secureCart: SecureCart,
+): Promise<(Item | null)[] | null> {
+  if (checkCartShape(secureCart)) return null;
+  if (secureCart.length === 0) return [];
+
+  const dataItems = await loadProducts(uniqueProductIDs(secureCart));
+  if (!dataItems) return null;
+
+  return secureCart.map((line) => {
+    const priced = priceCartLine(
+      dataItems.find((item) => item.product.id === line.productID),
+      line,
+    );
+    return priced.success ? priced.item : null;
+  });
 }

@@ -17,11 +17,13 @@ export function formatDate(date: Date) {
 
 export function calcPrice(product: Product, options: OptionValue[]) {
   const basePrice = product.price;
-  const priceModifier = options.reduce(
-    (acc, curr) => acc + (curr?.priceModifier ?? 0),
-    0,
+  // Modifiers compound: each one scales the price set by the others, so
+  // "+40% for 100% Arabica" is 40% of the 500g price, not of the base price.
+  const multiplier = options.reduce(
+    (acc, curr) => acc * (1 + (curr?.priceModifier ?? 0)),
+    1,
   );
-  const finalPrice = basePrice * (1 + priceModifier);
+  const finalPrice = basePrice * multiplier;
 
   // Drop floating-point noise before rounding up: 200 * (1 + 0.1) is
   // 220.00000000000003, which Math.ceil alone would turn into 221.

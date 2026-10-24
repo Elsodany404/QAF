@@ -45,7 +45,7 @@ export function createFakeSupabase() {
         return chain;
       };
     }
-    for (const filter of ["eq", "in", "ilike", "or", "neq"] as const) {
+    for (const filter of ["eq", "in", "ilike", "or", "neq", "is"] as const) {
       chain[filter] = (column: string, value: unknown) => {
         query.filters.push([filter, column, value]);
         return chain;

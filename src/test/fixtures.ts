@@ -55,6 +55,12 @@ export function makeOrder(overrides: Partial<OrderQuery> = {}): OrderQuery {
     bostaTrackingUrl: null,
     paymobOrderID: null,
     paymobTransactionID: null,
+    returnStatus: null,
+    returnReason: null,
+    returnRequestedAt: null,
+    refundAmount: null,
+    bostaReturnID: null,
+    bostaReturnTrackingNumber: null,
     orderItems: [
       {
         id: 1,

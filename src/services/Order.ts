@@ -1,3 +1,4 @@
+import { ORDERS_DISABLED_MESSAGE, TEST_BUILD } from "@/lib/testBuild";
 import supabaseAdmin from "@/supabase/admin";
 import type { orderPayloadT, OrderQuery } from "@/types/customTypes";
 
@@ -46,6 +47,9 @@ export async function getAllOrders(): Promise<OrderQuery[]> {
 }
 
 export async function postOrder(orderPayload: orderPayloadT): Promise<number> {
+  // Last line of defence: no code path can insert an order in a test build.
+  if (TEST_BUILD) throw new Error(ORDERS_DISABLED_MESSAGE);
+
   const items = orderPayload.cart.map((item) => ({
     productID: item.product.id,
     productName: item.product.name,

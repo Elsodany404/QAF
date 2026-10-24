@@ -58,8 +58,22 @@ export function districtsByZone(city: BostaCity): DistrictZone[] {
   return [...zones.values()];
 }
 
-/** Egyptian mobile numbers, e.g. "010 1234 5678" → "01012345678". */
+/**
+ * Egyptian mobile numbers in the local form Bosta and Paymob expect, e.g.
+ * "010 1234 5678", "+20 10 1234 5678", "(010) 1234-5678" or the number in
+ * Arabic digits → "01012345678". Browser autofill usually inserts the +20
+ * form.
+ */
 export function normalizeEgyptianMobile(value: string): string | null {
-  const digits = value.replace(/[\s-]/g, "");
+  const digits = value
+    // Arabic-Indic (٠-٩) and Persian (۰-۹) digits → 0-9. Both blocks start
+    // at a multiple of 16 (U+0660, U+06F0), so the low 4 bits are the digit.
+    .replace(/[\u0660-\u0669\u06f0-\u06f9]/g, (digit) =>
+      String(digit.charCodeAt(0) & 0xf),
+    )
+    .replace(/[\s\-().]/g, "")
+    // Country code: +20 / 0020 / 20 before the number, with or without its
+    // leading 0 ("+20 10…" and "+20 010…").
+    .replace(/^(?:\+|00)?200?(?=1\d{9}$)/, "0");
   return /^01[0125]\d{8}$/.test(digits) ? digits : null;
 }

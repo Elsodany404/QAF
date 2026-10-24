@@ -94,7 +94,7 @@ export default async function OrderSuccess({
 
   return (
     <>
-      {state !== "failed" && <ClearCart />}
+      {state !== "failed" && <ClearCart orderID={order.id} />}
       {state === "processing" && <RefreshWhilePending />}
       <div className={styles.page}>
         <div className={styles.card}>
@@ -121,8 +121,10 @@ export default async function OrderSuccess({
             </p>
           </div>
 
+          {/* The links replace this page in the history, so Back never
+              lands on a confirmation again. */}
           {state === "failed" && (
-            <Link href="/user" className={styles.continueButton}>
+            <Link href="/user" replace className={styles.continueButton}>
               Go to my orders
               <ArrowRight size={20} aria-hidden="true" />
             </Link>
@@ -175,10 +177,10 @@ export default async function OrderSuccess({
               </div>
 
               <div className={styles.buttonRow}>
-                <Link href="/user" className={styles.secondaryButton}>
+                <Link href="/user" replace className={styles.secondaryButton}>
                   Track my order
                 </Link>
-                <Link href={"/menu"} className={styles.continueButton}>
+                <Link href="/menu" replace className={styles.continueButton}>
                   Continue Shopping
                   <ArrowRight size={20} aria-hidden="true" />
                 </Link>

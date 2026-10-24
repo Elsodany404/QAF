@@ -10,7 +10,8 @@ export type UpdateProfileResult =
 export async function updateProfile(
   name: string,
 ): Promise<UpdateProfileResult> {
-  const normalizedName = name.trim();
+  // Server actions can be called with anything, not just what the form sends.
+  const normalizedName = typeof name === "string" ? name.trim() : "";
   if (normalizedName.length < 2 || normalizedName.length > 80) {
     return {
       success: false,
