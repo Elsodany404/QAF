@@ -222,129 +222,190 @@ describe("Bosta webhook", () => {
   });
 });
 
-describe("Bosta webhook for a customer return pickup", () => {
-  const returnPickup = (state: number) => ({
-    _id: "crp-1",
-    type: "CUSTOMER_RETURN_PICKUP",
-    state,
+describe("Bosta webhook for a delivery issue", () => {
+  it("records why Bosta flagged the delivery", async () => {
+    fake().queue(
+      "Order",
+      { data: order({ shippingStatus: "out_for_delivery" }) },
+      updated,
+    );
+
+    await POST(
+      request({
+        _id: "b1",
+        state: 47,
+        exceptionReason: "  Customer is not answering.  ",
+        exceptionCode: 7,
+      }),
+    );
+
+    expect(fake().updates("Order")[0].payload).toEqual({
+      shippingStatus: "exception",
+      bostaExceptionReason: "Customer is not answering.",
+    });
   });
-  const returning = (returnStatus: string) => ({
-    data: { id: 42, returnStatus },
+
+  it("drops an earlier issue's reason when a new one comes without any", async () => {
+    fake().queue(
+      "Order",
+      {
+        data: order({
+          shippingStatus: "out_for_delivery",
+          bostaExceptionReason: "Bad Weather.",
+        }),
+      },
+      updated,
+    );
+
+    await POST(request({ _id: "b1", state: 47 }));
+
+    expect(fake().updates("Order")[0].payload).toEqual({
+      shippingStatus: "exception",
+      bostaExceptionReason: null,
+    });
   });
 
-  it("finds the order by its return pickup, not its delivery", async () => {
-    fake().queue("Order", returning("pickup_scheduled"), updated);
+  it("keeps the latest reason when another attempt fails", async () => {
+    fake().queue(
+      "Order",
+      {
+        data: order({
+          shippingStatus: "exception",
+          bostaExceptionReason: "Customer is not answering.",
+        }),
+      },
+      updated,
+    );
 
-    const response = await POST(request(returnPickup(23)));
-
-    expect(response.status).toBe(200);
-    expect(fake().queries[0].filters).toContainEqual([
-      "eq",
-      "bostaReturnID",
-      "crp-1",
-    ]);
-  });
-
-  it("marks the order refunded once the courier has the items", async () => {
-    fake().queue("Order", returning("pickup_scheduled"), updated);
-
-    await POST(request(returnPickup(23)));
+    await POST(
+      request({
+        _id: "b1",
+        state: 47,
+        exceptionReason: "Waiting for data modification - wrong phone number.",
+      }),
+    );
 
     const [update] = fake().updates("Order");
     expect(update.payload).toEqual({
-      returnStatus: "picked_up",
-      paymentStatus: "refunded",
+      bostaExceptionReason:
+        "Waiting for data modification - wrong phone number.",
     });
-    expect(update.filters).toContainEqual([
-      "eq",
-      "returnStatus",
-      "pickup_scheduled",
-    ]);
+    expect(update.filters).toContainEqual(["eq", "shippingStatus", "exception"]);
   });
 
-  it("marks the order returned when the items are back", async () => {
-    fake().queue("Order", returning("picked_up"), updated);
+  it("ignores the same reason sent again", async () => {
+    fake().queue("Order", {
+      data: order({
+        shippingStatus: "exception",
+        bostaExceptionReason: "Bad Weather.",
+      }),
+    });
 
-    await POST(request(returnPickup(46)));
+    await POST(
+      request({ _id: "b1", state: 47, exceptionReason: "Bad Weather." }),
+    );
+
+    expect(fake().updates("Order")).toHaveLength(0);
+  });
+});
+
+describe("Bosta webhook for a delivery coming back (RTO)", () => {
+  const rto = (state: number, extra = {}) => ({
+    _id: "b1",
+    type: "RTO",
+    trackingNumber: "TRK1",
+    state,
+    ...extra,
+  });
+
+  it("reads 41 as heading back to the shop, never as out for delivery", async () => {
+    fake().queue(
+      "Order",
+      { data: order({ shippingStatus: "out_for_delivery" }) },
+      updated,
+    );
+
+    await POST(request(rto(41)));
 
     expect(fake().updates("Order")[0].payload).toEqual({
-      returnStatus: "returned",
-      paymentStatus: "refunded",
+      shippingStatus: "exception",
+      bostaExceptionReason: null,
+    });
+  });
+
+  it("doesn't reopen the delivery while the parcel is on its way back", async () => {
+    for (const state of [24, 30, 41]) {
+      fake().reset();
+      fake().queue("Order", { data: order({ shippingStatus: "exception" }) });
+
+      await POST(request(rto(state)));
+
+      expect(fake().updates("Order")).toHaveLength(0);
+    }
+  });
+
+  it("marks the order returned when the parcel is back", async () => {
+    fake().queue(
+      "Order",
+      { data: order({ shippingStatus: "exception" }) },
+      updated,
+    );
+
+    await POST(request(rto(46)));
+
+    expect(fake().updates("Order")[0].payload).toEqual({
       shippingStatus: "returned",
     });
   });
 
-  it("still records the refund when the pick-up webhook was missed", async () => {
-    fake().queue("Order", returning("pickup_scheduled"), updated);
-
-    await POST(request(returnPickup(46)));
-
-    expect(fake().updates("Order")[0].payload).toMatchObject({
-      paymentStatus: "refunded",
-    });
-  });
-
-  it("reads 41 as heading back to the shop, never as out for delivery", async () => {
-    fake().queue("Order", returning("pickup_scheduled"), updated);
-
-    await POST(request(returnPickup(41)));
-
-    expect(fake().updates("Order")[0].payload).toEqual({
-      returnStatus: "picked_up",
-      paymentStatus: "refunded",
-    });
-  });
-
-  it("lets the admin book again when Bosta cancels the pickup", async () => {
-    fake().queue("Order", returning("pickup_scheduled"), updated);
-
-    await POST(request(returnPickup(48)));
-
-    expect(fake().updates("Order")[0].payload).toEqual({
-      returnStatus: "pickup_failed",
-    });
-  });
-
-  it.each([
-    ["a late cancel after the refund was paid", "picked_up", 49],
-    ["an out-of-order update", "returned", 23],
-    ["a repeat", "picked_up", 23],
-    ["a return the admin hasn't booked", "requested", 23],
-  ])("ignores %s", async (_, current, state) => {
-    fake().queue("Order", returning(current));
-
-    const response = await POST(request(returnPickup(state)));
-
-    expect(response.status).toBe(200);
-    expect(fake().updates("Order")).toHaveLength(0);
-  });
-
-  it("ignores states that don't change a return, without a query", async () => {
-    for (const state of [47, 102, 103, 105]) {
-      expect((await POST(request(returnPickup(state)))).status).toBe(200);
-    }
-    expect(fake().queries).toHaveLength(0);
-  });
-
-  it("acknowledges return pickups it doesn't know", async () => {
-    fake().queue("Order", { data: null });
-    expect((await POST(request(returnPickup(23)))).status).toBe(200);
-    expect(fake().updates("Order")).toHaveLength(0);
-  });
-
-  it("re-reads and retries when another update wins the race", async () => {
+  it("finds the order by tracking number if Bosta gives the return a new id", async () => {
     fake().queue(
       "Order",
-      returning("pickup_scheduled"),
-      lostRace,
-      returning("picked_up"),
+      { data: null },
+      { data: order({ shippingStatus: "cancelled" }) },
       updated,
     );
 
-    const response = await POST(request(returnPickup(46)));
+    await POST(request(rto(46, { _id: "rto-9" })));
 
-    expect(response.status).toBe(200);
-    const [, retry] = fake().updates("Order");
-    expect(retry.filters).toContainEqual(["eq", "returnStatus", "picked_up"]);
+    const [byID, byTracking] = fake().queries;
+    expect(byID.filters).toContainEqual(["eq", "bostaOrderID", "rto-9"]);
+    expect(byTracking.filters).toContainEqual([
+      "eq",
+      "bostaTrackingNumber",
+      "TRK1",
+    ]);
+    expect(fake().updates("Order")[0].payload).toEqual({
+      shippingStatus: "returned",
+    });
   });
+
+  it("only falls back to the tracking number for returns", async () => {
+    fake().queue("Order", { data: null });
+
+    await POST(request({ _id: "x", state: 46, trackingNumber: "TRK1" }));
+
+    expect(fake().queries).toHaveLength(1);
+  });
+});
+
+describe("Bosta webhook for a customer return pickup", () => {
+  // Returns are arranged on WhatsApp; a pickup booked in Bosta's dashboard
+  // must not touch the order, whatever its state codes say.
+  it.each([10, 23, 41, 45, 46, 48, 49])(
+    "ignores state %i without reading or changing any order",
+    async (state) => {
+      const response = await POST(
+        request({
+          _id: "crp-1",
+          type: "CUSTOMER_RETURN_PICKUP",
+          trackingNumber: "TRK1",
+          state,
+        }),
+      );
+
+      expect(response.status).toBe(200);
+      expect(fake().queries).toHaveLength(0);
+    },
+  );
 });

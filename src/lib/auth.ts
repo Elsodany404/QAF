@@ -1,3 +1,4 @@
+import "server-only";
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 import { after } from "next/server";

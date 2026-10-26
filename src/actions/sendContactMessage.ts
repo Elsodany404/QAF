@@ -1,8 +1,12 @@
 "use server";
 
-import { sendEmail, SHOP_EMAIL } from "@/lib/email";
+import { sendEmail, shopInbox } from "@/lib/email";
 import { HONEYPOT_FIELD } from "@/lib/honeypot";
+import { allowRequest } from "@/lib/rateLimit";
 import type { ActionState } from "@/types/customTypes";
+
+// Enough for anyone writing to the shop; not enough to flood its inbox.
+const MESSAGE_LIMIT = { max: 5, windowMs: 10 * 60 * 1000 };
 
 export default async function sendContactMessage(
   _previousState: ActionState,
@@ -44,8 +48,16 @@ export default async function sendContactMessage(
     return { status: "failed", message: "Please enter a valid email address." };
   }
 
+  if (!(await allowRequest("contact", MESSAGE_LIMIT))) {
+    return {
+      status: "failed",
+      message:
+        "You've sent several messages in a row. Please wait a few minutes and try again.",
+    };
+  }
+
   const sent = await sendEmail({
-    to: SHOP_EMAIL,
+    to: shopInbox(),
     replyTo: email.trim(),
     // Keep the subject on one line.
     subject: `[Website contact] ${subject.replace(/\s+/g, " ").trim()}`,

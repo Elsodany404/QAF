@@ -6,7 +6,6 @@ import type { orderPayloadT } from "@/types/customTypes";
 
 const mocks = vi.hoisted(() => ({
   fake: null as ReturnType<typeof createFakeSupabase> | null,
-  testBuild: false,
 }));
 
 vi.mock("@/supabase/admin", async () => {
@@ -14,16 +13,9 @@ vi.mock("@/supabase/admin", async () => {
   mocks.fake = createFakeSupabase();
   return { default: mocks.fake.client };
 });
-vi.mock("@/lib/testBuild", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/testBuild")>()),
-  get TEST_BUILD() {
-    return mocks.testBuild;
-  },
-}));
 
 const { getOrderWithItems, getOrdersByCustomerID, postOrder } =
   await import("./Order");
-const { ORDERS_DISABLED_MESSAGE } = await import("@/lib/testBuild");
 const fake = () => mocks.fake!;
 
 function payload(overrides: Partial<orderPayloadT> = {}): orderPayloadT {
@@ -76,17 +68,9 @@ function payload(overrides: Partial<orderPayloadT> = {}): orderPayloadT {
 
 beforeEach(() => {
   fake().reset();
-  mocks.testBuild = false;
 });
 
 describe("postOrder", () => {
-  it("can't create an order in a test build", async () => {
-    mocks.testBuild = true;
-
-    await expect(postOrder(payload())).rejects.toThrow(ORDERS_DISABLED_MESSAGE);
-    expect(fake().queries).toHaveLength(0);
-  });
-
   it("saves line totals and the subtotal the customer was charged", async () => {
     fake().queue("create_order", { data: 77 });
 

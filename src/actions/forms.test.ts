@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ActionState } from "@/types/customTypes";
 
 const mocks = vi.hoisted(() => ({
+  allowRequest: vi.fn(),
   sendEmail: vi.fn(),
   updateUser: vi.fn(),
   revalidatePath: vi.fn(),
@@ -12,6 +13,7 @@ vi.mock("@/lib/email", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/email")>()),
   sendEmail: mocks.sendEmail,
 }));
+vi.mock("@/lib/rateLimit", () => ({ allowRequest: mocks.allowRequest }));
 vi.mock("@/lib/auth", () => ({
   auth: { api: { updateUser: mocks.updateUser } },
 }));
@@ -32,6 +34,7 @@ function form(values: Record<string, string>) {
 }
 
 beforeEach(() => {
+  mocks.allowRequest.mockReset().mockResolvedValue(true);
   mocks.sendEmail.mockReset().mockResolvedValue(true);
   mocks.updateUser.mockReset().mockResolvedValue({});
   mocks.revalidatePath.mockReset();
@@ -63,6 +66,31 @@ describe("sendContactMessage", () => {
         "Do you sell 5kg bags?",
       ].join("\n"),
     });
+  });
+
+  it("delivers to SHOP_INBOX_EMAIL when the shop's own mailbox is elsewhere", async () => {
+    vi.stubEnv("SHOP_INBOX_EMAIL", " qaf.orders@gmail.com ");
+    try {
+      await sendContactMessage(idle, form(message));
+    } finally {
+      vi.unstubAllEnvs();
+    }
+    expect(mocks.sendEmail.mock.calls[0][0].to).toBe("qaf.orders@gmail.com");
+  });
+
+  it("stops a visitor flooding the shop's inbox", async () => {
+    mocks.allowRequest.mockResolvedValue(false);
+
+    expect(await sendContactMessage(idle, form(message))).toEqual({
+      status: "failed",
+      message:
+        "You've sent several messages in a row. Please wait a few minutes and try again.",
+    });
+    expect(mocks.allowRequest).toHaveBeenCalledWith("contact", {
+      max: 5,
+      windowMs: 10 * 60 * 1000,
+    });
+    expect(mocks.sendEmail).not.toHaveBeenCalled();
   });
 
   it("quietly drops bot submissions", async () => {

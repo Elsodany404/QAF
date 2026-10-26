@@ -1,25 +1,52 @@
 "use server";
 import { errorMessage } from "@/lib/actionHelpers";
 import { isAdminUser } from "@/lib/adminAccess";
-import { parseISODate, todayInEgypt } from "@/lib/egyptDate";
+import { normalizeEgyptianMobile } from "@/lib/bostaLocations";
+import {
+  formatISODate,
+  parseISODate,
+  todayInEgypt,
+  weekdayOfISODate,
+} from "@/lib/egyptDate";
+import {
+  createBostaPickup,
+  getBostaPickupDates,
+  type PickupContact,
+} from "@/services/Bosta";
 import supabaseAdmin from "@/supabase/admin";
-import { formatDate } from "@/utils/helper";
 
 export type CreatePickupResult =
-  | { status: "success"; message: string; pickupID: string }
+  | { status: "success"; message: string; pickupID: string | null }
   | { status: "failed"; message: string };
 
-function getPickupContact() {
+const FRIDAY = 5;
+
+/**
+ * The person the courier asks for. Optional: without
+ * BOSTA_PICKUP_CONTACT_NAME / _PHONE, Bosta uses the pickup location's
+ * default contact.
+ */
+function getPickupContact(): PickupContact | undefined {
   const name = process.env.BOSTA_PICKUP_CONTACT_NAME?.trim();
-  const phone = process.env.BOSTA_PICKUP_CONTACT_PHONE?.trim();
+  const rawPhone = process.env.BOSTA_PICKUP_CONTACT_PHONE?.trim();
   const email = process.env.BOSTA_PICKUP_CONTACT_EMAIL?.trim();
 
+  if (!name && !rawPhone) return undefined;
+  const phone = rawPhone ? normalizeEgyptianMobile(rawPhone) : null;
   if (!name || !phone) {
     throw new Error(
-      "Pickup contact is not configured. Set BOSTA_PICKUP_CONTACT_NAME and BOSTA_PICKUP_CONTACT_PHONE.",
+      "The pickup contact is incomplete: BOSTA_PICKUP_CONTACT_NAME needs a name and BOSTA_PICKUP_CONTACT_PHONE an Egyptian mobile number (01xxxxxxxxx). Fix them, or remove both to use the pickup location's default contact.",
     );
   }
   return { name, phone, ...(email && { email }) };
+}
+
+/** Admin: the days Bosta can collect parcels (YYYY-MM-DD), soonest first. */
+export async function getPickupDates(): Promise<string[]> {
+  if (!(await isAdminUser())) {
+    throw new Error("Not authorized to schedule pickups");
+  }
+  return getBostaPickupDates();
 }
 
 /**
@@ -37,25 +64,21 @@ export async function createPickup(
       };
     }
 
-    const businessLocationId = process.env.BOSTA_BUSINESS_LOCATION_ID;
-    const apiKey = process.env.BOSTA_API_KEY;
-    if (!businessLocationId || !apiKey) {
-      throw new Error("Bosta pickup configuration is incomplete");
-    }
     const contactPerson = getPickupContact();
 
     // Dates are Egypt calendar days; the server's own clock runs in UTC.
     const today = todayInEgypt();
     const isoDate = scheduledDate ?? today;
-    const date = parseISODate(isoDate);
-    if (!date) {
+    if (!parseISODate(isoDate)) {
       throw new Error("Pickup date must be a real date in YYYY-MM-DD format");
     }
     // ISO dates compare correctly as strings.
     if (isoDate < today) {
       throw new Error("Pickup date cannot be in the past");
     }
-    const pickupDate = new Date(date.year, date.month - 1, date.day);
+    if (weekdayOfISODate(isoDate) === FRIDAY) {
+      throw new Error("Bosta doesn't collect on Fridays. Choose another day.");
+    }
 
     const { count, error: countError } = await supabaseAdmin
       .from("Order")
@@ -69,36 +92,16 @@ export async function createPickup(
       throw new Error("No orders are waiting for the courier");
     }
 
-    const formattedDate = formatDate(pickupDate);
-
-    const pickupRes = await fetch("https://app.bosta.co/api/v2/pickups", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: apiKey,
-      },
-      body: JSON.stringify({
-        businessLocationId,
-        scheduledDate: formattedDate,
-        contactPerson,
-        numberOfParcels: count,
-        packageType: "Normal",
-      }),
-      cache: "no-store",
+    const pickup = await createBostaPickup({
+      scheduledDate: isoDate,
+      numberOfParcels: count,
+      contactPerson,
     });
-
-    const pickupObj = await pickupRes.json().catch(() => null);
-
-    if (!pickupRes.ok || !pickupObj?.success) {
-      throw new Error(
-        `Failed to schedule pickup: ${pickupObj?.message ?? pickupRes.status}`,
-      );
-    }
 
     return {
       status: "success",
-      message: `Pickup for ${count} parcel${count === 1 ? "" : "s"} scheduled for ${formattedDate}`,
-      pickupID: pickupObj.data?._id ?? pickupObj._id ?? "unknown",
+      message: `Pickup for ${count} parcel${count === 1 ? "" : "s"} scheduled for ${formatISODate(isoDate)}`,
+      pickupID: pickup.id,
     };
   } catch (err) {
     return {

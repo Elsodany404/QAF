@@ -19,7 +19,7 @@ vi.mock("@/lib/adminAccess", () => ({
 vi.mock("@/services/Order", () => ({ getAllOrders: mocks.getAllOrders }));
 
 const { updateOrderStatus } = await import("./updateOrderStatus");
-const { createPickup } = await import("./createPickup");
+const { createPickup, getPickupDates } = await import("./createPickup");
 const { getAdminOrders } = await import("./getAdminOrders");
 const fake = () => mocks.fake!;
 const fetchMock = vi.fn();
@@ -75,14 +75,26 @@ describe("updateOrderStatus", () => {
     ["nothing to change", {}],
     ["an unknown shipping status", { shippingStatus: "lost_in_space" }],
     ["an unknown payment status", { paymentStatus: "maybe" }],
-    // Refunds must go through Paymob, not a status change.
-    ["a manual refund in progress", { paymentStatus: "refunding" }],
+    // Only set while the site refunded through Paymob, which it no longer does.
+    ["the old refunding status", { paymentStatus: "refunding" }],
   ])("rejects %s", async (_, update) => {
     expect(await updateOrderStatus(42, update as never)).toEqual({
       success: false,
       error: "Invalid order status update",
     });
     expect(fake().queries).toHaveLength(0);
+  });
+
+  it("records a refund the shop made outside the site", async () => {
+    fake().queue("Order", { data: { id: 42 } });
+
+    expect(await updateOrderStatus(42, { paymentStatus: "refunded" })).toEqual({
+      success: true,
+      data: "Status updated",
+    });
+    expect(fake().updates("Order")[0].payload).toEqual({
+      paymentStatus: "refunded",
+    });
   });
 
   it("rejects invalid order IDs and a missing update", async () => {
@@ -110,8 +122,13 @@ describe("createPickup", () => {
     vi.stubEnv("BOSTA_PICKUP_CONTACT_EMAIL", "");
   }
 
-  // 23:30 UTC on 1 Oct is already 2 Oct in Egypt.
-  const LATE_EVENING_UTC = new Date("2026-10-01T23:30:00Z");
+  // 22:30 UTC on Saturday 3 Oct is already Sunday 4 Oct in Egypt.
+  const LATE_EVENING_UTC = new Date("2026-10-03T22:30:00Z");
+
+  const booked = (data: unknown = { _id: "pickup-1" }) => ({
+    ok: true,
+    json: async () => ({ success: true, data }),
+  });
 
   it("is admin-only", async () => {
     mocks.isAdmin = false;
@@ -119,35 +136,25 @@ describe("createPickup", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("needs the pickup contact", async () => {
-    vi.stubEnv("BOSTA_PICKUP_CONTACT_NAME", "");
-    expect(await createPickup()).toMatchObject({
-      status: "failed",
-      message: expect.stringContaining("BOSTA_PICKUP_CONTACT_NAME"),
-    });
-  });
-
   it("schedules today's pickup in Egypt for every parcel waiting", async () => {
     configure();
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(LATE_EVENING_UTC);
     fake().queue("Order", { count: 3 });
-    fetchMock.mockResolvedValue({
-      ok: true,
-      json: async () => ({ success: true, data: { _id: "pickup-1" } }),
-    });
+    fetchMock.mockResolvedValue(booked());
 
     expect(await createPickup()).toEqual({
       status: "success",
-      message: "Pickup for 3 parcels scheduled for 02-10-2026",
+      message: "Pickup for 3 parcels scheduled for Sun, 4 Oct",
       pickupID: "pickup-1",
     });
     expect(fake().queries[0].filters).toEqual([
       ["eq", "shippingStatus", "ready_for_pickup"],
     ]);
+    // Bosta takes the date as YYYY-MM-DD.
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
       businessLocationId: "loc-1",
-      scheduledDate: "02-10-2026",
+      scheduledDate: "2026-10-04",
       contactPerson: { name: "Mohamed", phone: "01012345678" },
       numberOfParcels: 3,
       packageType: "Normal",
@@ -157,14 +164,56 @@ describe("createPickup", () => {
   it("says “parcel” for one", async () => {
     configure();
     fake().queue("Order", { count: 1 });
-    fetchMock.mockResolvedValue({
-      ok: true,
-      json: async () => ({ success: true, _id: "p" }),
+    fetchMock.mockResolvedValue(booked({ puid: 778 }));
+
+    expect(await createPickup("2099-01-31")).toEqual({
+      status: "success",
+      message: "Pickup for 1 parcel scheduled for Sat, 31 Jan",
+      pickupID: "778",
     });
+  });
+
+  it("lets Bosta call the pickup location's default contact when none is set", async () => {
+    fake().queue("Order", { count: 2 });
+    fetchMock.mockResolvedValue(booked());
 
     expect(await createPickup("2099-01-31")).toMatchObject({
-      message: "Pickup for 1 parcel scheduled for 31-01-2099",
+      status: "success",
     });
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).not.toHaveProperty(
+      "contactPerson",
+    );
+  });
+
+  it("sends the contact's number in the local form", async () => {
+    configure();
+    vi.stubEnv("BOSTA_PICKUP_CONTACT_PHONE", "+20 10 1234 5678");
+    vi.stubEnv("BOSTA_PICKUP_CONTACT_EMAIL", "sales@example.com");
+    fake().queue("Order", { count: 2 });
+    fetchMock.mockResolvedValue(booked());
+
+    await createPickup("2099-01-31");
+
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).contactPerson).toEqual({
+      name: "Mohamed",
+      phone: "01012345678",
+      email: "sales@example.com",
+    });
+  });
+
+  it.each([
+    ["a name without a phone", "Mohamed", ""],
+    ["a phone without a name", "", "01012345678"],
+    ["a number that is a digit short", "Mohamed", "0124048400"],
+  ])("refuses a pickup contact with %s", async (_, name, phone) => {
+    vi.stubEnv("BOSTA_PICKUP_CONTACT_NAME", name);
+    vi.stubEnv("BOSTA_PICKUP_CONTACT_PHONE", phone);
+
+    expect(await createPickup("2099-01-31")).toMatchObject({
+      status: "failed",
+      message: expect.stringContaining("BOSTA_PICKUP_CONTACT_PHONE"),
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it.each(["2026-02-30", "31-01-2099", "tomorrow", ""])(
@@ -183,11 +232,22 @@ describe("createPickup", () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(LATE_EVENING_UTC);
 
-    expect(await createPickup("2026-10-01")).toMatchObject({
+    expect(await createPickup("2026-10-03")).toMatchObject({
       status: "failed",
       message: "Pickup date cannot be in the past",
     });
     expect(fake().queries).toHaveLength(0);
+  });
+
+  it("doesn't ask Bosta for a Friday, when it never collects", async () => {
+    configure();
+
+    expect(await createPickup("2099-02-06")).toMatchObject({
+      status: "failed",
+      message: "Bosta doesn't collect on Fridays. Choose another day.",
+    });
+    expect(fake().queries).toHaveLength(0);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("doesn't book a courier for nothing", async () => {
@@ -201,18 +261,38 @@ describe("createPickup", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("reports Bosta's refusal", async () => {
+  it("reports Bosta's refusal in Bosta's words", async () => {
     configure();
     fake().queue("Order", { count: 2 });
     fetchMock.mockResolvedValue({
       ok: false,
       status: 400,
-      json: async () => ({ success: false, message: "No pickups on Friday" }),
+      json: async () => ({
+        success: false,
+        message: "Cannot create two pickup requests at the same date and pickup location",
+      }),
     });
 
     expect(await createPickup("2099-01-31")).toMatchObject({
       status: "failed",
-      message: "Failed to schedule pickup: No pickups on Friday",
+      message:
+        "Cannot create two pickup requests at the same date and pickup location",
     });
+  });
+});
+
+describe("getPickupDates", () => {
+  it("is admin-only", async () => {
+    mocks.isAdmin = false;
+    await expect(getPickupDates()).rejects.toThrow("Not authorized");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("lists the days Bosta can come", async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true, data: ["2026-10-26", "2026-10-27"] }),
+    });
+    expect(await getPickupDates()).toEqual(["2026-10-26", "2026-10-27"]);
   });
 });

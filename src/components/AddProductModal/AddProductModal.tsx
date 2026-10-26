@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useActionState } from "react";
+import { startTransition, useActionState, useEffect } from "react";
 import { useFieldArray, useForm, type SubmitHandler } from "react-hook-form";
 import { AlertCircle, CheckCircle2, Package, Plus, X } from "lucide-react";
 
@@ -39,6 +39,13 @@ export default function AddProductModal({ onClose }: Props) {
     initialState,
   );
   const dialogRef = useDialog<HTMLDivElement>(true, onClose);
+
+  // The server's answer shows at the top of the (long) form: bring it into view.
+  useEffect(() => {
+    if (state.type !== "idle") {
+      dialogRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [state, dialogRef]);
 
   const {
     register,
@@ -144,7 +151,7 @@ export default function AddProductModal({ onClose }: Props) {
                   className={styles.input}
                   placeholder="e.g. Arabica Blend"
                   {...register("name", {
-                    required: "please insert product name",
+                    required: "Enter the product name",
                   })}
                 />
                 <span className={styles.errorText}>
@@ -164,10 +171,10 @@ export default function AddProductModal({ onClose }: Props) {
                   className={styles.input}
                   placeholder="e.g. 120"
                   {...register("priceRaw", {
-                    required: "please insert a price",
+                    required: "Enter the price",
                     validate: (value) =>
                       (Number.isInteger(Number(value)) && Number(value) > 0) ||
-                      "price must be a whole number greater than zero",
+                      "The price must be a whole number above zero",
                   })}
                 />
                 <span className={styles.errorText}>
@@ -183,10 +190,10 @@ export default function AddProductModal({ onClose }: Props) {
               <textarea
                 id="description"
                 className={styles.textarea}
-                placeholder="product description shown on product page"
+                placeholder="Shown on the product page"
                 rows={4}
                 {...register("description", {
-                  required: "insert description",
+                  required: "Enter a description",
                 })}
               />
               <span className={styles.errorText}>
@@ -203,7 +210,7 @@ export default function AddProductModal({ onClose }: Props) {
                   id="category"
                   className={styles.select}
                   {...register("category", {
-                    required: "select from listed category",
+                    required: "Choose a category",
                   })}
                 >
                   <option value="">Select category…</option>
@@ -228,20 +235,20 @@ export default function AddProductModal({ onClose }: Props) {
                   className={styles.input}
                   placeholder="https://…"
                   {...register("imageUrl", {
-                    required: "insert valid image url",
+                    required: "Enter the image URL",
                     validate: async (value) => {
                       const dimensions = await getImageDimensions(value);
 
-                      if (!dimensions) return "unable to load image";
+                      if (!dimensions) return "The image couldn't be loaded";
                       if (dimensions.width < 1400 || dimensions.height < 1100) {
-                        return "image must be at least 1400 × 1100 px";
+                        return "The image must be at least 1400 × 1100 px";
                       }
 
                       if (
                         dimensions.width % 5 !== 0 ||
                         dimensions.height % 5 !== 0
                       ) {
-                        return "image dimensions must be divisible by 5 for the blurred image";
+                        return "The image's width and height must be divisible by 5";
                       }
 
                       return true;
@@ -263,7 +270,7 @@ export default function AddProductModal({ onClose }: Props) {
                   className={styles.input}
                   placeholder="https://…"
                   {...register("blurredImageUrl", {
-                    required: "insert blurred image url",
+                    required: "Enter the blurred image URL",
                     validate: async (value) => {
                       const productUrl = getValues("imageUrl");
                       const productDimensions =
@@ -271,7 +278,7 @@ export default function AddProductModal({ onClose }: Props) {
                       const blurredDimensions = await getImageDimensions(value);
 
                       if (!productDimensions || !blurredDimensions) {
-                        return "unable to load image dimensions";
+                        return "The images couldn't be loaded";
                       }
 
                       return blurredDimensions.width ===
@@ -279,7 +286,7 @@ export default function AddProductModal({ onClose }: Props) {
                         blurredDimensions.height ===
                           productDimensions.height / 5
                         ? true
-                        : `blurred image must be ${productDimensions.width / 5} × ${productDimensions.height / 5} px`;
+                        : `The blurred image must be ${productDimensions.width / 5} × ${productDimensions.height / 5} px, a fifth of the product image`;
                     },
                   })}
                 />

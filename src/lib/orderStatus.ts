@@ -21,18 +21,16 @@ export const PAYMENT_STATUSES = [
   "pending",
   "paid",
   "failed",
-  "refunding",
   "refunded",
 ] as const;
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 
-/** Payment statuses an admin may set by hand (refunds go through Paymob). */
-export const MANUAL_PAYMENT_STATUSES: PaymentStatus[] = [
-  "pending",
-  "paid",
-  "failed",
-  "refunded",
-];
+/**
+ * Payment statuses an admin may set by hand. The site never refunds: the
+ * shop agrees a refund with the customer on WhatsApp, makes it, and records
+ * it here as "Refunded".
+ */
+export const MANUAL_PAYMENT_STATUSES: PaymentStatus[] = [...PAYMENT_STATUSES];
 
 export const SHIPPING_STATUS_LABELS: Record<ShippingStatus, string> = {
   processing: "Processing",
@@ -49,7 +47,6 @@ export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
   pending: "Pending",
   paid: "Paid",
   failed: "Failed",
-  refunding: "Refunding",
   refunded: "Refunded",
 };
 
@@ -150,6 +147,22 @@ export function bostaStateToShippingStatus(
   return BOSTA_STATE_MAP[code] ?? null;
 }
 
+/**
+ * A delivery the customer didn't take (refused, unreachable, cancelled at
+ * the door) comes back to the shop as an RTO, "return to origin". Its states
+ * mean "on the way back" (41 is "heading to you", not to the customer), so
+ * it stays a delivery issue until it is back at the shop.
+ */
+export function bostaRtoStateToShippingStatus(
+  state: unknown,
+): ShippingStatus | null {
+  const code = typeof state === "string" ? Number(state) : state;
+  if (typeof code !== "number" || !Number.isInteger(code)) return null;
+  const status = BOSTA_STATE_MAP[code];
+  if (!status || status === "delivered") return null;
+  return status === "returned" ? "returned" : "exception";
+}
+
 const PROGRESS_RANK: Partial<Record<ShippingStatus, number>> = {
   processing: 0,
   ready_for_pickup: 1,
@@ -182,102 +195,13 @@ export function shouldApplyShippingUpdate(
 
 /*
  * =========================================================
- * RETURNS
- * =========================================================
- * The customer asks for a return from their account; the admin approves it
- * and Bosta books a "customer return pickup": the courier collects the
- * items and pays the customer the refund in cash. Paymob refunds are only
- * for orders cancelled before they shipped.
- */
-export const RETURN_STATUSES = [
-  "requested", // waiting for the admin
-  "rejected", // the admin declined it
-  "pickup_scheduled", // Bosta return pickup booked
-  "picked_up", // the courier collected the items and paid the refund
-  "returned", // the items are back at the shop
-  "pickup_failed", // Bosta cancelled or terminated the pickup
-] as const;
-export type ReturnStatus = (typeof RETURN_STATUSES)[number];
-
-export const RETURN_STATUS_LABELS: Record<ReturnStatus, string> = {
-  requested: "Requested",
-  rejected: "Declined",
-  pickup_scheduled: "Pickup booked",
-  picked_up: "Picked up · refunded",
-  returned: "Back at the shop",
-  pickup_failed: "Pickup failed",
-};
-
-/** Length of the reason a customer gives for a return. */
-export const RETURN_REASON_MIN_LENGTH = 5;
-export const RETURN_REASON_MAX_LENGTH = 500;
-
-/** null: the customer hasn't asked for a return. */
-export function normalizeReturnStatus(
-  raw: string | null | undefined,
-): ReturnStatus | null {
-  return typeof raw === "string" &&
-    (RETURN_STATUSES as readonly string[]).includes(raw)
-    ? (raw as ReturnStatus)
-    : null;
-}
-
-// States of a customer return pickup (Bosta docs, "Get shipment status via
-// webhook"). The rest (exceptions, investigation...) don't change it.
-const BOSTA_RETURN_STATE_MAP: Record<number, ReturnStatus> = {
-  10: "pickup_scheduled", // Pickup requested
-  20: "pickup_scheduled", // Route assigned
-  22: "pickup_scheduled", // Picking up from the customer
-  23: "picked_up", // Picked up from the customer, who got the refund
-  24: "picked_up", // Received at warehouse
-  30: "picked_up", // In transit between hubs
-  41: "picked_up", // Heading back to the shop
-  46: "returned", // Returned to business
-  48: "pickup_failed", // Terminated
-  49: "pickup_failed", // Canceled
-};
-
-export function bostaStateToReturnStatus(state: unknown): ReturnStatus | null {
-  const code = typeof state === "string" ? Number(state) : state;
-  if (typeof code !== "number" || !Number.isInteger(code)) return null;
-  return BOSTA_RETURN_STATE_MAP[code] ?? null;
-}
-
-const RETURN_PROGRESS: Partial<Record<ReturnStatus, number>> = {
-  pickup_scheduled: 0,
-  picked_up: 1,
-  returned: 2,
-};
-
-/**
- * Like shouldApplyShippingUpdate, for a booked return pickup: only forward,
- * and a pickup can only fail before the courier has the items.
- */
-export function shouldApplyReturnUpdate(
-  current: ReturnStatus | null,
-  next: ReturnStatus,
-): boolean {
-  const from = current === null ? undefined : RETURN_PROGRESS[current];
-  if (from === undefined) return false; // no pickup in progress
-  if (next === "pickup_failed") return current === "pickup_scheduled";
-
-  const to = RETURN_PROGRESS[next];
-  return to !== undefined && to > from;
-}
-
-/*
- * =========================================================
  * DERIVED STATE (UI + permission checks)
  * =========================================================
  */
 
 type OrderStatusFields = Pick<
   Order,
-  | "paymentMethod"
-  | "paymentStatus"
-  | "shippingStatus"
-  | "paymobTransactionID"
-  | "returnStatus"
+  "paymentMethod" | "paymentStatus" | "shippingStatus"
 >;
 
 export type OrderDisplayStatus =
@@ -290,12 +214,7 @@ export type OrderDisplayStatus =
   | "delivered"
   | "exception"
   | "cancelled"
-  | "refund_due"
-  | "returned"
-  | "return_requested"
-  | "return_scheduled"
-  | "return_refunded"
-  | "return_issue";
+  | "returned";
 
 export type StatusTone = "pending" | "info" | "success" | "danger";
 
@@ -312,36 +231,13 @@ export const DISPLAY_STATUS_META: Record<
   delivered: { label: "Delivered", tone: "success" },
   exception: { label: "Delivery issue", tone: "danger" },
   cancelled: { label: "Cancelled", tone: "danger" },
-  refund_due: { label: "Cancelled · refund due", tone: "danger" },
   returned: { label: "Returned", tone: "danger" },
-  return_requested: { label: "Return requested", tone: "pending" },
-  return_scheduled: { label: "Return pickup booked", tone: "info" },
-  return_refunded: { label: "Returned · refunded", tone: "info" },
-  return_issue: { label: "Return pickup failed", tone: "danger" },
 };
 
 export function getDisplayStatus(order: OrderStatusFields): OrderDisplayStatus {
   const shipping = normalizeShippingStatus(order.shippingStatus);
   const payment = normalizePaymentStatus(order.paymentStatus);
 
-  // A return outranks the delivery it follows. A declined one doesn't show.
-  switch (normalizeReturnStatus(order.returnStatus)) {
-    case "requested":
-      return "return_requested";
-    case "pickup_scheduled":
-      return "return_scheduled";
-    case "picked_up":
-    case "returned":
-      return "return_refunded";
-    case "pickup_failed":
-      return "return_issue";
-  }
-
-  if (shipping === "cancelled") {
-    return payment === "paid" && isOnlinePayment(order.paymentMethod)
-      ? "refund_due"
-      : "cancelled";
-  }
   if (shipping !== "processing") return shipping;
 
   if (isOnlinePayment(order.paymentMethod)) {
@@ -374,22 +270,34 @@ export function getTrackingStepIndex(order: OrderStatusFields): number {
     case "out_for_delivery":
       return 3;
     case "delivered":
-    case "return_requested":
-    case "return_scheduled":
-    case "return_refunded":
-    case "return_issue":
       return 4;
     default:
       return 0;
   }
 }
 
+/** Before the courier has the parcel, the shop can cancel any order. */
 export function canCancelOrder(order: OrderStatusFields): boolean {
-  return (
-    CANCELLABLE_SHIPPING_STATUSES.includes(
-      normalizeShippingStatus(order.shippingStatus),
-    ) && normalizePaymentStatus(order.paymentStatus) !== "refunding"
+  return CANCELLABLE_SHIPPING_STATUSES.includes(
+    normalizeShippingStatus(order.shippingStatus),
   );
+}
+
+/** Money taken online (Paymob) for this order and not refunded. */
+export function hasOnlinePayment(order: OrderStatusFields): boolean {
+  return (
+    isOnlinePayment(order.paymentMethod) &&
+    normalizePaymentStatus(order.paymentStatus) === "paid"
+  );
+}
+
+/**
+ * Customers cancel from their account only while no money has been taken:
+ * cash on delivery, or an online order not paid yet. A paid order is
+ * cancelled by the shop on WhatsApp, where the refund is agreed too.
+ */
+export function canCustomerCancelOrder(order: OrderStatusFields): boolean {
+  return canCancelOrder(order) && !hasOnlinePayment(order);
 }
 
 export function canPayOrder(order: OrderStatusFields): boolean {
@@ -401,41 +309,50 @@ export function canPayOrder(order: OrderStatusFields): boolean {
   );
 }
 
-/** A Paymob payment that can go back to the card or wallet it came from. */
-export function hasRefundablePayment(order: OrderStatusFields): boolean {
-  return (
-    isOnlinePayment(order.paymentMethod) &&
-    normalizePaymentStatus(order.paymentStatus) === "paid" &&
-    Boolean(order.paymobTransactionID)
-  );
-}
-
-/**
- * Paymob refunds are for cancelled orders only: nothing was delivered.
- * Returns of delivered orders are refunded in cash by Bosta.
+/*
+ * What a customer has to message the shop on WhatsApp about:
+ *   cancel – a paid order the courier doesn't have yet
+ *   return – a delivered order
+ *   refund – a paid order that won't reach them (cancelled or brought back)
+ *   help   – a delivery issue, or an unpaid order that came back
  */
-export function canRefundOrder(order: OrderStatusFields): boolean {
-  return (
-    hasRefundablePayment(order) &&
-    normalizeShippingStatus(order.shippingStatus) === "cancelled"
-  );
+export type WhatsAppTopic = "cancel" | "return" | "refund" | "help";
+
+export function customerWhatsAppTopic(
+  order: OrderStatusFields,
+): WhatsAppTopic | null {
+  const shipping = normalizeShippingStatus(order.shippingStatus);
+  const paid = hasOnlinePayment(order);
+
+  if (canCancelOrder(order)) return paid ? "cancel" : null;
+  if (shipping === "delivered") return "return";
+  if (shipping === "cancelled" || shipping === "returned") {
+    return paid ? "refund" : shipping === "returned" ? "help" : null;
+  }
+  return shipping === "exception" ? "help" : null;
 }
 
-/** A delivered order the customer hasn't asked to return yet. */
-export function canRequestReturn(order: OrderStatusFields): boolean {
+/** Orders the admin has to do something about. */
+export function needsAdminAction(
+  order: OrderStatusFields & Pick<Order, "bostaOrderID">,
+): boolean {
+  const status = getDisplayStatus(order);
+  if (status === "exception") return true;
+  // Paid online but it won't reach the customer: agree the refund with them
+  // on WhatsApp, make it, then set the payment to Refunded.
+  if (
+    (status === "cancelled" || status === "returned") &&
+    hasOnlinePayment(order)
+  ) {
+    return true;
+  }
+  // Ready to ship but no Bosta shipment yet (e.g. the courier API failed).
   return (
-    normalizeShippingStatus(order.shippingStatus) === "delivered" &&
-    normalizeReturnStatus(order.returnStatus) === null
+    status === "processing" &&
+    !order.bostaOrderID &&
+    (!isOnlinePayment(order.paymentMethod) ||
+      normalizePaymentStatus(order.paymentStatus) === "paid")
   );
-}
-
-/**
- * A return the admin can still approve (book the Bosta pickup) or decline,
- * including a pickup Bosta cancelled, so it can be booked again.
- */
-export function canReviewReturn(order: OrderStatusFields): boolean {
-  const status = normalizeReturnStatus(order.returnStatus);
-  return status === "requested" || status === "pickup_failed";
 }
 
 export function formatOrderNumber(orderID: number) {

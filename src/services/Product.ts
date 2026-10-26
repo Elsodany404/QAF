@@ -55,12 +55,13 @@ export async function getProductByID(
   productId: string,
 ): Promise<DataItem | null> {
   // A malformed ID can't match a product: that's a 404, not a query error.
-  if (!/^\d{1,18}$/.test(productId)) return null;
+  // 15 digits keep it a safe integer, so Number() can't round it.
+  if (!/^\d{1,15}$/.test(productId)) return null;
 
   const { data, error } = await supabase
     .from("Product")
     .select(PRODUCT_WITH_OPTIONS)
-    .eq("id", productId)
+    .eq("id", Number(productId))
     .maybeSingle();
 
   if (error) {

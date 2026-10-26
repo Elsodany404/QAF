@@ -6,7 +6,6 @@ import {
   calcPrice,
   categoryLabel,
   formatCurrency,
-  formatDate,
   generateItemID,
 } from "./helper";
 
@@ -166,10 +165,6 @@ describe("generateItemID", () => {
   it("keeps the old format for products without options", () => {
     expect(generateItemID(7, [])).toBe("7:");
   });
-});
-
-it("formats dates as DD-MM-YYYY for Bosta", () => {
-  expect(formatDate(new Date(2026, 0, 5))).toBe("05-01-2026");
 });
 
 describe("formatCurrency", () => {

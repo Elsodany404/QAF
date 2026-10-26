@@ -112,7 +112,8 @@ export async function POST(req: Request) {
       );
     }
 
-    // Refund / void callbacks: createRefund already updated the order.
+    // Refund / void callbacks: refunds are made by hand in the Paymob
+    // dashboard, and the admin marks the order refunded.
     if (transaction.is_refund || transaction.is_void) {
       return ack("Refund/void notification ignored");
     }
@@ -181,8 +182,8 @@ export async function POST(req: Request) {
 
     if (isSuccess && !order.bostaOrderID) {
       if (order.shippingStatus === "cancelled") {
-        // Customer paid after cancelling — the dashboard shows it as
-        // "refund due" so the admin can refund it.
+        // Customer paid after cancelling: the dashboard lists it under
+        // "Needs action" so the admin can arrange a refund on WhatsApp.
         console.error(`Paymob webhook: order ${orderID} paid after cancel`);
       } else {
         try {

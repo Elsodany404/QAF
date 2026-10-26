@@ -2,6 +2,7 @@ import { Shield, Truck, RotateCcw } from "lucide-react";
 import styles from "./page.module.css";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SHOP_WHATSAPP_DISPLAY, shopWhatsAppUrl } from "@/lib/whatsapp";
 
 export const metadata: Metadata = {
   title: "Policies",
@@ -40,29 +41,21 @@ const policies = [
     title: "Return & Refund Policy",
     content: [
       <>
-        You can cancel an order from <Link href="/user">your account</Link>{" "}
-        while it is still being prepared, before it is handed to the courier. If
-        you paid online, the payment is refunded to your original payment method
-        automatically. Once the order has been picked up by the courier, it can
-        no longer be cancelled, but you can request a return.
+        Returns and refunds are handled personally on WhatsApp at{" "}
+        <a href={shopWhatsAppUrl()} target="_blank" rel="noreferrer">
+          {SHOP_WHATSAPP_DISPLAY}
+        </a>
+        . Message us with your order number and we&apos;ll take it from there.
       </>,
       <>
-        To request a return, open the delivered order in{" "}
-        <Link href="/user">your account</Link>, tap &ldquo;Request a
-        return&rdquo; and tell us what went wrong. For damaged, incorrect, or
-        materially different orders, please request it within 48 hours of
-        delivery. If you have photos of the problem, send them with your order
-        number on{" "}
-        <a
-          href="https://wa.me/201031200143?text=Hello%20Qaf%20Coffee%2C%20I%20requested%20a%20return."
-          target="_blank"
-          rel="noreferrer"
-        >
-          WhatsApp at +20 103 120 0143
-        </a>
-        .
+        If you paid in cash on delivery, or haven&apos;t paid yet, you can
+        cancel an order from <Link href="/user">your account</Link> while it is
+        still being prepared, before it is handed to the courier. If you paid
+        online, message us on WhatsApp to cancel it and we&apos;ll arrange your
+        refund. Once the courier has the order, it can no longer be cancelled.
       </>,
-      "We review every return request. If it is approved, a courier from our delivery partner, Bosta, collects the items from your address and refunds you in cash on the spot, however you paid.",
+      "If something is wrong with a delivered order (damaged, incorrect, or materially different from what you ordered), message us on WhatsApp within 48 hours of delivery, with photos of the problem if you can. We review every request and agree the next step with you, whether a return, a replacement or a refund.",
+      "Refunds are arranged with you directly on WhatsApp. Nothing is refunded automatically through the website.",
     ],
   },
 ] as const;

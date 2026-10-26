@@ -6,14 +6,15 @@ import { errorMessage } from "@/lib/actionHelpers";
 import { isAdminUser } from "@/lib/adminAccess";
 import {
   findDeliveryAddress,
+  MIN_STREET_LENGTH,
   normalizeEgyptianMobile,
+  STREET_TOO_SHORT_MESSAGE,
 } from "@/lib/bostaLocations";
 import {
   createBostaDelivery,
   getBostaFees,
   MAX_COD_AMOUNT,
 } from "@/services/Bosta";
-import { ORDERS_DISABLED_MESSAGE, TEST_BUILD } from "@/lib/testBuild";
 import { getOrderWithItems, postOrder } from "@/services/Order";
 import { sendOrderConfirmation } from "@/services/OrderEmails";
 import { createPaymobCheckout } from "@/services/Paymob";
@@ -68,9 +69,6 @@ export async function adminCreateOrder(
     if (!(await isAdminUser())) {
       return { status: "failed", message: "Not authorized to create orders" };
     }
-    if (TEST_BUILD) {
-      return { status: "failed", message: ORDERS_DISABLED_MESSAGE };
-    }
 
     const customerName = String(payload.customerName ?? "").trim();
     const customerEmail = String(payload.customerEmail ?? "").trim();
@@ -93,6 +91,9 @@ export async function adminCreateOrder(
       payload.items.length === 0
     ) {
       return { status: "failed", message: "Invalid manual order details" };
+    }
+    if (street.length < MIN_STREET_LENGTH) {
+      return { status: "failed", message: STREET_TOO_SHORT_MESSAGE };
     }
 
     const phone = normalizeEgyptianMobile(String(payload.customerPhone ?? ""));

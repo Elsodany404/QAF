@@ -111,16 +111,18 @@
 
 /* ── Two-column layout ─────────────────────────────────────────────── */
 /* Mobile: single column, sidebar on top */
+/* minmax(0, …): a plain 1fr column grows to fit its widest content (e.g. a
+   row of quick links), pushing the whole page past the screen's edge. */
 .layout {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.5rem;
 }
 
 /* Tablet+: sidebar column fixed at 260px, main takes the rest */
 @media (min-width: 768px) {
   .layout {
-    grid-template-columns: 260px 1fr;
+    grid-template-columns: 260px minmax(0, 1fr);
     gap: 2rem;
     align-items: start;
   }

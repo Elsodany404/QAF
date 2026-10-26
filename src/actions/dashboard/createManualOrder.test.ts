@@ -1,13 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { DELIVERY_CITIES } from "@/lib/bostaLocations";
+import {
+  DELIVERY_CITIES,
+  STREET_TOO_SHORT_MESSAGE,
+} from "@/lib/bostaLocations";
 import { createFakeSupabase } from "@/test/fakeSupabase";
 import { makeOrder } from "@/test/fixtures";
 import type { AdminCreateOrderPayload } from "./createManualOrder";
 
 const mocks = vi.hoisted(() => ({
   fake: null as ReturnType<typeof createFakeSupabase> | null,
-  testBuild: false,
   isAdmin: true,
   getBostaFees: vi.fn(),
   createBostaDelivery: vi.fn(),
@@ -22,12 +24,6 @@ vi.mock("@/supabase/admin", async () => {
 });
 vi.mock("@/lib/adminAccess", () => ({
   isAdminUser: async () => mocks.isAdmin,
-}));
-vi.mock("@/lib/testBuild", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/testBuild")>()),
-  get TEST_BUILD() {
-    return mocks.testBuild;
-  },
 }));
 vi.mock("@/services/Bosta", () => ({
   MAX_COD_AMOUNT: 30000,
@@ -113,7 +109,6 @@ function payload(
 
 beforeEach(() => {
   fake().reset();
-  mocks.testBuild = false;
   mocks.isAdmin = true;
   mocks.getBostaFees.mockReset().mockResolvedValue(85);
   mocks.createBostaDelivery.mockReset().mockResolvedValue({ trackingNumber: "T1" });
@@ -130,17 +125,12 @@ describe("adminCreateOrder", () => {
     expect(fake().queries).toHaveLength(0);
   });
 
-  it("creates no orders in a test build", async () => {
-    mocks.testBuild = true;
-    const { ORDERS_DISABLED_MESSAGE } = await import("@/lib/testBuild");
-
-    expect(await adminCreateOrder(payload())).toEqual({
+  it("asks for the full street address Bosta needs", async () => {
+    expect(await adminCreateOrder(payload({ street: " Nasr " }))).toEqual({
       status: "failed",
-      message: ORDERS_DISABLED_MESSAGE,
+      message: STREET_TOO_SHORT_MESSAGE,
     });
     expect(fake().queries).toHaveLength(0);
-    expect(mocks.getBostaFees).not.toHaveBeenCalled();
-    expect(mocks.createPaymobCheckout).not.toHaveBeenCalled();
   });
 
   it("prices the chosen options on the server and charges Bosta's fee", async () => {

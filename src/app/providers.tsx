@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import ToastCard from "@/components/Toast/Toast";
 import { CartProvider } from "@/context/CartContext";
 import { Toaster } from "react-hot-toast";
 
@@ -23,29 +24,21 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <Toaster
         position="top-center"
         reverseOrder={false}
-        gutter={8}
+        gutter={10}
+        // Below the fixed navbar, so a toast never hides the cart or menu.
+        containerStyle={{ top: "calc(var(--nav-height) + 0.75rem)" }}
         toastOptions={{
           duration: 3000,
-          style: {
-            background: "white",
-            color: "var(--charcoal-900)",
-            border: "1px solid var(--cream-200)",
-            fontFamily: "var(--font-body)",
-          },
-          success: {
-            iconTheme: {
-              primary: "var(--success-600)",
-              secondary: "white",
-            },
-          },
+          // Errors and notices take longer to read.
           error: {
-            iconTheme: {
-              primary: "var(--danger-500)",
-              secondary: "white",
-            },
+            duration: 5000,
+            ariaProps: { role: "alert", "aria-live": "assertive" },
           },
+          blank: { duration: 5000 },
         }}
-      />
+      >
+        {(t) => <ToastCard t={t} />}
+      </Toaster>
       <CartProvider>{children}</CartProvider>
     </QueryClientProvider>
   );

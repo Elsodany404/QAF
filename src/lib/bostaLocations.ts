@@ -2,18 +2,12 @@ import bostaAddresses from "@/assets/data/bostaDistricts.json";
 import type { BostaCity, BostaDistrict } from "@/types/customTypes";
 
 /*
- * Cities and districts Bosta delivers to. The checkout form only offers
- * these, and the server re-checks every order against them, so shipping is
- * priced and booked for the same, real address.
+ * Cities and districts Bosta delivers to (`npm run update-bosta-locations`
+ * refreshes the list). The checkout form only offers these, and the server
+ * re-checks every order against them, so shipping is priced and booked for
+ * the same, real address.
  */
-const ALL_CITIES: BostaCity[] = bostaAddresses.data;
-
-export const DELIVERY_CITIES: BostaCity[] = ALL_CITIES.filter(
-  (city) => city.dropOffAvailability,
-).map((city) => ({
-  ...city,
-  districts: city.districts.filter((district) => district.dropOffAvailability),
-}));
+export const DELIVERY_CITIES: BostaCity[] = bostaAddresses.data;
 
 export function findDeliveryCity(cityName: string) {
   return DELIVERY_CITIES.find((city) => city.cityName === cityName) ?? null;
@@ -25,6 +19,19 @@ export function findDeliveryAddress(cityID: string, districtID: string) {
   const district = city?.districts.find((d) => d.districtId === districtID);
   return city && district ? { city, district } : null;
 }
+
+/**
+ * Bosta's upper bound for cash collected on delivery. Checkout offers cash
+ * on delivery up to this total.
+ */
+export const MAX_COD_AMOUNT = 30000;
+
+/**
+ * Bosta refuses a delivery whose street line is 5 characters or shorter, so
+ * checkout and manual orders ask for at least this many.
+ */
+export const MIN_STREET_LENGTH = 6;
+export const STREET_TOO_SHORT_MESSAGE = `Please enter the full street address (at least ${MIN_STREET_LENGTH} characters), e.g. 12 El Nasr Street`;
 
 /** "Cairo · القاهره" — customers may look for either spelling. */
 export function bilingualName(name: string, otherName?: string | null) {

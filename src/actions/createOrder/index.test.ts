@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  testBuild: false,
   session: null as null | { user: { id: string } },
   createOrder: vi.fn(),
   parseCreateOrderForm: vi.fn(),
@@ -11,12 +10,6 @@ const mocks = vi.hoisted(() => ({
   }),
 }));
 
-vi.mock("@/lib/testBuild", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/testBuild")>()),
-  get TEST_BUILD() {
-    return mocks.testBuild;
-  },
-}));
 vi.mock("@/lib/adminAccess", () => ({
   getCurrentSession: vi.fn(async () => mocks.session),
 }));
@@ -31,12 +24,10 @@ vi.mock("./parseCreateOrderForm", () => ({
 
 const { default: placeOrder } = await import("./index");
 const { getCurrentSession } = await import("@/lib/adminAccess");
-const { ORDERS_DISABLED_MESSAGE } = await import("@/lib/testBuild");
 
 const parsed = { success: true, data: { paymentMethod: "cash_on_delivery" } };
 
 beforeEach(() => {
-  mocks.testBuild = false;
   mocks.session = { user: { id: "user-1" } };
   mocks.createOrder.mockReset();
   mocks.parseCreateOrderForm.mockReset().mockReturnValue(parsed);
@@ -46,18 +37,6 @@ beforeEach(() => {
 });
 
 describe("checkout action", () => {
-  it("refuses every order in a test build, before doing anything else", async () => {
-    mocks.testBuild = true;
-
-    expect(await placeOrder(undefined, new FormData())).toEqual({
-      success: false,
-      error: ORDERS_DISABLED_MESSAGE,
-    });
-    expect(getCurrentSession).not.toHaveBeenCalled();
-    expect(mocks.parseCreateOrderForm).not.toHaveBeenCalled();
-    expect(mocks.createOrder).not.toHaveBeenCalled();
-  });
-
   it("requires a signed-in customer", async () => {
     mocks.session = null;
 

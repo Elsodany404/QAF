@@ -1,4 +1,6 @@
+import "server-only";
 import { emailButton, emailLayout, escapeHtml, sendEmail } from "@/lib/email";
+import { optionLabels } from "@/lib/orderItems";
 import { formatOrderNumber, isOnlinePayment } from "@/lib/orderStatus";
 import { getSiteUrl } from "@/lib/siteUrl";
 import { getOrderWithItems } from "@/services/Order";
@@ -11,17 +13,7 @@ import { formatCurrency } from "@/utils/helper";
  * online payments.
  */
 
-function itemOptions(options: unknown): string {
-  if (!Array.isArray(options)) return "";
-  return options
-    .map((o) =>
-      typeof o === "object" && o !== null && "label" in o
-        ? String((o as { label: unknown }).label)
-        : "",
-    )
-    .filter(Boolean)
-    .join(", ");
-}
+const itemOptions = (options: unknown) => optionLabels(options).join(", ");
 
 const PAYMENT_LABELS: Record<string, string> = {
   paymob_card: "Card (paid)",

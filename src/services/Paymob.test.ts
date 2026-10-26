@@ -1,28 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createFakeSupabase } from "@/test/fakeSupabase";
 import { makeOrder } from "@/test/fixtures";
 
-const db = vi.hoisted(() => ({
-  fake: null as ReturnType<typeof createFakeSupabase> | null,
-}));
-vi.mock("@/supabase/admin", async () => {
-  const { createFakeSupabase } = await import("@/test/fakeSupabase");
-  db.fake = createFakeSupabase();
-  return { default: db.fake.client };
-});
-
-const {
-  createPaymobCheckout,
-  parsePaymobReference,
-  refundPaymobOrder,
-  toCents,
-} = await import("./Paymob");
-const fake = () => db.fake!;
+const { createPaymobCheckout, parsePaymobReference, toCents } = await import(
+  "./Paymob"
+);
 const fetchMock = vi.fn();
 
 beforeEach(() => {
-  fake().reset();
   fetchMock.mockReset();
   vi.stubGlobal("fetch", fetchMock);
 });
@@ -83,6 +68,44 @@ describe("createPaymobCheckout", () => {
     ]);
   });
 
+  it("describes each item by the options the customer chose", async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ client_secret: "s" }));
+    const order = makeOrder();
+    order.orderItems[0] = {
+      ...order.orderItems[0],
+      options: [
+        { id: 10, optionID: 100, label: "250g", priceModifier: 0 },
+        { id: 6, optionID: 2, label: "Medium", priceModifier: 0 },
+      ],
+    };
+
+    await createPaymobCheckout(order);
+
+    const [item] = JSON.parse(fetchMock.mock.calls[0][1].body).items;
+    expect(item).toMatchObject({
+      name: "House Blend",
+      description: "250g, Medium",
+    });
+  });
+
+  it("keeps item text within Paymob's limits, whatever the catalog says", async () => {
+    // Paymob refuses the whole payment over 250 / 500 characters.
+    fetchMock.mockResolvedValue(jsonResponse({ client_secret: "s" }));
+    const order = makeOrder();
+    order.orderItems[0] = {
+      ...order.orderItems[0],
+      productName: "N".repeat(300),
+      options: [{ id: 10, optionID: 100, label: "L".repeat(600) }],
+    };
+
+    await createPaymobCheckout(order);
+
+    const [item] = JSON.parse(fetchMock.mock.calls[0][1].body).items;
+    expect(item.name).toHaveLength(250);
+    expect(item.description).toHaveLength(500);
+    expect(item.description.endsWith("…")).toBe(true);
+  });
+
   it("refuses cash-on-delivery orders", async () => {
     await expect(
       createPaymobCheckout(makeOrder({ paymentMethod: "cash_on_delivery" })),
@@ -95,111 +118,5 @@ describe("createPaymobCheckout", () => {
     await expect(createPaymobCheckout(makeOrder())).rejects.toThrow(
       "bad phone",
     );
-  });
-});
-
-describe("refundPaymobOrder", () => {
-  const paidOrder = {
-    id: 42,
-    totalPrice: 460,
-    paymentStatus: "paid",
-    paymobTransactionID: "tx-1",
-    shippingStatus: "cancelled",
-  };
-
-  it("claims the order, refunds, then marks it refunded", async () => {
-    fake().queue(
-      "Order",
-      { data: paidOrder },
-      { data: { id: 42 } }, // claim
-      { data: null }, // finalize
-    );
-    fetchMock.mockResolvedValue(jsonResponse({ success: true }));
-
-    await refundPaymobOrder(42);
-
-    const updates = fake()
-      .updates("Order")
-      .map((u) => u.payload);
-    expect(updates).toEqual([
-      { paymentStatus: "refunding" },
-      { paymentStatus: "refunded" },
-    ]);
-    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
-      transaction_id: "tx-1",
-      amount_cents: "46000",
-    });
-  });
-
-  it("does not call Paymob when another refund already claimed the order", async () => {
-    fake().queue("Order", { data: paidOrder }, { data: null });
-    await expect(refundPaymobOrder(42)).rejects.toThrow("already in progress");
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
-  it("releases the claim when Paymob rejects the refund", async () => {
-    fake().queue(
-      "Order",
-      { data: paidOrder },
-      { data: { id: 42 } },
-      { data: null },
-    );
-    fetchMock.mockResolvedValue(
-      jsonResponse({ success: false, detail: "nope" }),
-    );
-
-    await expect(refundPaymobOrder(42)).rejects.toThrow("nope");
-    expect(
-      fake()
-        .updates("Order")
-        .map((u) => u.payload),
-    ).toEqual([{ paymentStatus: "refunding" }, { paymentStatus: "paid" }]);
-  });
-
-  it.each(["processing", "shipped", "delivered", "returned"])(
-    "only refunds cancelled orders, not %s ones (returns go through Bosta)",
-    async (shippingStatus) => {
-      fake().queue("Order", { data: { ...paidOrder, shippingStatus } });
-
-      await expect(refundPaymobOrder(42)).rejects.toThrow(
-        "Only cancelled orders are refunded through Paymob",
-      );
-      expect(fetchMock).not.toHaveBeenCalled();
-      expect(fake().updates("Order")).toHaveLength(0);
-    },
-  );
-
-  it("always refunds the full order total", async () => {
-    fake().queue(
-      "Order",
-      { data: { ...paidOrder, totalPrice: 984.5 } },
-      { data: { id: 42 } },
-      { data: null },
-    );
-    fetchMock.mockResolvedValue(jsonResponse({ success: true }));
-
-    await refundPaymobOrder(42);
-
-    expect(JSON.parse(fetchMock.mock.calls[0][1].body).amount_cents).toBe(
-      "98450",
-    );
-  });
-
-  it("leaves the order refunding when Paymob doesn't answer", async () => {
-    fake().queue("Order", { data: paidOrder }, { data: { id: 42 } });
-    fetchMock.mockRejectedValue(new TypeError("fetch failed"));
-
-    await expect(refundPaymobOrder(42)).rejects.toThrow("uncertain");
-    // Not released: a human checks Paymob before anyone refunds again.
-    expect(
-      fake()
-        .updates("Order")
-        .map((u) => u.payload),
-    ).toEqual([{ paymentStatus: "refunding" }]);
-  });
-
-  it("refuses unpaid orders", async () => {
-    fake().queue("Order", { data: { ...paidOrder, paymentStatus: "pending" } });
-    await expect(refundPaymobOrder(42)).rejects.toThrow("no successful");
   });
 });

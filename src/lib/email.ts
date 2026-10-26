@@ -1,3 +1,4 @@
+import "server-only";
 import nodemailer from "nodemailer";
 import { Resend } from "resend";
 
@@ -15,8 +16,18 @@ import { Resend } from "resend";
  *     once the sending domain is verified in Resend.
  */
 
-/** The shop's inbox: contact-form messages and return requests land here. */
+/** The shop's public address, shown in emails and on the site. */
 export const SHOP_EMAIL = "sales@qafcoffee.store";
+
+/**
+ * Where contact-form messages are delivered, and where
+ * customers' replies to our emails go: SHOP_INBOX_EMAIL when set (e.g. a
+ * Gmail inbox while the shop's own mailbox is unavailable), the shop's
+ * public address otherwise.
+ */
+export function shopInbox(): string {
+  return process.env.SHOP_INBOX_EMAIL?.trim() || SHOP_EMAIL;
+}
 
 /** Sends one message; throws if the provider refuses it. */
 type Sender = (message: EmailMessage) => Promise<void>;
@@ -88,8 +99,13 @@ export async function sendEmail(message: EmailMessage): Promise<boolean> {
     return false;
   }
 
+  // Replies to an email sent to a customer reach the shop, not a no-reply
+  // sender.
+  const inbox = shopInbox();
+  const replyTo = message.replyTo ?? (message.to === inbox ? undefined : inbox);
+
   try {
-    await send(message);
+    await send({ ...message, ...(replyTo && { replyTo }) });
     return true;
   } catch (error) {
     console.error(

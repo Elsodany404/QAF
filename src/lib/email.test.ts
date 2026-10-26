@@ -62,6 +62,7 @@ beforeEach(() => {
     "SMTP_FROM",
     "RESEND_API_KEY",
     "RESEND_FROM_EMAIL",
+    "SHOP_INBOX_EMAIL",
   ]) {
     vi.stubEnv(key, "");
   }
@@ -174,6 +175,7 @@ describe("sendEmail over Resend", () => {
     expect(mocks.resendSend).toHaveBeenCalledWith({
       from: "Qaf Coffee <orders@qafcoffee.store>",
       ...message,
+      replyTo: "sales@qafcoffee.store",
     });
     expect(mocks.resendKeys).toContain("re_test");
   });
@@ -198,6 +200,37 @@ describe("sendEmail over Resend", () => {
     useResend();
     mocks.resendSend.mockRejectedValue(new Error("fetch failed"));
     expect(await sendEmail(message)).toBe(false);
+  });
+});
+
+describe("reply address", () => {
+  it("sends customers' replies to the shop, not to a no-reply sender", async () => {
+    useSmtp();
+    await sendEmail(message);
+    expect(mocks.sendMail.mock.calls[0][0].replyTo).toBe(
+      "sales@qafcoffee.store",
+    );
+  });
+
+  it("uses SHOP_INBOX_EMAIL when it's set", async () => {
+    useSmtp();
+    vi.stubEnv("SHOP_INBOX_EMAIL", "qaf.orders@gmail.com");
+    await sendEmail(message);
+    expect(mocks.sendMail.mock.calls[0][0].replyTo).toBe(
+      "qaf.orders@gmail.com",
+    );
+  });
+
+  it("keeps a reply address the sender chose", async () => {
+    useSmtp();
+    await sendEmail({ ...message, replyTo: "sara@example.com" });
+    expect(mocks.sendMail.mock.calls[0][0].replyTo).toBe("sara@example.com");
+  });
+
+  it("adds none to a message for the shop itself", async () => {
+    useSmtp();
+    await sendEmail({ ...message, to: "sales@qafcoffee.store" });
+    expect(mocks.sendMail.mock.calls[0][0]).not.toHaveProperty("replyTo");
   });
 });
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { STREET_TOO_SHORT_MESSAGE } from "@/lib/bostaLocations";
 import { FULL_NAME_MESSAGE } from "@/lib/fullName";
 import { parseCreateOrderForm } from "./parseCreateOrderForm";
 
@@ -58,6 +59,22 @@ describe("parseCreateOrderForm", () => {
   it("accepts Arabic full names", () => {
     const result = parseCreateOrderForm(form({ name: " سارة أحمد " }));
     expect(result.success && result.data.customerName).toBe("سارة أحمد");
+  });
+
+  // Bosta refuses a delivery whose street line is 5 characters or fewer.
+  it.each(["Nasr", "  12 St  ", "12345"])(
+    "asks for the full street address instead of %j",
+    (street) => {
+      expect(parseCreateOrderForm(form({ street }))).toEqual({
+        success: false,
+        error: STREET_TOO_SHORT_MESSAGE,
+      });
+    },
+  );
+
+  it("accepts a street long enough for Bosta", () => {
+    const result = parseCreateOrderForm(form({ street: " 9 Road " }));
+    expect(result.success && result.data.street).toBe("9 Road");
   });
 
   it("rejects invalid emails and blank fields", () => {

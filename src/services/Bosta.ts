@@ -1,11 +1,17 @@
+import "server-only";
 import supabaseAdmin from "@/supabase/admin";
 import {
+  findDeliveryAddress,
+  MAX_COD_AMOUNT,
+  MIN_STREET_LENGTH,
+} from "@/lib/bostaLocations";
+import { parseISODate } from "@/lib/egyptDate";
+import {
   bostaTrackingUrl,
-  canReviewReturn,
   isOnlinePayment,
   normalizePaymentStatus,
-  normalizeShippingStatus,
 } from "@/lib/orderStatus";
+import { getSiteUrl } from "@/lib/siteUrl";
 import type { Order } from "@/types/db";
 
 /*
@@ -15,9 +21,7 @@ import type { Order } from "@/types/db";
  */
 
 const BOSTA_API_URL = "https://app.bosta.co/api/v2";
-// Bosta's documented upper bound for cash collected on delivery, and for
-// cash refunded on a return pickup.
-export const MAX_COD_AMOUNT = 30000;
+export { MAX_COD_AMOUNT };
 
 function getBostaApiKey() {
   const apiKey = process.env.BOSTA_API_KEY;
@@ -25,6 +29,28 @@ function getBostaApiKey() {
   return apiKey;
 }
 
+/**
+ * What the customer pays for shipping, from Bosta's price quote: Bosta's
+ * full price for the parcel (delivery to that city, the fees on cash it
+ * collects, and VAT), rounded up to whole pounds like product prices.
+ * `tier.cost` is only the plan's base rate, the same for every city.
+ */
+export function shippingFeeFromQuote(quote: unknown): number {
+  const price =
+    typeof quote === "object" && quote !== null && "priceAfterVat" in quote
+      ? Number(quote.priceAfterVat)
+      : NaN;
+  if (!Number.isFinite(price) || price < 0) {
+    throw new Error("Bosta returned an invalid shipping fee");
+  }
+  // Drop floating-point noise first: 207.48000000000002 is 208, not 209.
+  return Math.ceil(Math.round(price * 100) / 100);
+}
+
+/**
+ * Shipping for one normal-size parcel to `dropOffCity`, collecting `cod`
+ * in cash (0 for prepaid orders).
+ */
 export async function getBostaFees(dropOffCity: string, cod: number) {
   const response = await fetch(
     `${BOSTA_API_URL}/pricing/shipment/calculator?dropOffCity=${encodeURIComponent(
@@ -36,7 +62,10 @@ export async function getBostaFees(dropOffCity: string, cod: number) {
         "Content-Type": "application/json",
         Authorization: getBostaApiKey(),
       },
-      cache: "no-store",
+      // Prices rarely change: a quote is reused for 10 minutes, so choosing
+      // a city at checkout and then ordering don't both wait on Bosta. Only
+      // successful replies are cached.
+      next: { revalidate: 600 },
     },
   );
 
@@ -45,12 +74,7 @@ export async function getBostaFees(dropOffCity: string, cod: number) {
   }
 
   const data = await response.json();
-  const shippingFees = Number(data?.data?.tier?.cost);
-
-  if (!Number.isFinite(shippingFees) || shippingFees < 0) {
-    throw new Error("Bosta returned an invalid shipping fee");
-  }
-  return shippingFees;
+  return shippingFeeFromQuote(data?.data);
 }
 
 function getBusinessLocationId() {
@@ -90,15 +114,48 @@ function packageSpecs(order: OrderForBosta, description: string) {
   };
 }
 
-/** The customer's address, as Bosta takes it for drop-offs and pickups. */
+/**
+ * The customer's address in Bosta's documented format: city name, district
+ * by ID (with its zone when known), street and apartment. The district goes
+ * by ID only: Bosta takes either an ID or a name, not both.
+ */
 function customerAddress(order: OrderForBosta) {
+  const zoneId = findDeliveryAddress(order.cityID, order.districtID)?.district
+    .zoneId;
+  const street = order.street.trim();
+  const apartment = order.apartment.trim();
   return {
-    cityId: order.cityID,
     city: order.city,
     districtId: order.districtID,
-    districtName: order.district,
-    firstLine: order.street,
-    apartment: order.apartment,
+    ...(zoneId && { zoneId }),
+    // Bosta rejects a first line of 5 characters or fewer; orders since
+    // checkout's own check never have one, older ones borrow the apartment.
+    firstLine:
+      street.length >= MIN_STREET_LENGTH || !apartment
+        ? street
+        : `${street}, ${apartment}`,
+    ...(apartment && { apartment }),
+  };
+}
+
+/**
+ * Bosta posts every status change of the deliveries we create to our
+ * webhook, signed with the shared secret, even if the webhook was never set
+ * up in the Bosta dashboard. Only when the site is public: Bosta can't reach
+ * a local development server.
+ */
+function webhookFields() {
+  const secret = process.env.BOSTA_SECRET_KEY;
+  let site: string;
+  try {
+    site = getSiteUrl();
+  } catch {
+    return {};
+  }
+  if (!secret || !site.startsWith("https://")) return {};
+  return {
+    webhookUrl: `${site}/api/webhooks/bosta`,
+    webhookCustomHeaders: { Authorization: secret },
   };
 }
 
@@ -122,7 +179,7 @@ async function postDelivery(payload: object, what: string) {
         "Content-Type": "application/json",
         Authorization: getBostaApiKey(),
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ ...payload, ...webhookFields() }),
       cache: "no-store",
     });
   } catch {
@@ -216,98 +273,6 @@ export async function createBostaDelivery(orderID: number) {
   return { trackingNumber };
 }
 
-/**
- * Books a Bosta "customer return pickup" for a delivered order whose return
- * the customer requested: the courier collects the items, pays the customer
- * `refundAmount` (whole pounds) in cash, and brings the parcel back to the
- * business location.
- */
-export async function createBostaReturnPickup(
-  orderID: number,
-  refundAmount: number,
-) {
-  const businessLocationId = getBusinessLocationId();
-  // Fail before touching the order when Bosta isn't configured.
-  getBostaApiKey();
-
-  const order = await loadOrderForBosta(orderID);
-
-  if (
-    !canReviewReturn(order) ||
-    normalizeShippingStatus(order.shippingStatus) !== "delivered"
-  ) {
-    throw new Error("This order has no return waiting for a pickup");
-  }
-
-  const maxRefund = Math.min(Math.round(order.totalPrice), MAX_COD_AMOUNT);
-  const refund = Math.round(refundAmount);
-  if (!Number.isFinite(refund) || refund < 1 || refund > maxRefund) {
-    throw new Error(`The refund must be between 1 and ${maxRefund} EGP`);
-  }
-
-  // Claim the return first, so a second click can't book a second pickup
-  // (and a second cash refund).
-  const { data: claimed, error: claimError } = await supabaseAdmin
-    .from("Order")
-    .update({ returnStatus: "pickup_scheduled", refundAmount: refund })
-    .eq("id", orderID)
-    .eq("returnStatus", order.returnStatus!)
-    .select("id")
-    .maybeSingle();
-
-  if (claimError || !claimed) {
-    throw new Error(
-      claimError?.message ?? "This return is already being booked",
-    );
-  }
-
-  let pickup: Awaited<ReturnType<typeof postDelivery>>;
-  try {
-    pickup = await postDelivery(
-      {
-        type: 25, // CUSTOMER_RETURN_PICKUP
-        // Where the courier brings the returned parcel.
-        businessLocationId,
-        businessReference: `${order.id}-return`,
-        // Return pickups only take a refund: the cash the courier hands the
-        // customer, sent as a negative amount (Bosta caps it at 30000 EGP).
-        cod: -refund,
-        specs: packageSpecs(order, "Coffee return"),
-        pickupAddress: customerAddress(order),
-        receiver: customerContact(order),
-      },
-      "return pickup",
-    );
-  } catch (err) {
-    // Release the claim so the admin can fix the problem and book again.
-    await supabaseAdmin
-      .from("Order")
-      .update({
-        returnStatus: order.returnStatus,
-        refundAmount: order.refundAmount,
-      })
-      .eq("id", orderID)
-      .eq("returnStatus", "pickup_scheduled");
-    throw err;
-  }
-
-  const { error: updateError } = await supabaseAdmin
-    .from("Order")
-    .update({
-      bostaReturnID: pickup.id,
-      bostaReturnTrackingNumber: pickup.trackingNumber,
-    })
-    .eq("id", orderID);
-
-  if (updateError) {
-    throw new Error(
-      `Bosta booked return pickup ${pickup.trackingNumber ?? pickup.id}, but the order could not be updated. Add the tracking number to the order manually.`,
-    );
-  }
-
-  return { trackingNumber: pickup.trackingNumber, refund };
-}
-
 /** Terminates a Bosta delivery. Only possible before the courier picks it up. */
 export async function terminateBostaDelivery(trackingNumber: string) {
   const response = await fetch(
@@ -334,4 +299,85 @@ export async function terminateBostaDelivery(trackingNumber: string) {
       body?.message ?? `Bosta cancellation failed (${response.status})`,
     );
   }
+}
+
+/**
+ * The next days Bosta can collect parcels from the business, as YYYY-MM-DD,
+ * soonest first. Bosta leaves out Fridays, holidays and today once its
+ * cut-off time has passed.
+ */
+export async function getBostaPickupDates(days = 10): Promise<string[]> {
+  const response = await fetch(
+    `${BOSTA_API_URL}/pickups/available-dates?days=${days}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: getBostaApiKey(),
+      },
+      cache: "no-store",
+    },
+  );
+
+  const body = await response.json().catch(() => null);
+  if (!response.ok || body?.success !== true || !Array.isArray(body.data)) {
+    throw new Error(
+      body?.message ?? `Bosta couldn't list pickup dates (${response.status})`,
+    );
+  }
+  return body.data.filter(
+    (date: unknown): date is string =>
+      typeof date === "string" && parseISODate(date) !== null,
+  );
+}
+
+export type PickupContact = { name: string; phone: string; email?: string };
+
+/**
+ * Asks Bosta to collect `numberOfParcels` from the business location on
+ * `scheduledDate` (YYYY-MM-DD). Without a contact, Bosta calls the
+ * location's default contact. Resolves to the pickup's id, if Bosta sent one.
+ */
+export async function createBostaPickup({
+  scheduledDate,
+  numberOfParcels,
+  contactPerson,
+}: {
+  scheduledDate: string;
+  numberOfParcels: number;
+  contactPerson?: PickupContact;
+}): Promise<{ id: string | null }> {
+  const businessLocationId = getBusinessLocationId();
+
+  let response: Response;
+  try {
+    response = await fetch(`${BOSTA_API_URL}/pickups`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: getBostaApiKey(),
+      },
+      body: JSON.stringify({
+        businessLocationId,
+        scheduledDate,
+        numberOfParcels,
+        packageType: "Normal",
+        ...(contactPerson && { contactPerson }),
+      }),
+      cache: "no-store",
+    });
+  } catch {
+    throw new Error(
+      "Bosta didn't answer, so the pickup may or may not be booked. Check the Bosta dashboard before trying again.",
+    );
+  }
+
+  const body = await response.json().catch(() => null);
+  if (!response.ok || body?.success !== true) {
+    throw new Error(
+      body?.message ?? `Bosta couldn't book the pickup (${response.status})`,
+    );
+  }
+  const id = body.data?._id ?? body.data?.puid;
+  return { id: id != null ? String(id) : null };
 }

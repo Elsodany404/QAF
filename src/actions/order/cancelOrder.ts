@@ -6,18 +6,20 @@ import { errorMessage, isValidOrderID } from "@/lib/actionHelpers";
 import { getCurrentSession } from "@/lib/adminAccess";
 import {
   canCancelOrder,
-  hasRefundablePayment,
+  canCustomerCancelOrder,
+  hasOnlinePayment,
   normalizeShippingStatus,
 } from "@/lib/orderStatus";
 import { terminateBostaDelivery } from "@/services/Bosta";
-import { refundPaymobOrder } from "@/services/Paymob";
 import supabaseAdmin from "@/supabase/admin";
 import type { ActionReturnType } from "@/types/customTypes";
 
 /**
  * Cancels an order on behalf of its owner (or an admin). Only allowed before
- * the courier picks the parcel up. Terminates the Bosta shipment if one
- * exists and refunds a paid Paymob order. The order row is kept for records.
+ * the courier picks the parcel up; terminates the Bosta shipment if one
+ * exists. The site never refunds: customers can't cancel an order they paid
+ * for online, and the shop cancels it on WhatsApp, where the refund is
+ * agreed. The order row is kept for records.
  */
 export async function cancelOrder(orderID: number): Promise<ActionReturnType> {
   try {
@@ -51,7 +53,14 @@ export async function cancelOrder(orderID: number): Promise<ActionReturnType> {
       return {
         success: false,
         error:
-          "This order has already been handed to the courier and can no longer be cancelled. Please contact us for a return.",
+          "This order has already been handed to the courier and can no longer be cancelled. Please message us on WhatsApp.",
+      };
+    }
+    if (!isAdmin && !canCustomerCancelOrder(order)) {
+      return {
+        success: false,
+        error:
+          "You've paid for this order online, so please message us on WhatsApp to cancel it and arrange your refund.",
       };
     }
 
@@ -63,7 +72,7 @@ export async function cancelOrder(orderID: number): Promise<ActionReturnType> {
           success: false,
           error: isAdmin
             ? `Could not cancel the Bosta shipment: ${errorMessage(err)}`
-            : "We couldn't cancel the courier shipment. Please contact us and we'll cancel it for you.",
+            : "We couldn't cancel the courier shipment. Please message us on WhatsApp and we'll cancel it for you.",
         };
       }
     }
@@ -85,18 +94,11 @@ export async function cancelOrder(orderID: number): Promise<ActionReturnType> {
       };
     }
 
-    let message = "Order cancelled";
     // `order` is the row as it was before cancelling.
-    if (hasRefundablePayment(order)) {
-      try {
-        await refundPaymobOrder(orderID);
-        message = "Order cancelled and your payment has been refunded";
-      } catch (err) {
-        console.error(`cancelOrder: refund failed for order ${orderID}`, err);
-        message =
-          "Order cancelled. Your refund will be processed by our team shortly.";
-      }
-    }
+    const message =
+      isAdmin && hasOnlinePayment(order)
+        ? "Order cancelled. It was paid online: refund the customer in your Paymob dashboard, then set its payment to Refunded."
+        : "Order cancelled";
 
     revalidatePath("/user");
     return { success: true, data: message };

@@ -49,11 +49,13 @@
   border-color: var(--danger-500);
 }
 
+/* Label, control, then the error under it: fields side by side keep their
+   labels and inputs level whatever message one of them shows. */
 .fieldGrid > * {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  align-self: end;
+  align-self: start;
 
   font-weight: 600;
   color: var(--charcoal-900);
@@ -104,11 +106,24 @@
 }
 
 .errorText {
-  padding: 0 0.5rem;
+  padding: 0 0.25rem;
   position: relative;
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   font-weight: 500;
+  line-height: 1.4;
   color: var(--danger-600);
+}
+
+.errorText:empty {
+  display: none;
+}
+
+.paymentWarning {
+  margin-top: 0.6rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.55;
+  color: var(--danger-700);
 }
 
 .paymentCard {
@@ -217,9 +232,10 @@
   border: none;
 }
 
+/* Muted in the shop's own warm tones (also shown while shipping loads). */
 .submitButtonDisabled {
-  background: var(--charcoal-300);
-  color: var(--charcoal-500);
+  background: var(--cream-200);
+  color: var(--cream-800);
   cursor: not-allowed;
   box-shadow: none;
 }

@@ -3,6 +3,7 @@ import {
   ArrowRight,
   Check,
   Clock3,
+  MessageCircle,
   PackageCheck,
   ShoppingBag,
   Truck,
@@ -11,45 +12,60 @@ import styles from "./OrdersList.module.css";
 import Link from "next/link";
 import type { OrderQuery } from "@/types/customTypes";
 import {
-  bostaTrackingUrl,
-  canCancelOrder,
+  canCustomerCancelOrder,
   canPayOrder,
-  canRequestReturn,
+  customerWhatsAppTopic,
   DISPLAY_STATUS_META,
   formatOrderNumber,
   getDisplayStatus,
   getTrackingStepIndex,
-  hasRefundablePayment,
-  normalizeReturnStatus,
+  hasOnlinePayment,
+  normalizePaymentStatus,
   orderTrackingUrl,
   type OrderDisplayStatus,
   TRACKING_STEPS,
+  type WhatsAppTopic,
 } from "@/lib/orderStatus";
+import { optionLabels } from "@/lib/orderItems";
+import { shopWhatsAppUrl } from "@/lib/whatsapp";
 import { formatCurrency } from "@/utils/helper";
-import {
-  CancelOrderButton,
-  PayOrderButton,
-  RequestReturnButton,
-} from "./OrderActions";
+import { CancelOrderButton, PayOrderButton } from "./OrderActions";
 
 // Statuses where the tracking bar no longer makes sense.
-const CLOSED_STATUSES: OrderDisplayStatus[] = [
-  "cancelled",
-  "refund_due",
-  "returned",
-  "return_refunded",
-];
+const CLOSED_STATUSES: OrderDisplayStatus[] = ["cancelled", "returned"];
 
 // Shown in the warning colour.
-const WARNING_STATUSES: OrderDisplayStatus[] = [
-  "exception",
-  "payment_failed",
-  "return_issue",
-];
+const WARNING_STATUSES: OrderDisplayStatus[] = ["exception", "payment_failed"];
+
+/*
+ * Returns, refunds and cancelling a paid order are all handled on WhatsApp:
+ * the button opens a chat with the order number already typed.
+ */
+const WHATSAPP_ACTIONS: Record<
+  WhatsAppTopic,
+  { label: string; message: (orderNumber: string) => string }
+> = {
+  cancel: {
+    label: "Cancel on WhatsApp",
+    message: (n) => `Hello Qaf Coffee, I'd like to cancel order ${n}.`,
+  },
+  return: {
+    label: "Request a return on WhatsApp",
+    message: (n) => `Hello Qaf Coffee, I'd like to return order ${n}.`,
+  },
+  refund: {
+    label: "Ask about my refund",
+    message: (n) => `Hello Qaf Coffee, I'm writing about the refund for order ${n}.`,
+  },
+  help: {
+    label: "Message us on WhatsApp",
+    message: (n) => `Hello Qaf Coffee, I'm writing about order ${n}.`,
+  },
+};
 
 /** What the customer should know about where their order stands. */
 function statusNote(order: OrderQuery, status: OrderDisplayStatus) {
-  const refund = formatCurrency(order.refundAmount ?? 0);
+  const refunded = normalizePaymentStatus(order.paymentStatus) === "refunded";
   switch (status) {
     case "awaiting_payment":
       return "We haven't received your payment yet. Complete it to start preparing your order.";
@@ -57,20 +73,16 @@ function statusNote(order: OrderQuery, status: OrderDisplayStatus) {
       return "Your last payment attempt didn't go through. You can try again below.";
     case "exception":
       return "There's an issue with your delivery. Our team is on it and will contact you shortly.";
-    case "refund_due":
-      return "Your order was cancelled. Your refund is being processed by our team.";
-    case "return_requested":
-      return "We've received your return request and will review it shortly. Once it's approved, a Bosta courier will collect the items and refund you in cash.";
-    case "return_scheduled":
-      return `Your return is approved. A Bosta courier will collect the items and pay you ${refund} in cash.`;
-    case "return_refunded":
-      return `The courier collected your return and refunded you ${refund} in cash.`;
-    case "return_issue":
-      return "The courier couldn't collect your return. We'll contact you to arrange a new pickup.";
-    case "delivered":
-      return normalizeReturnStatus(order.returnStatus) === "rejected"
-        ? "Your return request was declined. Please contact us if you have any questions."
+    case "cancelled":
+      if (refunded) return "Your order was cancelled and your payment refunded.";
+      return hasOnlinePayment(order)
+        ? "Your order was cancelled. You paid online: message us on WhatsApp and we'll arrange your refund."
         : null;
+    case "returned":
+      if (refunded) return "This order came back to us and has been refunded.";
+      return hasOnlinePayment(order)
+        ? "This order came back to us. Message us on WhatsApp and we'll arrange your refund."
+        : "This order came back to us. Message us on WhatsApp if you have any questions.";
     default:
       return null;
   }
@@ -145,9 +157,10 @@ function OrdersList({ orders }: { orders: OrderQuery[] }) {
         const isClosed = CLOSED_STATUSES.includes(status);
         const activeStep = getTrackingStepIndex(order);
         const note = statusNote(order, status);
-        const showCancel = canCancelOrder(order);
+        const showCancel = canCustomerCancelOrder(order);
         const showPay = canPayOrder(order);
-        const showReturn = canRequestReturn(order);
+        const topic = customerWhatsAppTopic(order);
+        const whatsApp = topic && WHATSAPP_ACTIONS[topic];
         // Percentage of the connecting line that is filled.
         const progress = (activeStep / (TRACKING_STEPS.length - 1)) * 100;
 
@@ -243,6 +256,11 @@ function OrdersList({ orders }: { orders: OrderQuery[] }) {
                     <span className={styles.itemQuantity}>
                       × {item.quantity}
                     </span>
+                    {optionLabels(item.options).length > 0 && (
+                      <small className={styles.itemOptions}>
+                        {optionLabels(item.options).join(" · ")}
+                      </small>
+                    )}
                   </div>
                 ))}
               </div>
@@ -267,28 +285,23 @@ function OrdersList({ orders }: { orders: OrderQuery[] }) {
               </a>
             )}
 
-            {order.bostaReturnTrackingNumber && (
-              <a
-                className={styles.trackingLink}
-                href={bostaTrackingUrl(order.bostaReturnTrackingNumber)}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Track return pickup ({order.bostaReturnTrackingNumber}){" "}
-                <ArrowRight aria-hidden="true" />
-              </a>
-            )}
-
-            {(showPay || showCancel || showReturn) && (
+            {(showPay || showCancel || whatsApp) && (
               <footer className={styles.actions}>
                 {showPay && <PayOrderButton orderID={order.id} />}
-                {showCancel && (
-                  <CancelOrderButton
-                    orderID={order.id}
-                    willRefund={hasRefundablePayment(order)}
-                  />
+                {showCancel && <CancelOrderButton orderID={order.id} />}
+                {whatsApp && (
+                  <a
+                    className={styles.whatsappButton}
+                    href={shopWhatsAppUrl(
+                      whatsApp.message(formatOrderNumber(order.id)),
+                    )}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <MessageCircle aria-hidden="true" />
+                    {whatsApp.label}
+                  </a>
                 )}
-                {showReturn && <RequestReturnButton orderID={order.id} />}
               </footer>
             )}
           </article>

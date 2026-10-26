@@ -1,6 +1,6 @@
-import { normalizeShippingStatus } from "@/lib/orderStatus";
+import "server-only";
+import { optionLabels } from "@/lib/orderItems";
 import { siteUrl } from "@/lib/siteUrl";
-import supabaseAdmin from "@/supabase/admin";
 import type { OrderQuery } from "@/types/customTypes";
 
 /*
@@ -10,6 +10,13 @@ import type { OrderQuery } from "@/types/customTypes";
  */
 
 const PAYMOB_API_URL = "https://accept.paymob.com";
+// Paymob rejects the whole intention when an item's text is longer.
+const MAX_ITEM_NAME = 250;
+const MAX_ITEM_DESCRIPTION = 500;
+
+function clip(text: string, max: number) {
+  return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+}
 
 export function toCents(amount: number) {
   return Math.round(amount * 100);
@@ -47,9 +54,13 @@ export async function createPaymobCheckout(order: OrderQuery): Promise<string> {
   const amount = toCents(order.totalPrice);
   let items = [
     ...order.orderItems.map((item) => ({
-      name: item.productName,
+      name: clip(item.productName, MAX_ITEM_NAME),
       amount: toCents(item.totalPrice / item.quantity),
-      description: item.product?.description || item.productName,
+      // What the customer chose ("250g, Medium"), shown on Paymob's receipt.
+      description: clip(
+        optionLabels(item.options).join(", ") || item.productName,
+        MAX_ITEM_DESCRIPTION,
+      ),
       quantity: item.quantity,
     })),
     {
@@ -129,108 +140,4 @@ export async function createPaymobCheckout(order: OrderQuery): Promise<string> {
     `?publicKey=${encodeURIComponent(publicKey)}` +
     `&clientSecret=${encodeURIComponent(clientSecret)}`
   );
-}
-
-/**
- * Refunds a cancelled, paid Paymob order in full. Returns of delivered
- * orders are refunded in cash by Bosta instead (see createBostaReturnPickup).
- * The order row is claimed with a "refunding" status first so two
- * concurrent refunds cannot both go through.
- */
-export async function refundPaymobOrder(orderID: number) {
-  const secretKey = process.env.PAYMOB_SECRET_KEY;
-  if (!secretKey) throw new Error("Paymob secret key is not configured");
-
-  const { data: order, error: orderError } = await supabaseAdmin
-    .from("Order")
-    .select(
-      "id, totalPrice, paymentStatus, paymobTransactionID, shippingStatus",
-    )
-    .eq("id", orderID)
-    .single();
-
-  if (orderError || !order) {
-    throw new Error(orderError?.message ?? "Order not found");
-  }
-  if (order.paymentStatus !== "paid" || !order.paymobTransactionID) {
-    throw new Error("Order has no successful Paymob payment");
-  }
-  if (normalizeShippingStatus(order.shippingStatus) !== "cancelled") {
-    throw new Error(
-      "Only cancelled orders are refunded through Paymob. Returns are refunded in cash by Bosta.",
-    );
-  }
-
-  const amountCents = toCents(order.totalPrice);
-  if (amountCents <= 0) {
-    throw new Error("This order has nothing to refund");
-  }
-
-  const { data: claimed, error: claimError } = await supabaseAdmin
-    .from("Order")
-    .update({ paymentStatus: "refunding" })
-    .eq("id", orderID)
-    .eq("paymentStatus", "paid")
-    .select("id")
-    .maybeSingle();
-
-  if (claimError || !claimed) {
-    throw new Error(claimError?.message ?? "A refund is already in progress");
-  }
-
-  let responseData: {
-    success?: boolean;
-    detail?: string;
-    message?: string;
-  } | null;
-  let ok: boolean;
-  try {
-    const response = await fetch(
-      `${PAYMOB_API_URL}/api/acceptance/void_refund/refund`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Token ${secretKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          transaction_id: order.paymobTransactionID,
-          amount_cents: String(amountCents),
-        }),
-        cache: "no-store",
-      },
-    );
-    responseData = await response.json().catch(() => null);
-    ok = response.ok && responseData?.success === true;
-  } catch {
-    // Network failure: we cannot know whether Paymob processed it, so leave
-    // the order in "refunding" for a human to verify.
-    throw new Error("Refund result is uncertain; check Paymob before retrying");
-  }
-
-  if (!ok) {
-    await supabaseAdmin
-      .from("Order")
-      .update({ paymentStatus: "paid" })
-      .eq("id", orderID)
-      .eq("paymentStatus", "refunding");
-
-    throw new Error(
-      responseData?.detail ??
-        responseData?.message ??
-        "Paymob could not process the refund",
-    );
-  }
-
-  const { error: finalizeError } = await supabaseAdmin
-    .from("Order")
-    .update({ paymentStatus: "refunded" })
-    .eq("id", orderID)
-    .eq("paymentStatus", "refunding");
-
-  if (finalizeError) {
-    throw new Error(
-      "Paymob accepted the refund, but the order could not be updated. Mark it refunded manually.",
-    );
-  }
 }

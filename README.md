@@ -22,14 +22,15 @@ npm run dev
 
 Open <http://localhost:3000>.
 
-| Script                 | What it does                                  |
-| ---------------------- | --------------------------------------------- |
-| `npm run dev`          | Development server                            |
-| `npm run build`        | Production build                              |
-| `npm start`            | Serve the production build                    |
-| `npm test`             | Unit tests (Vitest)                           |
-| `npm run check`        | Type check, lint and tests                    |
-| `npm run update-types` | Regenerate `src/supabase/database.types.ts`   |
+| Script                           | What it does                                       |
+| -------------------------------- | -------------------------------------------------- |
+| `npm run dev`                    | Development server                                 |
+| `npm run build`                  | Production build                                   |
+| `npm start`                      | Serve the production build                         |
+| `npm test`                       | Unit tests (Vitest)                                |
+| `npm run check`                  | Type check, lint and tests                         |
+| `npm run update-types`           | Regenerate `src/supabase/database.types.ts`        |
+| `npm run update-bosta-locations` | Refresh the cities and districts Bosta delivers to |
 
 ## Deploying
 
@@ -42,18 +43,33 @@ Railway, a VPS with `npm run build && npm start`, ...).
    production address (for example `https://qafcoffee.store`): auth emails,
    Paymob callbacks and allowed origins are all built from it.
 2. **Database.** Apply the migrations in `supabase/migrations` to the
-   production project (`npx supabase db push`).
+   production project with `npx supabase db push`. Link this folder to the
+   project once before the first push: `npx supabase login`, then
+   `npx supabase link --project-ref <ref>`, where `<ref>` is the id in
+   `NEXT_PUBLIC_SUPABASE_URL` (`https://<ref>.supabase.co`). The admin "Add
+   product" form needs `20261026060915_catalog_identity_ids.sql`: before it,
+   products, options and option values have no automatic ids and every
+   insert fails.
 3. **Email.** Either verify the sending domain of `RESEND_FROM_EMAIL` in
    Resend, or set the `SMTP_*` variables to a mailbox (see `.env.example`).
    Without one of them, verification and order emails are not delivered and
-   nobody can finish signing up.
-4. **Bosta webhook.** In the Bosta dashboard, point the delivery webhook to
-   `https://<your-domain>/api/webhooks/bosta` and set its Authorization header
-   to the value of `BOSTA_SECRET_KEY`.
-5. **Paymob.** Each payment tells Paymob to notify
-   `https://<your-domain>/api/webhooks/paymob`; the notification is verified
-   with `PAYMOB_HMAC_KEY`, which must match the HMAC secret in the Paymob
-   dashboard.
+   nobody can finish signing up. Resend's test sender (`onboarding@resend.dev`)
+   only delivers to the Resend account's owner. Contact-form messages go to
+   `sales@qafcoffee.store`, or to `SHOP_INBOX_EMAIL` when it is set;
+   customers' replies to the shop's emails go there too.
+4. **Bosta.** Every delivery the site books asks Bosta to post its status
+   changes to `https://<your-domain>/api/webhooks/bosta`, signed with
+   `BOSTA_SECRET_KEY`. Set the same URL and Authorization header in the Bosta
+   dashboard as well, so deliveries booked from the dashboard are tracked
+   too. Shipping is charged at Bosta's own quote for the address: delivery,
+   the fees on cash it collects and VAT, rounded up to whole pounds. Run
+   `npm run update-bosta-locations` every few weeks: Bosta switches districts
+   on and off, and checkout only offers the ones it delivers to.
+5. **Paymob.** Use the live keys and integration ids in production (the
+   `egy_sk_test_` / `egy_pk_test_` keys only take test cards). Each payment
+   tells Paymob to notify `https://<your-domain>/api/webhooks/paymob`; the
+   notification is verified with `PAYMOB_HMAC_KEY`, which must match the HMAC
+   secret in the Paymob dashboard.
 6. **Admin account.** Sign up on the live site, verify the email, then grant
    the admin role in the Supabase SQL editor:
 
@@ -63,23 +79,21 @@ Railway, a VPS with `npm run build && npm start`, ...).
 
    The dashboard is at `/admin/dashboard`.
 
-### Returns
+### Returns and refunds
 
-A customer requests a return on a delivered order from their account (with
-a reason); the request emails the shop inbox and appears under "Needs
-action" in the dashboard. Approving it there, with the refund amount, books
-a Bosta customer return pickup: the courier collects the items and pays the
-customer the refund in cash, and the Bosta webhook marks the order refunded
-and then returned. Paymob refunds are only for orders cancelled before they
-shipped. Apply `supabase/migrations/20261024142108_order_returns.sql` first.
+Returns, refunds and cancelling a paid order are handled with the customer
+on WhatsApp (the number is in `src/lib/whatsapp.ts`); the site never refunds
+by itself. Customers can cancel an order from their account only while no
+money has been taken (cash on delivery, or an online order not paid yet) and
+before the courier has it. Otherwise their order shows a WhatsApp button
+with the order number already typed: "Cancel on WhatsApp", "Request a
+return on WhatsApp" or "Ask about my refund".
 
-### Test build
-
-`TEST_BUILD` in `src/lib/testBuild.ts` is currently `true`. People can sign
-up, verify their email, browse and go through checkout, but no order can be
-created: checkout, admin manual orders and the order insert itself refuse,
-and the checkout and sign-up pages say it's a test build. Set it to `false`
-for the production build.
+In the dashboard, an order paid online that won't reach the customer
+(cancelled, or brought back) is listed under "Needs action". Refund it in the
+Paymob dashboard, or however you agreed with the customer, then set its
+payment to Refunded. A return pickup you book in Bosta's dashboard doesn't
+change the order: update its status by hand.
 
 ### Notes
 
@@ -90,4 +104,5 @@ for the production build.
 - When running more than one server instance, set
   `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` to the same value on every instance.
 - Pickup dates are Egyptian calendar days (`Africa/Cairo`) whatever the
-  server's time zone.
+  server's time zone. The dashboard only offers the days Bosta can come
+  (no Fridays or holidays).

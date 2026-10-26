@@ -23,6 +23,7 @@ import {
   bilingualName,
   DELIVERY_CITIES,
   districtsByZone,
+  MIN_STREET_LENGTH,
 } from "@/lib/bostaLocations";
 import { formatOrderNumber } from "@/lib/orderStatus";
 import { getAllProducts } from "@/services/Product";
@@ -444,6 +445,8 @@ export default function CreateOrderModal({ onClose }: Props) {
                   id="co-street"
                   name="street"
                   className={styles.input}
+                  placeholder="e.g. 12 El Nasr Street"
+                  minLength={MIN_STREET_LENGTH}
                   maxLength={200}
                   required
                 />

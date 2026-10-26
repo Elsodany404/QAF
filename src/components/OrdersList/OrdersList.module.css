@@ -236,16 +236,25 @@
   gap: 0.35rem;
 }
 
+/* Name and quantity on one line, the chosen options under them. */
 .item {
   display: flex;
+  flex-wrap: wrap;
   min-width: 0;
-  gap: 0.45rem;
+  column-gap: 0.45rem;
   color: var(--charcoal-700);
   font-size: 0.82rem;
 }
 
 .itemName {
   overflow-wrap: anywhere;
+  text-transform: capitalize;
+}
+
+.itemOptions {
+  flex-basis: 100%;
+  color: var(--charcoal-500);
+  font-size: 0.75rem;
   text-transform: capitalize;
 }
 
@@ -293,7 +302,7 @@
 }
 
 .cancelButton,
-.returnButton,
+.whatsappButton,
 .payButton {
   display: inline-flex;
   min-height: 2.5rem;
@@ -317,13 +326,17 @@
 }
 
 .cancelButton:hover,
-.returnButton:hover {
+.whatsappButton:hover {
   border-color: var(--cream-500);
   background: var(--cream-50);
 }
 
 .cancelButton {
   color: var(--danger-800);
+}
+
+.whatsappButton {
+  color: var(--espresso-700);
 }
 
 .payButton {
@@ -343,7 +356,7 @@
 }
 
 .cancelButton svg,
-.returnButton svg,
+.whatsappButton svg,
 .payButton svg {
   width: 1rem;
   height: 1rem;
@@ -492,49 +505,4 @@
 
 .shopButton:hover {
   opacity: 0.85;
-}
-
-.returnForm {
-  display: flex;
-  flex: 1 1 100%;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.returnLabel {
-  color: var(--charcoal-900);
-  font-size: 0.82rem;
-  font-weight: 700;
-}
-
-.returnReason {
-  width: 100%;
-  padding: 0.6rem 0.75rem;
-  border: 1px solid var(--cream-300);
-  border-radius: 6px;
-  font: inherit;
-  font-size: 0.85rem;
-  resize: vertical;
-}
-
-.returnReason:focus {
-  border-color: var(--espresso-500);
-  outline: none;
-}
-
-.returnHint {
-  color: var(--charcoal-500);
-  font-size: 0.76rem;
-  line-height: 1.5;
-}
-
-.returnFormActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.returnButton:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }

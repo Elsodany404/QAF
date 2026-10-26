@@ -13,27 +13,14 @@
   color: var(--charcoal-950);
 }
 
+/* One wide card per row on phones, so every title, description and blend
+   reads in full; three across from tablets up. */
 .categoryGrid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
   width: 100%;
   min-width: 0;
-}
-
-/* Two per row on phones: a last, odd card spans the row instead of sitting
-   alone on the left. Twice as wide, same height as its neighbours. */
-@media (max-width: 767px) {
-  .categoryCard:last-child:nth-child(odd) {
-    grid-column: 1 / -1;
-    aspect-ratio: 2 / 1.2;
-  }
-}
-
-@media (max-width: 380px) {
-  .categoryCard:last-child:nth-child(odd) {
-    aspect-ratio: 2 / 1.1;
-  }
 }
 
 .categoryCard {
@@ -41,7 +28,8 @@
   display: block;
   width: 100%;
   min-width: 0;
-  aspect-ratio: 1 / 1.2;
+  aspect-ratio: 16 / 10;
+  max-height: 22rem;
   padding: 0;
   overflow: hidden;
   border: 0;
@@ -87,7 +75,7 @@
   bottom: 0;
   left: 0;
   max-width: 100%;
-  padding: 0.75rem;
+  padding: 1rem 1.1rem;
   overflow: hidden;
 }
 
@@ -95,7 +83,7 @@
   margin-bottom: 0.25rem;
   overflow: hidden;
   color: var(--gold-400);
-  font-size: 0.55rem;
+  font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-overflow: ellipsis;
@@ -108,7 +96,7 @@
   overflow: hidden;
   color: white;
   font-family: var(--font-display);
-  font-size: 1.1rem;
+  font-size: 1.4rem;
   font-weight: 700;
   line-height: 1.15;
   text-overflow: ellipsis;
@@ -117,10 +105,10 @@
 
 .categoryDescription {
   display: -webkit-box;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.6rem;
   overflow: hidden;
   color: var(--cream-100);
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   line-height: 1.35;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -128,22 +116,19 @@
 
 .blendWrap {
   display: flex;
-  flex-wrap: nowrap;
-  gap: 0.25rem;
+  flex-wrap: wrap;
+  gap: 0.3rem;
   max-width: 100%;
-  margin-bottom: 0.5rem;
-  overflow: hidden;
+  margin-bottom: 0.6rem;
 }
 
 .blendTag {
-  flex-shrink: 0;
-  max-width: 45%;
-  padding: 0.2rem 0.4rem;
+  padding: 0.2rem 0.5rem;
   overflow: hidden;
   border-radius: 9999px;
   background: rgba(218, 144, 14, 0.2);
   color: var(--gold-100);
-  font-size: 0.55rem;
+  font-size: 0.62rem;
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -154,7 +139,7 @@
   align-items: center;
   gap: 0.2rem;
   color: var(--gold-400);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -165,31 +150,19 @@
   height: 0.8rem;
 }
 
-/* Small phones */
+/* Small phones: a little taller, so the text keeps clear of the photo's top. */
 @media (max-width: 380px) {
-  .categoryGrid {
-    gap: 0.6rem;
-  }
-
   .categoryCard {
-    aspect-ratio: 1 / 1.1;
+    aspect-ratio: 4 / 3;
     border-radius: 0.75rem;
   }
 
   .categoryContent {
-    padding: 0.6rem;
+    padding: 0.85rem;
   }
 
   .categoryTitle {
-    font-size: 1rem;
-  }
-
-  .categoryDescription {
-    display: none;
-  }
-
-  .blendWrap {
-    margin-bottom: 0.4rem;
+    font-size: 1.25rem;
   }
 }
 
@@ -202,6 +175,7 @@
 
   .categoryCard {
     aspect-ratio: 3 / 4;
+    max-height: none;
     border-radius: 1.25rem;
   }
 
@@ -222,13 +196,7 @@
     font-size: 0.85rem;
   }
 
-  .blendWrap {
-    flex-wrap: wrap;
-    overflow: visible;
-  }
-
   .blendTag {
-    max-width: none;
     font-size: 0.65rem;
   }
 

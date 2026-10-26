@@ -12,6 +12,40 @@ export function todayInEgypt(now: Date = new Date()): string {
   }).format(now);
 }
 
+/** Day of the week of a YYYY-MM-DD date: 0 is Sunday, 5 is Friday. */
+export function weekdayOfISODate(value: string): number | null {
+  const date = parseISODate(value);
+  if (!date) return null;
+  return new Date(Date.UTC(date.year, date.month - 1, date.day)).getUTCDay();
+}
+
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+/**
+ * "Mon, 26 Oct" for a YYYY-MM-DD date, the same on the server and in any
+ * browser (Intl's punctuation varies between versions).
+ */
+export function formatISODate(value: string): string {
+  const date = parseISODate(value);
+  const weekday = weekdayOfISODate(value);
+  if (!date || weekday === null) return value;
+  return `${WEEKDAYS[weekday]}, ${date.day} ${MONTHS[date.month - 1]}`;
+}
+
 /** Parses a real calendar date in YYYY-MM-DD form; null otherwise. */
 export function parseISODate(
   value: string,

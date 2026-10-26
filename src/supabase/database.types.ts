@@ -83,7 +83,7 @@ export type Database = {
         Insert: {
           description: string
           icon: string
-          id: number
+          id?: number
           name: string
         }
         Update: {
@@ -105,7 +105,7 @@ export type Database = {
         }
         Insert: {
           default?: boolean
-          id: number
+          id?: number
           inStock?: boolean
           label: string
           optionID: number
@@ -132,9 +132,8 @@ export type Database = {
       Order: {
         Row: {
           apartment: string
+          bostaExceptionReason: string | null
           bostaOrderID: string | null
-          bostaReturnID: string | null
-          bostaReturnTrackingNumber: string | null
           bostaTrackingNumber: string | null
           bostaTrackingUrl: string | null
           city: string
@@ -151,10 +150,6 @@ export type Database = {
           paymentStatus: string
           paymobOrderID: string | null
           paymobTransactionID: string | null
-          refundAmount: number | null
-          returnReason: string | null
-          returnRequestedAt: string | null
-          returnStatus: string | null
           shippingFees: number
           shippingStatus: string
           street: string
@@ -163,9 +158,8 @@ export type Database = {
         }
         Insert: {
           apartment: string
+          bostaExceptionReason?: string | null
           bostaOrderID?: string | null
-          bostaReturnID?: string | null
-          bostaReturnTrackingNumber?: string | null
           bostaTrackingNumber?: string | null
           bostaTrackingUrl?: string | null
           city: string
@@ -182,10 +176,6 @@ export type Database = {
           paymentStatus?: string
           paymobOrderID?: string | null
           paymobTransactionID?: string | null
-          refundAmount?: number | null
-          returnReason?: string | null
-          returnRequestedAt?: string | null
-          returnStatus?: string | null
           shippingFees: number
           shippingStatus?: string
           street: string
@@ -194,9 +184,8 @@ export type Database = {
         }
         Update: {
           apartment?: string
+          bostaExceptionReason?: string | null
           bostaOrderID?: string | null
-          bostaReturnID?: string | null
-          bostaReturnTrackingNumber?: string | null
           bostaTrackingNumber?: string | null
           bostaTrackingUrl?: string | null
           city?: string
@@ -213,10 +202,6 @@ export type Database = {
           paymentStatus?: string
           paymobOrderID?: string | null
           paymobTransactionID?: string | null
-          refundAmount?: number | null
-          returnReason?: string | null
-          returnRequestedAt?: string | null
-          returnStatus?: string | null
           shippingFees?: number
           shippingStatus?: string
           street?: string
@@ -298,7 +283,7 @@ export type Database = {
           category: string
           description: string
           featured?: boolean
-          id: number
+          id?: number
           imageUrl: string
           inStock?: boolean
           name: string
@@ -349,6 +334,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rateLimit: {
+        Row: {
+          count: number
+          id: string
+          key: string
+          lastRequest: number
+        }
+        Insert: {
+          count: number
+          id: string
+          key: string
+          lastRequest: number
+        }
+        Update: {
+          count?: number
+          id?: string
+          key?: string
+          lastRequest?: number
+        }
+        Relationships: []
       }
       session: {
         Row: {

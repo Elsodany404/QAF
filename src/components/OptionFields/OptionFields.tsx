@@ -63,9 +63,12 @@ export default function OptionFields({
             className={styles.input}
             placeholder="e.g. Size"
             {...register(`options.${optionIndex}.name`, {
-              required: "insert option name",
+              required: "Enter the option name",
             })}
           />
+          <span className={styles.errorText}>
+            {errors.options?.[optionIndex]?.name?.message?.toString()}
+          </span>
         </div>
 
         <div className={styles.field}>
@@ -81,15 +84,15 @@ export default function OptionFields({
             className={styles.input}
             placeholder="https://…"
             {...register(`options.${optionIndex}.icon`, {
-              required: "insert a 512 × 512 icon url",
+              required: "Enter the icon URL",
               validate: async (value) => {
                 const dimensions = await getImageDimensions(value);
 
-                if (!dimensions) return "unable to load icon";
+                if (!dimensions) return "The icon couldn't be loaded";
 
                 return dimensions.width === 512 && dimensions.height === 512
                   ? true
-                  : "icon must be exactly 512 × 512 px";
+                  : "The icon must be exactly 512 × 512 px";
               },
             })}
           />
@@ -145,6 +148,9 @@ export default function OptionFields({
             optionIndex={optionIndex}
             valueIndex={valueIndex}
             register={register}
+            labelError={errors.options?.[optionIndex]?.values?.[
+              valueIndex
+            ]?.label?.message?.toString()}
             setDefault={(selectedValueIndex) => {
               fields.forEach((_, index) => {
                 setValue(

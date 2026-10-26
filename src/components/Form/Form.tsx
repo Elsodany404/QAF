@@ -20,7 +20,10 @@ import {
   bilingualName,
   DELIVERY_CITIES,
   districtsByZone,
+  MAX_COD_AMOUNT,
+  MIN_STREET_LENGTH,
   normalizeEgyptianMobile,
+  STREET_TOO_SHORT_MESSAGE,
 } from "@/lib/bostaLocations";
 import { FULL_NAME_MESSAGE, isFullName } from "@/lib/fullName";
 import { isOnlinePayment } from "@/lib/orderStatus";
@@ -131,8 +134,14 @@ function Form() {
 
   const total = cartPrice + (shippingFees ?? 0);
   const online = isOnlinePayment(paymentMethod);
+  // The courier can't collect more cash than Bosta allows.
+  const codTooHigh = !online && total > MAX_COD_AMOUNT;
   // Only place an order against a real shipping quote.
-  const blocked = isPending || shippingFeesLoading || Boolean(shippingFeesError);
+  const blocked =
+    isPending ||
+    shippingFeesLoading ||
+    Boolean(shippingFeesError) ||
+    codTooHigh;
 
   function onValid(data: FormValues) {
     if (!city || !district) {
@@ -184,9 +193,10 @@ function Form() {
         <div className={styles.fieldGrid}>
           <div>
             <label htmlFor="name">Full Name</label>
-            <span className={styles.errorText}>{errors.name?.message}</span>
             <input
               id="name"
+              aria-invalid={Boolean(errors.name)}
+              aria-describedby="name-error"
               className={`${styles.input} ${errors.name ? styles.inputError : ""}`}
               type="text"
               autoComplete="name"
@@ -198,13 +208,17 @@ function Form() {
                 validate: (value) => isFullName(value) || FULL_NAME_MESSAGE,
               })}
             />
+            <span id="name-error" className={styles.errorText}>
+              {errors.name?.message}
+            </span>
           </div>
 
           <div>
             <label htmlFor="email">Email Address</label>
-            <span className={styles.errorText}>{errors.email?.message}</span>
             <input
               id="email"
+              aria-invalid={Boolean(errors.email)}
+              aria-describedby="email-error"
               className={`${styles.input} ${errors.email ? styles.inputError : ""}`}
               type="email"
               autoComplete="email"
@@ -218,13 +232,17 @@ function Form() {
                 },
               })}
             />
+            <span id="email-error" className={styles.errorText}>
+              {errors.email?.message}
+            </span>
           </div>
 
           <div>
             <label htmlFor="phone">Mobile Number</label>
-            <span className={styles.errorText}>{errors.phone?.message}</span>
             <input
               id="phone"
+              aria-invalid={Boolean(errors.phone)}
+              aria-describedby="phone-error"
               className={`${styles.input} ${errors.phone ? styles.inputError : ""}`}
               type="tel"
               inputMode="tel"
@@ -237,6 +255,9 @@ function Form() {
                   "Please enter a valid Egyptian mobile number (01xxxxxxxxx)",
               })}
             />
+            <span id="phone-error" className={styles.errorText}>
+              {errors.phone?.message}
+            </span>
           </div>
         </div>
       </div>
@@ -247,9 +268,10 @@ function Form() {
         <div className={styles.fieldGrid}>
           <div className={styles.dropdown}>
             <label htmlFor="city">City</label>
-            <span className={styles.errorText}>{errors.city?.message}</span>
             <select
               id="city"
+              aria-invalid={Boolean(errors.city)}
+              aria-describedby="city-error"
               className={errors.city ? styles.inputError : undefined}
               {...register("city", {
                 required: "Please choose your city",
@@ -267,15 +289,17 @@ function Form() {
                 </option>
               ))}
             </select>
+            <span id="city-error" className={styles.errorText}>
+              {errors.city?.message}
+            </span>
           </div>
 
           <div className={styles.dropdown}>
             <label htmlFor="district">District</label>
-            <span className={styles.errorText}>
-              {errors.district?.message}
-            </span>
             <select
               id="district"
+              aria-invalid={Boolean(errors.district)}
+              aria-describedby="district-error"
               className={errors.district ? styles.inputError : undefined}
               {...register("district", {
                 required: "Please choose your district",
@@ -295,13 +319,17 @@ function Form() {
                 </optgroup>
               ))}
             </select>
+            <span id="district-error" className={styles.errorText}>
+              {errors.district?.message}
+            </span>
           </div>
 
           <div>
             <label htmlFor="street">Street</label>
-            <span className={styles.errorText}>{errors.street?.message}</span>
             <input
               id="street"
+              aria-invalid={Boolean(errors.street)}
+              aria-describedby="street-error"
               className={`${styles.input} ${errors.street ? styles.inputError : ""}`}
               type="text"
               autoComplete="address-line1"
@@ -310,18 +338,21 @@ function Form() {
               {...register("street", {
                 required: "Please enter your street",
                 validate: (value) =>
-                  value.trim().length > 0 || "Please enter your street",
+                  value.trim().length >= MIN_STREET_LENGTH ||
+                  STREET_TOO_SHORT_MESSAGE,
               })}
             />
+            <span id="street-error" className={styles.errorText}>
+              {errors.street?.message}
+            </span>
           </div>
 
           <div>
             <label htmlFor="apartment">Building &amp; Apartment</label>
-            <span className={styles.errorText}>
-              {errors.apartment?.message}
-            </span>
             <input
               id="apartment"
+              aria-invalid={Boolean(errors.apartment)}
+              aria-describedby="apartment-error"
               className={`${styles.input} ${errors.apartment ? styles.inputError : ""}`}
               type="text"
               autoComplete="address-line2"
@@ -334,6 +365,9 @@ function Form() {
                   "Please enter your building and apartment",
               })}
             />
+            <span id="apartment-error" className={styles.errorText}>
+              {errors.apartment?.message}
+            </span>
           </div>
         </div>
       </div>
@@ -390,11 +424,19 @@ function Form() {
           ) : (
             <div>
               <h3 className={styles.paymentTitle}>Pay on delivery</h3>
-              <p className={styles.paymentBody}>
-                {shippingFees === null
-                  ? "Pay the courier in cash when your order arrives."
-                  : `Please have ${formatCurrency(total)} ready in cash for the courier.`}
-              </p>
+              {codTooHigh ? (
+                <p className={styles.paymentWarning} role="alert">
+                  Cash on delivery is available for orders up to{" "}
+                  {formatCurrency(MAX_COD_AMOUNT)}. Please pay online by card
+                  or mobile wallet.
+                </p>
+              ) : (
+                <p className={styles.paymentBody}>
+                  {shippingFees === null
+                    ? "Pay the courier in cash when your order arrives."
+                    : `Please have ${formatCurrency(total)} ready in cash for the courier.`}
+                </p>
+              )}
             </div>
           )}
         </div>

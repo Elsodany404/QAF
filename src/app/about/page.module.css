@@ -78,9 +78,10 @@
   line-height: 1.1;
 }
 
+/* Gold like the other page heroes: espresso browns vanish on the dark photo. */
 .heroTitleAccent {
   color: transparent;
-  background: linear-gradient(90deg, var(--espresso-600), var(--espresso-200));
+  background: linear-gradient(90deg, var(--gold-300), var(--gold-500));
   -webkit-background-clip: text;
   background-clip: text;
 }

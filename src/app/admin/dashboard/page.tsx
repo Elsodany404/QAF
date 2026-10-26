@@ -23,35 +23,14 @@ import AddProductModal from "@/components/AddProductModal/AddProductModal";
 import {
   DISPLAY_STATUS_META,
   getDisplayStatus,
-  isOnlinePayment,
+  needsAdminAction,
   normalizePaymentStatus,
   type OrderDisplayStatus,
 } from "@/lib/orderStatus";
-import type { OrderQuery } from "@/types/customTypes";
 
 type StatusFilter = OrderDisplayStatus | "all" | "needs_action";
 
 const statusOptions = Object.keys(DISPLAY_STATUS_META) as OrderDisplayStatus[];
-
-/** Orders the admin has to do something about. */
-function needsAction(order: OrderQuery) {
-  const status = getDisplayStatus(order);
-  if (
-    status === "refund_due" ||
-    status === "exception" ||
-    status === "return_requested" ||
-    status === "return_issue"
-  ) {
-    return true;
-  }
-  // Ready to ship but no Bosta shipment yet (e.g. the courier API failed).
-  return (
-    status === "processing" &&
-    !order.bostaOrderID &&
-    (!isOnlinePayment(order.paymentMethod) ||
-      normalizePaymentStatus(order.paymentStatus) === "paid")
-  );
-}
 
 export default function Dashboard() {
   const [search, setSearch] = useState("");
@@ -83,7 +62,7 @@ export default function Dashboard() {
       const matchesStatus =
         statusFilter === "all" ||
         (statusFilter === "needs_action"
-          ? needsAction(order)
+          ? needsAdminAction(order)
           : getDisplayStatus(order) === statusFilter);
       const matchesSearch =
         !q ||
@@ -92,7 +71,6 @@ export default function Dashboard() {
         order.customerEmail.toLowerCase().includes(q) ||
         order.customerPhone.toLowerCase().includes(q) ||
         (order.bostaTrackingNumber ?? "").toLowerCase().includes(q) ||
-        (order.bostaReturnTrackingNumber ?? "").toLowerCase().includes(q) ||
         (order.paymobTransactionID ?? "").toLowerCase().includes(q);
 
       return matchesStatus && matchesSearch;
@@ -109,7 +87,7 @@ export default function Dashboard() {
         s === "ready_for_pickup" || s === "shipped" || s === "out_for_delivery",
     ).length;
     const delivered = statuses.filter((s) => s === "delivered").length;
-    const attention = orders.filter(needsAction).length;
+    const attention = orders.filter(needsAdminAction).length;
 
     return { revenue, inTransit, delivered, attention };
   }, [orders]);

@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { parseISODate, todayInEgypt } from "./egyptDate";
+import {
+  formatISODate,
+  parseISODate,
+  todayInEgypt,
+  weekdayOfISODate,
+} from "./egyptDate";
 
 describe("todayInEgypt", () => {
   it("is already tomorrow in Egypt late in the UTC evening", () => {
@@ -23,5 +28,24 @@ describe("parseISODate", () => {
     expect(parseISODate("2026-13-01")).toBeNull();
     expect(parseISODate("16-10-2026")).toBeNull();
     expect(parseISODate("2026-1-5")).toBeNull();
+  });
+});
+
+describe("weekdayOfISODate", () => {
+  it("knows the day of the week, whatever the server's time zone", () => {
+    expect(weekdayOfISODate("2026-10-30")).toBe(5); // Friday
+    expect(weekdayOfISODate("2026-10-26")).toBe(1); // Monday
+    expect(weekdayOfISODate("2026-02-30")).toBeNull();
+  });
+});
+
+describe("formatISODate", () => {
+  it("reads like a calendar day", () => {
+    expect(formatISODate("2026-10-26")).toBe("Mon, 26 Oct");
+    expect(formatISODate("2099-01-31")).toBe("Sat, 31 Jan");
+  });
+
+  it("leaves anything that isn't a date as it is", () => {
+    expect(formatISODate("tomorrow")).toBe("tomorrow");
   });
 });

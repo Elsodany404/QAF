@@ -63,7 +63,19 @@
   gap: 0.75rem;
 }
 
+/* Fixed columns, so the phone, status and total line up from row to row
+   whatever the status label's length. */
+@media (min-width: 820px) {
+  .orderMeta {
+    display: grid;
+    grid-template-columns: 12.5rem 6.75rem 1.25rem;
+    justify-items: end;
+  }
+}
+
+/* Next to the chevron, not floating between it and the status. */
 .total {
+  margin-left: auto;
   color: var(--charcoal-950);
   font-weight: 900;
   white-space: nowrap;
@@ -150,6 +162,20 @@
   color: var(--charcoal-600);
   font-size: 0.88rem;
   line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* Bosta's reason for a delivery issue. */
+.detailWarning {
+  margin-top: 0.5rem;
+  padding: 0.45rem 0.6rem;
+  border-left: 3px solid var(--danger-500);
+  border-radius: 0.35rem;
+  background: var(--danger-50);
+  color: var(--danger-800);
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.45;
   overflow-wrap: anywhere;
 }
 
@@ -324,24 +350,4 @@
   width: 1rem;
   height: 1rem;
   flex-shrink: 0;
-}
-
-/* Refund the Bosta courier pays the customer for an approved return. */
-.refundField {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--charcoal-600);
-  font-size: 0.78rem;
-  font-weight: 800;
-}
-
-.refundInput {
-  width: 7rem;
-  min-height: 2.4rem;
-  padding: 0 0.75rem;
-  border: 1px solid var(--cream-200);
-  border-radius: 0.65rem;
-  background: white;
-  font: inherit;
 }

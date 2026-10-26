@@ -4,7 +4,6 @@ import { useActionState, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { Coffee, Eye, EyeOff, UserPlus } from "lucide-react";
 import styles from "./SignUpForm.module.css";
-import TestBuildNotice from "@/components/TestBuildNotice/TestBuildNotice";
 import {
   rememberPendingEmail,
   signUpAction,
@@ -81,11 +80,6 @@ export default function SignUpForm() {
 
         <h1 className={styles.heading}>Create an account</h1>
         <p className={styles.subheading}>Join us and enjoy premium coffee</p>
-
-        <TestBuildNotice>
-          You can create an account, verify your email and try the shop, but
-          orders are turned off: nothing will be charged or delivered.
-        </TestBuildNotice>
 
         <form
           onSubmit={handleSubmit(onValid)}

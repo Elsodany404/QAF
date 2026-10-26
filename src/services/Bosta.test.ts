@@ -13,10 +13,12 @@ vi.mock("@/supabase/admin", async () => {
 
 const {
   createBostaDelivery,
-  createBostaReturnPickup,
+  createBostaPickup,
   getBostaFees,
+  getBostaPickupDates,
   terminateBostaDelivery,
 } = await import("./Bosta");
+const { DELIVERY_CITIES } = await import("@/lib/bostaLocations");
 const fake = () => db.fake!;
 const fetchMock = vi.fn();
 
@@ -37,11 +39,22 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-describe("getBostaFees", () => {
-  it("asks Bosta for the city and cash amount and returns the cost", async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ data: { tier: { cost: 75 } } }));
+// Trimmed from a real reply for Cairo with 1000 EGP cash on delivery.
+const cairoQuote = {
+  tier: { cost: 54 },
+  transit: { cost: 38, originSectorId: 1, destinationSectorId: 1 },
+  shippingFee: 118,
+  expediteFee: { amount: 13, percentage: 0.013 },
+  vat: 0.14,
+  priceBeforeVat: 131,
+  priceAfterVat: 149.34,
+};
 
-    expect(await getBostaFees("6th of October", 924)).toBe(75);
+describe("getBostaFees", () => {
+  it("asks Bosta for the city and cash amount and returns its price", async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ data: cairoQuote }));
+
+    expect(await getBostaFees("6th of October", 924)).toBe(150);
 
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe(
@@ -50,19 +63,39 @@ describe("getBostaFees", () => {
     expect(init).toMatchObject({
       method: "GET",
       headers: { Authorization: "bosta-key" },
-      cache: "no-store",
+      // Quotes are reused for a while instead of asking Bosta every time.
+      next: { revalidate: 600 },
     });
   });
 
+  it("charges Bosta's full price, not the plan's base rate", async () => {
+    // tier.cost is the same 54 EGP for every city; the price isn't.
+    fetchMock.mockResolvedValue(
+      jsonResponse({ data: { ...cairoQuote, priceAfterVat: 207.48 } }),
+    );
+    expect(await getBostaFees("South Sinai", 0)).toBe(208);
+  });
+
+  it("rounds up to whole pounds without floating-point noise", async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({ data: { priceAfterVat: 207.48000000000002 } }),
+    );
+    expect(await getBostaFees("Cairo", 0)).toBe(208);
+
+    fetchMock.mockResolvedValue(jsonResponse({ data: { priceAfterVat: 134 } }));
+    expect(await getBostaFees("Cairo", 0)).toBe(134);
+  });
+
   it("returns free shipping as 0, not as an error", async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ data: { tier: { cost: 0 } } }));
+    fetchMock.mockResolvedValue(jsonResponse({ data: { priceAfterVat: 0 } }));
     expect(await getBostaFees("Cairo", 0)).toBe(0);
   });
 
   it.each([
-    ["no tier", { data: {} }],
-    ["a text cost", { data: { tier: { cost: "cheap" } } }],
-    ["a negative cost", { data: { tier: { cost: -10 } } }],
+    ["no price", { data: { tier: { cost: 54 } } }],
+    ["no data", {}],
+    ["a text price", { data: { priceAfterVat: "cheap" } }],
+    ["a negative price", { data: { priceAfterVat: -10 } }],
   ])("rejects a response with %s", async (_, body) => {
     fetchMock.mockResolvedValue(jsonResponse(body));
     await expect(getBostaFees("Cairo", 0)).rejects.toThrow(
@@ -133,11 +166,10 @@ describe("createBostaDelivery", () => {
         size: "SMALL",
         packageDetails: { itemsCount: 5, description: "Coffee Packages" },
       },
+      // Bosta's documented format: the district by ID only.
       dropOffAddress: {
-        cityId: "c1",
         city: "Cairo",
         districtId: "d1",
-        districtName: "Maadi",
         firstLine: "9 Road",
         apartment: "4",
       },
@@ -148,6 +180,9 @@ describe("createBostaDelivery", () => {
         phone: "01012345678",
         email: "sara@example.com",
       },
+      // Status changes come to our webhook, signed with the shared secret.
+      webhookUrl: "https://shop.test/api/webhooks/bosta",
+      webhookCustomHeaders: { Authorization: "bosta-webhook-secret" },
     });
     expect(fake().updates("Order")[0].payload).toEqual({
       bostaOrderID: "bosta-1",
@@ -156,6 +191,61 @@ describe("createBostaDelivery", () => {
         "https://bosta.co/tracking-shipments?shipment-number=987",
       shippingStatus: "ready_for_pickup",
     });
+  });
+
+  it("sends the district's zone with a real Bosta address", async () => {
+    const city = DELIVERY_CITIES[0];
+    const district = city.districts[0];
+    fake().queue(
+      "Order",
+      {
+        data: order({
+          city: city.cityName,
+          cityID: city.cityId,
+          district: district.districtName,
+          districtID: district.districtId,
+        }),
+      },
+      { data: null },
+    );
+    fetchMock.mockResolvedValue(created());
+
+    await createBostaDelivery(42);
+
+    expect(
+      JSON.parse(fetchMock.mock.calls[0][1].body).dropOffAddress,
+    ).toMatchObject({
+      city: city.cityName,
+      districtId: district.districtId,
+      zoneId: district.zoneId,
+    });
+  });
+
+  it("adds the apartment to a street line Bosta would find too short", async () => {
+    fake().queue(
+      "Order",
+      { data: order({ street: "Nasr", apartment: "Bldg 4, apt 7" }) },
+      { data: null },
+    );
+    fetchMock.mockResolvedValue(created());
+
+    await createBostaDelivery(42);
+
+    expect(
+      JSON.parse(fetchMock.mock.calls[0][1].body).dropOffAddress.firstLine,
+    ).toBe("Nasr, Bldg 4, apt 7");
+  });
+
+  it("doesn't send Bosta a webhook it can't reach from a local site", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "http://localhost:3000");
+    fake().queue("Order", { data: order() }, { data: null });
+    fetchMock.mockResolvedValue(created());
+
+    await createBostaDelivery(42);
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body).not.toHaveProperty("webhookUrl");
+    expect(body).not.toHaveProperty("webhookCustomHeaders");
   });
 
   it("collects nothing for a paid online order", async () => {
@@ -277,238 +367,6 @@ describe("createBostaDelivery", () => {
   });
 });
 
-describe("createBostaReturnPickup", () => {
-  const returning = (overrides: Record<string, unknown> = {}) => ({
-    id: 42,
-    customerName: "Sara Ahmed",
-    customerEmail: "sara@example.com",
-    customerPhone: "01012345678",
-    city: "Cairo",
-    cityID: "c1",
-    district: "Maadi",
-    districtID: "d1",
-    street: "9 Road",
-    apartment: "4",
-    paymentMethod: "cash_on_delivery",
-    paymentStatus: "paid",
-    shippingStatus: "delivered",
-    subTotal: 924,
-    shippingFees: 60,
-    totalPrice: 984,
-    returnStatus: "requested",
-    refundAmount: null,
-    bostaOrderID: "bosta-1",
-    bostaReturnID: null,
-    orderItems: [{ quantity: 2 }],
-    ...overrides,
-  });
-
-  const booked = () =>
-    jsonResponse({
-      success: true,
-      data: { _id: "crp-1", trackingNumber: 555 },
-    });
-
-  it("books a pickup that refunds the customer in cash", async () => {
-    fake().queue(
-      "Order",
-      { data: returning() },
-      { data: { id: 42 } }, // claim
-      { data: null }, // record the pickup
-    );
-    fetchMock.mockResolvedValue(booked());
-
-    expect(await createBostaReturnPickup(42, 924)).toEqual({
-      trackingNumber: "555",
-      refund: 924,
-    });
-
-    const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe("https://app.bosta.co/api/v2/deliveries?apiVersion=1");
-    expect(JSON.parse(init.body)).toEqual({
-      type: 25,
-      businessLocationId: "loc-1",
-      businessReference: "42-return",
-      // A refund is the cash the courier hands over: a negative amount.
-      cod: -924,
-      specs: {
-        packageType: "Parcel",
-        size: "SMALL",
-        packageDetails: { itemsCount: 2, description: "Coffee return" },
-      },
-      pickupAddress: {
-        cityId: "c1",
-        city: "Cairo",
-        districtId: "d1",
-        districtName: "Maadi",
-        firstLine: "9 Road",
-        apartment: "4",
-      },
-      receiver: {
-        firstName: "Sara",
-        lastName: "Ahmed",
-        phone: "01012345678",
-        email: "sara@example.com",
-      },
-    });
-
-    const [claim, record] = fake().updates("Order");
-    expect(claim.payload).toEqual({
-      returnStatus: "pickup_scheduled",
-      refundAmount: 924,
-    });
-    expect(claim.filters).toContainEqual(["eq", "returnStatus", "requested"]);
-    expect(record.payload).toEqual({
-      bostaReturnID: "crp-1",
-      bostaReturnTrackingNumber: "555",
-    });
-  });
-
-  it("claims the return before calling Bosta", async () => {
-    fake().queue("Order", { data: returning() }, { data: { id: 42 } }, {});
-    fetchMock.mockImplementation(async () => {
-      // By now the order is already marked as booked.
-      expect(fake().updates("Order")).toHaveLength(1);
-      return booked();
-    });
-
-    await createBostaReturnPickup(42, 900);
-  });
-
-  it("books again after Bosta cancelled the first pickup", async () => {
-    fake().queue(
-      "Order",
-      {
-        data: returning({
-          returnStatus: "pickup_failed",
-          bostaReturnID: "old",
-        }),
-      },
-      { data: { id: 42 } },
-      { data: null },
-    );
-    fetchMock.mockResolvedValue(booked());
-
-    await createBostaReturnPickup(42, 500);
-
-    expect(fake().updates("Order")[0].filters).toContainEqual([
-      "eq",
-      "returnStatus",
-      "pickup_failed",
-    ]);
-  });
-
-  it("rounds the refund to whole pounds", async () => {
-    fake().queue("Order", { data: returning() }, { data: { id: 42 } }, {});
-    fetchMock.mockResolvedValue(booked());
-
-    expect(await createBostaReturnPickup(42, 499.6)).toMatchObject({
-      refund: 500,
-    });
-    expect(JSON.parse(fetchMock.mock.calls[0][1].body).cod).toBe(-500);
-  });
-
-  it.each([0, -10, 985, Number.NaN])(
-    "refuses a refund of %s (it must be 1 to the order total)",
-    async (refund) => {
-      fake().queue("Order", { data: returning() });
-
-      await expect(createBostaReturnPickup(42, refund)).rejects.toThrow(
-        "The refund must be between 1 and 984 EGP",
-      );
-      expect(fetchMock).not.toHaveBeenCalled();
-      expect(fake().updates("Order")).toHaveLength(0);
-    },
-  );
-
-  it("caps the refund at what Bosta can pay out", async () => {
-    fake().queue("Order", { data: returning({ totalPrice: 40000 }) });
-
-    await expect(createBostaReturnPickup(42, 30001)).rejects.toThrow(
-      "between 1 and 30000 EGP",
-    );
-  });
-
-  it.each([
-    ["no return was requested", { returnStatus: null }],
-    ["the return was declined", { returnStatus: "rejected" }],
-    ["a pickup is already booked", { returnStatus: "pickup_scheduled" }],
-    ["the items are already back", { returnStatus: "returned" }],
-    ["the order isn't delivered", { shippingStatus: "out_for_delivery" }],
-  ])("refuses when %s", async (_, overrides) => {
-    fake().queue("Order", { data: returning(overrides) });
-
-    await expect(createBostaReturnPickup(42, 500)).rejects.toThrow(
-      "This order has no return waiting for a pickup",
-    );
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
-  it("doesn't book twice when another click claimed it first", async () => {
-    fake().queue("Order", { data: returning() }, { data: null });
-
-    await expect(createBostaReturnPickup(42, 500)).rejects.toThrow(
-      "already being booked",
-    );
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
-  it("releases the claim when Bosta rejects the pickup", async () => {
-    fake().queue("Order", { data: returning() }, { data: { id: 42 } }, {});
-    fetchMock.mockResolvedValue(
-      jsonResponse(
-        { success: false, message: "CRP orders accept only refund COD values" },
-        400,
-      ),
-    );
-
-    await expect(createBostaReturnPickup(42, 500)).rejects.toThrow(
-      "CRP orders accept only refund COD values",
-    );
-    const [, release] = fake().updates("Order");
-    expect(release.payload).toEqual({
-      returnStatus: "requested",
-      refundAmount: null,
-    });
-    expect(release.filters).toContainEqual([
-      "eq",
-      "returnStatus",
-      "pickup_scheduled",
-    ]);
-  });
-
-  it("warns to check Bosta when it didn't answer", async () => {
-    fake().queue("Order", { data: returning() }, { data: { id: 42 } }, {});
-    fetchMock.mockRejectedValue(new TypeError("fetch failed"));
-
-    await expect(createBostaReturnPickup(42, 500)).rejects.toThrow(
-      "Check the Bosta dashboard before trying again",
-    );
-  });
-
-  it("says so when the pickup is booked but the order can't be updated", async () => {
-    fake().queue(
-      "Order",
-      { data: returning() },
-      { data: { id: 42 } },
-      { error: { message: "timeout" } },
-    );
-    fetchMock.mockResolvedValue(booked());
-
-    await expect(createBostaReturnPickup(42, 500)).rejects.toThrow(
-      "Bosta booked return pickup 555, but the order could not be updated",
-    );
-  });
-
-  it("needs the business location to send the items back to", async () => {
-    vi.stubEnv("BOSTA_BUSINESS_LOCATION_ID", "");
-    await expect(createBostaReturnPickup(42, 500)).rejects.toThrow(
-      "BOSTA_BUSINESS_LOCATION_ID",
-    );
-    expect(fake().queries).toHaveLength(0);
-  });
-});
-
 describe("terminateBostaDelivery", () => {
   it("terminates the delivery by tracking number", async () => {
     fetchMock.mockResolvedValue(jsonResponse({ success: true }));
@@ -540,5 +398,104 @@ describe("terminateBostaDelivery", () => {
       },
     } as unknown as Response);
     await expect(terminateBostaDelivery("T1")).rejects.toThrow("(502)");
+  });
+});
+
+describe("getBostaPickupDates", () => {
+  it("lists the days Bosta can come, as Bosta sends them", async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({
+        success: true,
+        data: ["2026-10-26", "2026-10-27", "2026-10-29", "2026-10-31"],
+      }),
+    );
+
+    expect(await getBostaPickupDates()).toEqual([
+      "2026-10-26",
+      "2026-10-27",
+      "2026-10-29",
+      "2026-10-31",
+    ]);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe(
+      "https://app.bosta.co/api/v2/pickups/available-dates?days=10",
+    );
+    expect(init.headers).toMatchObject({ Authorization: "bosta-key" });
+  });
+
+  it("drops anything that isn't a real date", async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({
+        success: true,
+        data: ["2026-10-26", "Mon, 27 Oct.", null, "2026-02-30"],
+      }),
+    );
+    expect(await getBostaPickupDates()).toEqual(["2026-10-26"]);
+  });
+
+  it("fails with Bosta's reason", async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({ success: false, message: "Business not found." }, 400),
+    );
+    await expect(getBostaPickupDates()).rejects.toThrow("Business not found.");
+  });
+});
+
+describe("createBostaPickup", () => {
+  it("books the pickup for the day in Bosta's YYYY-MM-DD format", async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({ success: true, data: { _id: "p-1", puid: "778" } }),
+    );
+
+    expect(
+      await createBostaPickup({
+        scheduledDate: "2026-10-27",
+        numberOfParcels: 3,
+        contactPerson: { name: "Mahmoud Saif", phone: "01012345678" },
+      }),
+    ).toEqual({ id: "p-1" });
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("https://app.bosta.co/api/v2/pickups");
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(init.body)).toEqual({
+      businessLocationId: "loc-1",
+      scheduledDate: "2026-10-27",
+      numberOfParcels: 3,
+      packageType: "Normal",
+      contactPerson: { name: "Mahmoud Saif", phone: "01012345678" },
+    });
+  });
+
+  it("leaves the contact to the pickup location's default when there's none", async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({ success: true, data: { puid: 778 } }),
+    );
+
+    expect(
+      await createBostaPickup({ scheduledDate: "2026-10-27", numberOfParcels: 1 }),
+    ).toEqual({ id: "778" });
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).not.toHaveProperty(
+      "contactPerson",
+    );
+  });
+
+  it("passes Bosta's reason on", async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse(
+        { success: false, message: "Scheduled date can not be Friday!" },
+        400,
+      ),
+    );
+    await expect(
+      createBostaPickup({ scheduledDate: "2026-10-30", numberOfParcels: 1 }),
+    ).rejects.toThrow("Scheduled date can not be Friday!");
+  });
+
+  it("warns to check Bosta when it didn't answer", async () => {
+    fetchMock.mockRejectedValue(new TypeError("fetch failed"));
+    await expect(
+      createBostaPickup({ scheduledDate: "2026-10-27", numberOfParcels: 1 }),
+    ).rejects.toThrow("Check the Bosta dashboard before trying again");
   });
 });

@@ -10,6 +10,7 @@ type OptionValueFieldsProps = {
   optionIndex: number;
   valueIndex: number;
   register: UseFormRegister<ProductFormInputs>;
+  labelError?: string;
   setDefault: (valueIndex: number) => void;
   remove: (index: number) => void;
   isOnlyValue: boolean;
@@ -19,6 +20,7 @@ export default function OptionValueFields({
   optionIndex,
   valueIndex,
   register,
+  labelError,
   setDefault,
   remove,
   isOnlyValue,
@@ -26,11 +28,13 @@ export default function OptionValueFields({
   return (
     <div className={styles.valueRow}>
       <input
-        className={styles.input}
+        className={`${styles.input} ${labelError ? styles.inputError : ""}`}
         placeholder="e.g. 250g"
         aria-label={`Value ${valueIndex + 1} label`}
+        aria-invalid={Boolean(labelError)}
+        title={labelError}
         {...register(`options.${optionIndex}.values.${valueIndex}.label`, {
-          required: "insert value label",
+          required: "Enter a label",
         })}
       />
       <input

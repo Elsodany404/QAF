@@ -3,7 +3,6 @@
 import { redirect, RedirectType } from "next/navigation";
 
 import { getCurrentSession } from "@/lib/adminAccess";
-import { ORDERS_DISABLED_MESSAGE, TEST_BUILD } from "@/lib/testBuild";
 
 import { createOrder, type CreateOrderFailure } from "./createOrder";
 import { parseCreateOrderForm } from "./parseCreateOrderForm";
@@ -14,10 +13,6 @@ export default async function index(
   _previousState: CreateOrderState,
   formData: FormData,
 ): Promise<CreateOrderState> {
-  if (TEST_BUILD) {
-    return { success: false, error: ORDERS_DISABLED_MESSAGE };
-  }
-
   const session = await getCurrentSession();
 
   if (!session?.user) {

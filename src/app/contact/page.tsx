@@ -1,6 +1,7 @@
 import { Mail, Phone, MapPin, Clock, MessageCircle } from "lucide-react";
 import styles from "./page.module.css";
 import ContactForm from "@/components/ContactForm/ContactForm";
+import { shopWhatsAppUrl } from "@/lib/whatsapp";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -99,7 +100,9 @@ export default function Contact() {
                 </ul>
 
                 <a
-                  href="https://wa.me/201031200143?text=Hello%20Qaf%20Coffee%2C%20I%20would%20like%20to%20get%20in%20touch."
+                  href={shopWhatsAppUrl(
+                    "Hello Qaf Coffee, I would like to get in touch.",
+                  )}
                   target="_blank"
                   rel="noreferrer"
                   className={styles.whatsappButton}

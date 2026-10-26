@@ -7,7 +7,6 @@ const mocks = vi.hoisted(() => ({
   fake: null as ReturnType<typeof createFakeSupabase> | null,
   session: null as null | { user: { id: string; role: string } },
   terminateBostaDelivery: vi.fn(),
-  refundPaymobOrder: vi.fn(),
 }));
 
 vi.mock("@/supabase/admin", async () => {
@@ -22,19 +21,16 @@ vi.mock("@/lib/adminAccess", () => ({
 vi.mock("@/services/Bosta", () => ({
   terminateBostaDelivery: mocks.terminateBostaDelivery,
 }));
-vi.mock("@/services/Paymob", () => ({
-  refundPaymobOrder: mocks.refundPaymobOrder,
-}));
 
 const { cancelOrder } = await import("./cancelOrder");
 const fake = () => mocks.fake!;
 const customer = { user: { id: "user-1", role: "user" } };
+const admin = { user: { id: "admin-1", role: "admin" } };
 
 beforeEach(() => {
   fake().reset();
   mocks.session = customer;
   mocks.terminateBostaDelivery.mockReset();
-  mocks.refundPaymobOrder.mockReset();
 });
 
 describe("cancelOrder", () => {
@@ -54,7 +50,7 @@ describe("cancelOrder", () => {
   });
 
   it("lets admins cancel any order", async () => {
-    mocks.session = { user: { id: "admin-1", role: "admin" } };
+    mocks.session = admin;
     fake().queue(
       "Order",
       { data: makeOrder({ customer_ID: "someone-else" }) },
@@ -70,15 +66,14 @@ describe("cancelOrder", () => {
     expect(mocks.terminateBostaDelivery).not.toHaveBeenCalled();
   });
 
-  it("terminates the shipment and refunds a paid card order", async () => {
+  it("terminates the shipment of an unpaid order and cancels it", async () => {
     fake().queue(
       "Order",
       {
         data: makeOrder({
           shippingStatus: "ready_for_pickup",
           bostaTrackingNumber: "TRK1",
-          paymentStatus: "paid",
-          paymobTransactionID: "tx-1",
+          paymentMethod: "cash_on_delivery",
         }),
       },
       { data: { id: 42 } },
@@ -87,7 +82,6 @@ describe("cancelOrder", () => {
     const result = await cancelOrder(42);
 
     expect(mocks.terminateBostaDelivery).toHaveBeenCalledWith("TRK1");
-    expect(mocks.refundPaymobOrder).toHaveBeenCalledWith(42);
     const [update] = fake().updates("Order");
     expect(update.payload).toEqual({ shippingStatus: "cancelled" });
     expect(update.filters).toContainEqual([
@@ -95,10 +89,53 @@ describe("cancelOrder", () => {
       "shippingStatus",
       "ready_for_pickup",
     ]);
-    expect(result).toEqual({
-      success: true,
-      data: "Order cancelled and your payment has been refunded",
+    expect(result).toEqual({ success: true, data: "Order cancelled" });
+  });
+
+  it("sends a customer who paid online to WhatsApp instead of cancelling", async () => {
+    fake().queue("Order", {
+      data: makeOrder({
+        paymentStatus: "paid",
+        paymobTransactionID: "tx-1",
+        bostaTrackingNumber: "TRK1",
+        shippingStatus: "ready_for_pickup",
+      }),
     });
+
+    expect(await cancelOrder(42)).toEqual({
+      success: false,
+      error:
+        "You've paid for this order online, so please message us on WhatsApp to cancel it and arrange your refund.",
+    });
+    expect(mocks.terminateBostaDelivery).not.toHaveBeenCalled();
+    expect(fake().updates("Order")).toHaveLength(0);
+  });
+
+  it("lets the shop cancel a paid order, and reminds it to refund by hand", async () => {
+    mocks.session = admin;
+    fake().queue(
+      "Order",
+      {
+        data: makeOrder({
+          customer_ID: "someone-else",
+          paymentStatus: "paid",
+          paymobTransactionID: "tx-1",
+          bostaTrackingNumber: "TRK1",
+          shippingStatus: "ready_for_pickup",
+        }),
+      },
+      { data: { id: 42 } },
+    );
+
+    expect(await cancelOrder(42)).toEqual({
+      success: true,
+      data: "Order cancelled. It was paid online: refund the customer in your Paymob dashboard, then set its payment to Refunded.",
+    });
+    expect(mocks.terminateBostaDelivery).toHaveBeenCalledWith("TRK1");
+    // Only the shipping status changes: the payment stays as it was.
+    expect(fake().updates("Order").map((u) => u.payload)).toEqual([
+      { shippingStatus: "cancelled" },
+    ]);
   });
 
   it("keeps the order open if Bosta refuses to cancel the shipment", async () => {
@@ -114,21 +151,6 @@ describe("cancelOrder", () => {
     expect(fake().updates("Order")).toHaveLength(0);
   });
 
-  it("still cancels, and says so, when the refund fails", async () => {
-    mocks.refundPaymobOrder.mockRejectedValue(new Error("Paymob down"));
-    vi.spyOn(console, "error").mockImplementation(() => {});
-    fake().queue(
-      "Order",
-      { data: makeOrder({ paymentStatus: "paid", paymobTransactionID: "tx" }) },
-      { data: { id: 42 } },
-    );
-
-    expect(await cancelOrder(42)).toEqual({
-      success: true,
-      data: "Order cancelled. Your refund will be processed by our team shortly.",
-    });
-  });
-
   it("reports a race when the status changed underneath us", async () => {
     fake().queue("Order", { data: makeOrder() }, { data: null });
     expect(await cancelOrder(42)).toMatchObject({
@@ -137,12 +159,11 @@ describe("cancelOrder", () => {
     });
   });
 
-  it("does not refund unpaid orders", async () => {
+  it("cancels an unpaid online order for its customer", async () => {
     fake().queue("Order", { data: makeOrder() }, { data: { id: 42 } });
     expect(await cancelOrder(42)).toEqual({
       success: true,
       data: "Order cancelled",
     });
-    expect(mocks.refundPaymobOrder).not.toHaveBeenCalled();
   });
 });

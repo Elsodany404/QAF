@@ -3,11 +3,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(
-    135deg,
-    var(--cream-50) 0%,
-    var(--mocha-900) 100%
-  );
+  /* Warm cream with a soft espresso glow; a straight cream-to-dark blend
+     turns grey halfway. */
+  background:
+    radial-gradient(
+      60rem 36rem at 100% 100%,
+      rgba(64, 38, 31, 0.22),
+      transparent 65%
+    ),
+    radial-gradient(
+      44rem 28rem at 0% 0%,
+      rgba(234, 178, 45, 0.12),
+      transparent 60%
+    ),
+    linear-gradient(160deg, var(--cream-50), var(--cream-100) 60%, var(--cream-200));
   /* Centre the card in the space below the fixed navbar. */
   padding: calc(var(--nav-height) + 1.5rem) 1.5rem 1.5rem;
 }

@@ -180,15 +180,15 @@ export type AddProductResult =
   | { type: "error"; message: string }
   | { type: "idle" };
 
-/** Shape of src/assets/data/bostaDistricts.json (Bosta's city list). */
+/**
+ * Shape of src/assets/data/bostaDistricts.json: the cities and districts
+ * Bosta delivers to (scripts/update-bosta-locations.mjs).
+ */
 export type BostaCity = {
   cityId: string;
   cityName: string;
   cityOtherName: string;
-  cityCode: string;
   districts: BostaDistrict[];
-  pickupAvailability: boolean;
-  dropOffAvailability: boolean;
 };
 
 export type BostaDistrict = {
@@ -198,8 +198,4 @@ export type BostaDistrict = {
   districtId: string;
   districtName: string;
   districtOtherName: string;
-  pickupAvailability: boolean;
-  dropOffAvailability: boolean;
-  isBusy?: boolean;
-  notAllowedBulkyOrders?: boolean;
 };

@@ -1,48 +1,75 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, Calendar, CheckCircle2, Truck, X } from "lucide-react";
-import { createPickup } from "@/actions/dashboard/createPickup";
+import { createPickup, getPickupDates } from "@/actions/dashboard/createPickup";
 import { useDialog } from "@/hooks/useDialog";
-import { todayInEgypt } from "@/lib/egyptDate";
+import {
+  formatISODate,
+  todayInEgypt,
+  weekdayOfISODate,
+} from "@/lib/egyptDate";
 import styles from "./SchedulePickupModal.module.css";
 
 interface Props {
   onClose: () => void;
 }
 
+const FRIDAY = 5;
+
 export default function SchedulePickupModal({ onClose }: Props) {
   const dialogRef = useDialog<HTMLDivElement>(true, onClose);
   // Same calendar day the server checks against.
-  const [date, setDate] = useState(() => todayInEgypt());
+  const today = todayInEgypt();
+
+  // The days Bosta can come, so only a date it accepts can be picked.
+  const {
+    data: pickupDates,
+    isPending: datesLoading,
+    isError: datesFailed,
+  } = useQuery({
+    queryKey: ["pickup-dates"],
+    queryFn: () => getPickupDates(),
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+  const offered = pickupDates && pickupDates.length > 0 ? pickupDates : null;
+
+  // Until the admin picks a day, the soonest one Bosta offers.
+  const [pickedDate, setPickedDate] = useState<string | null>(null);
+  // Without Bosta's calendar, a free date input.
+  const [typedDate, setTypedDate] = useState(today);
+  const date = offered
+    ? pickedDate && offered.includes(pickedDate)
+      ? pickedDate
+      : offered[0]
+    : typedDate;
+  const isFriday = !offered && weekdayOfISODate(date) === FRIDAY;
+
   const [result, setResult] = useState<{
     type: "success" | "error";
     message: string;
-    pickupID?: string;
+    pickupID?: string | null;
   } | null>(null);
-
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (isFriday) return;
     setResult(null);
 
     startTransition(async () => {
       const res = await createPickup(date);
-      if (res.status === "success") {
-        setResult({
-          type: "success",
-          message: res.message,
-          pickupID: res.pickupID,
-        });
-      } else {
-        setResult({ type: "error", message: res.message });
-      }
+      setResult(
+        res.status === "success"
+          ? { type: "success", message: res.message, pickupID: res.pickupID }
+          : { type: "error", message: res.message },
+      );
     });
   }
 
-  // Minimum date = today
-  const todayISO = todayInEgypt();
+  const done = result?.type === "success";
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
@@ -74,16 +101,17 @@ export default function SchedulePickupModal({ onClose }: Props) {
           </button>
         </div>
 
-        {result ? (
+        {result && (
           <div
             className={
               result.type === "success" ? styles.successBox : styles.errorBox
             }
+            role={result.type === "success" ? "status" : "alert"}
           >
             {result.type === "success" ? (
-              <CheckCircle2 className={styles.resultIcon} />
+              <CheckCircle2 className={styles.resultIcon} aria-hidden="true" />
             ) : (
-              <AlertCircle className={styles.resultIcon} />
+              <AlertCircle className={styles.resultIcon} aria-hidden="true" />
             )}
             <div>
               <p className={styles.resultMsg}>{result.message}</p>
@@ -94,24 +122,73 @@ export default function SchedulePickupModal({ onClose }: Props) {
               )}
             </div>
           </div>
-        ) : (
+        )}
+
+        {!done && (
           <form className={styles.form} onSubmit={handleSubmit}>
-            <label className={styles.label} htmlFor="pickup-date">
-              <Calendar className={styles.inputIcon} aria-hidden="true" />
-              <span>Pickup date</span>
-            </label>
-            <input
-              id="pickup-date"
-              type="date"
-              className={styles.dateInput}
-              value={date}
-              min={todayISO}
-              onChange={(e) => setDate(e.target.value)}
-              required
-            />
+            {datesLoading ? (
+              <p className={styles.hint} role="status">
+                Checking which days Bosta can come…
+              </p>
+            ) : offered ? (
+              <fieldset className={styles.dateFieldset}>
+                <legend className={styles.label}>
+                  <Calendar className={styles.inputIcon} aria-hidden="true" />
+                  <span>Pickup date</span>
+                </legend>
+                <div className={styles.dateGrid}>
+                  {offered.map((day) => (
+                    <label key={day} className={styles.dateChoice}>
+                      <input
+                        type="radio"
+                        name="pickup-date"
+                        value={day}
+                        checked={day === date}
+                        onChange={() => setPickedDate(day)}
+                      />
+                      <span>
+                        {formatISODate(day)}
+                        {day === today && (
+                          <small className={styles.dateNote}>Today</small>
+                        )}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            ) : (
+              <>
+                <label className={styles.label} htmlFor="pickup-date">
+                  <Calendar className={styles.inputIcon} aria-hidden="true" />
+                  <span>Pickup date</span>
+                </label>
+                <input
+                  id="pickup-date"
+                  type="date"
+                  className={styles.dateInput}
+                  value={typedDate}
+                  min={today}
+                  onChange={(e) => setTypedDate(e.target.value)}
+                  aria-invalid={isFriday}
+                  aria-describedby="pickup-date-hint"
+                  required
+                />
+                <p
+                  id="pickup-date-hint"
+                  className={isFriday ? styles.fieldError : styles.hint}
+                >
+                  {isFriday
+                    ? "Bosta doesn't collect on Fridays. Choose another day."
+                    : datesFailed
+                      ? "Bosta's calendar couldn't be loaded. It doesn't collect on Fridays or public holidays."
+                      : "Bosta has no pickup days available right now."}
+                </p>
+              </>
+            )}
 
             <p className={styles.hint}>
-              Bosta will collect parcels from your warehouse on this date.
+              Bosta collects every order that is ready for the courier from
+              your warehouse on this day.
             </p>
 
             <div className={styles.actions}>
@@ -125,7 +202,7 @@ export default function SchedulePickupModal({ onClose }: Props) {
               <button
                 type="submit"
                 className={styles.submitBtn}
-                disabled={isPending}
+                disabled={isPending || datesLoading || isFriday}
               >
                 {isPending ? "Scheduling…" : "Schedule Pickup"}
               </button>
@@ -133,7 +210,7 @@ export default function SchedulePickupModal({ onClose }: Props) {
           </form>
         )}
 
-        {result?.type === "success" && (
+        {done && (
           <div className={styles.doneActions}>
             <button
               type="button"

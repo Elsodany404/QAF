@@ -21,6 +21,13 @@
   border-color: var(--gold-500);
 }
 
+/* A missing label: the row has no room for a message, so the border says it
+   (and the input's title explains on hover). */
+.inputError {
+  border-color: var(--danger-500);
+  background: var(--danger-50);
+}
+
 .checkLabel {
   display: flex;
   align-items: center;

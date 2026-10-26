@@ -13,6 +13,7 @@ import {
 import OrdersList from "../OrdersList/OrdersList";
 import ProfileEditor from "./ProfileEditor";
 import { getDisplayStatus } from "@/lib/orderStatus";
+import { SHOP_WHATSAPP_DISPLAY, shopWhatsAppUrl } from "@/lib/whatsapp";
 
 export default function UserPage({
   user,
@@ -24,10 +25,7 @@ export default function UserPage({
   const statuses = orders.map(getDisplayStatus);
   const activeOrders = statuses.filter(
     (status) =>
-      status !== "delivered" &&
-      status !== "cancelled" &&
-      status !== "refund_due" &&
-      status !== "returned",
+      status !== "delivered" && status !== "cancelled" && status !== "returned",
   ).length;
   const deliveredOrders = statuses.filter(
     (status) => status === "delivered",
@@ -118,21 +116,23 @@ export default function UserPage({
               </div>
               <div className={styles.helpCard}>
                 <p className={styles.helpText}>
-                  For order issues, returns, or any questions, reach out to our
-                  team — we respond within one business day.
+                  Returns, refunds and cancelling an order you paid for online
+                  are handled on WhatsApp: message us with your order number
+                  and we&apos;ll take care of it. For anything else, you can
+                  also send us a message.
                 </p>
                 <div className={styles.helpLinks}>
-                  <Link href="/contact" className={styles.helpLink}>
-                    Send us a message
-                  </Link>
                   <a
-                    href="https://wa.me/201031200143"
+                    href={shopWhatsAppUrl()}
                     target="_blank"
                     rel="noreferrer"
                     className={styles.helpLink}
                   >
-                    WhatsApp: +20 103 120 0143
+                    WhatsApp: {SHOP_WHATSAPP_DISPLAY}
                   </a>
+                  <Link href="/contact" className={styles.helpLink}>
+                    Send us a message
+                  </Link>
                 </div>
               </div>
             </section>

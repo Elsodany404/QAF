@@ -62,11 +62,14 @@ describe("findDeliveryCity", () => {
     expect(findDeliveryCity("Atlantis")).toBeNull();
   });
 
-  it("lists only districts Bosta delivers to", () => {
-    for (const city of DELIVERY_CITIES) {
-      expect(city.dropOffAvailability).toBe(true);
-      expect(city.districts.every((d) => d.dropOffAvailability)).toBe(true);
-    }
+  it("lists every delivery city with districts, each district once", () => {
+    const ids = DELIVERY_CITIES.flatMap((city) =>
+      city.districts.map((district) => district.districtId),
+    );
+    expect(DELIVERY_CITIES.every((city) => city.districts.length > 0)).toBe(
+      true,
+    );
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });
 

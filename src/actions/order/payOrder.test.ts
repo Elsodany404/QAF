@@ -66,7 +66,7 @@ describe("payOrder", () => {
 
   it.each([
     ["a paid order", { paymentStatus: "paid" }],
-    ["a refund in progress", { paymentStatus: "refunding" }],
+    ["a refunded order", { paymentStatus: "refunded" }],
     ["a cash-on-delivery order", { paymentMethod: "cash_on_delivery" }],
     ["a cancelled order", { shippingStatus: "cancelled" }],
     ["an order already shipped", { shippingStatus: "shipped" }],

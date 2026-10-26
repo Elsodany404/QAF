@@ -2,22 +2,19 @@ import { describe, expect, it } from "vitest";
 
 import { makeOrder } from "@/test/fixtures";
 import {
+  bostaRtoStateToShippingStatus,
   bostaStateToShippingStatus,
   bostaTrackingUrl,
   canCancelOrder,
+  canCustomerCancelOrder,
   canPayOrder,
-  bostaStateToReturnStatus,
-  canRefundOrder,
-  canRequestReturn,
-  canReviewReturn,
+  customerWhatsAppTopic,
   DISPLAY_STATUS_META,
-  hasRefundablePayment,
-  normalizeReturnStatus,
-  RETURN_STATUSES,
-  shouldApplyReturnUpdate,
   formatOrderNumber,
   getDisplayStatus,
   getTrackingStepIndex,
+  hasOnlinePayment,
+  needsAdminAction,
   normalizePaymentStatus,
   normalizeShippingStatus,
   orderTrackingUrl,
@@ -82,6 +79,26 @@ describe("bostaStateToShippingStatus", () => {
   });
 });
 
+describe("bostaRtoStateToShippingStatus", () => {
+  it("marks the order returned once the parcel is back at the shop", () => {
+    expect(bostaRtoStateToShippingStatus(46)).toBe("returned");
+    expect(bostaRtoStateToShippingStatus("46")).toBe("returned");
+  });
+
+  it.each([20, 24, 30, 41, 47, 48, 49, 100, 101, 103, 105])(
+    "keeps state %i of a returning parcel a delivery issue, never out for delivery",
+    (state) => {
+      expect(bostaRtoStateToShippingStatus(state)).toBe("exception");
+    },
+  );
+
+  it("ignores codes that carry no news for a return", () => {
+    expect(bostaRtoStateToShippingStatus(45)).toBeNull();
+    expect(bostaRtoStateToShippingStatus(104)).toBeNull();
+    expect(bostaRtoStateToShippingStatus("abc")).toBeNull();
+  });
+});
+
 describe("shouldApplyShippingUpdate", () => {
   it("moves forward along the happy path", () => {
     expect(shouldApplyShippingUpdate("ready_for_pickup", "shipped")).toBe(true);
@@ -131,17 +148,15 @@ describe("getDisplayStatus", () => {
     ).toBe("processing");
   });
 
-  it("flags cancelled-but-paid online orders as refund due", () => {
-    expect(
-      getDisplayStatus(
-        makeOrder({ shippingStatus: "cancelled", paymentStatus: "paid" }),
-      ),
-    ).toBe("refund_due");
-    expect(
-      getDisplayStatus(
-        makeOrder({ shippingStatus: "cancelled", paymentStatus: "refunded" }),
-      ),
-    ).toBe("cancelled");
+  it("shows a cancelled or returned order as it is, paid or not", () => {
+    // Refunds are agreed on WhatsApp: there's no "refund due" status.
+    for (const shippingStatus of ["cancelled", "returned"]) {
+      for (const paymentStatus of ["pending", "paid", "refunded"]) {
+        expect(
+          getDisplayStatus(makeOrder({ shippingStatus, paymentStatus })),
+        ).toBe(shippingStatus);
+      }
+    }
   });
 
   it("uses the shipping status once the order is moving", () => {
@@ -179,9 +194,38 @@ describe("permission helpers", () => {
     expect(canCancelOrder(makeOrder({ shippingStatus: "cancelled" }))).toBe(
       false,
     );
-    expect(canCancelOrder(makeOrder({ paymentStatus: "refunding" }))).toBe(
+  });
+
+  it("lets customers cancel only orders they haven't paid for online", () => {
+    expect(canCustomerCancelOrder(makeOrder())).toBe(true);
+    expect(
+      canCustomerCancelOrder(makeOrder({ paymentMethod: "cash_on_delivery" })),
+    ).toBe(true);
+    // Paid online: cancelling means a refund, which goes through WhatsApp.
+    expect(canCustomerCancelOrder(makeOrder({ paymentStatus: "paid" }))).toBe(
       false,
     );
+    // The shop can still cancel it.
+    expect(canCancelOrder(makeOrder({ paymentStatus: "paid" }))).toBe(true);
+    expect(
+      canCustomerCancelOrder(makeOrder({ shippingStatus: "shipped" })),
+    ).toBe(false);
+  });
+
+  it("counts only online payments that weren't refunded as money taken", () => {
+    expect(hasOnlinePayment(makeOrder({ paymentStatus: "paid" }))).toBe(true);
+    expect(hasOnlinePayment(makeOrder({ paymentStatus: "pending" }))).toBe(
+      false,
+    );
+    expect(hasOnlinePayment(makeOrder({ paymentStatus: "refunded" }))).toBe(
+      false,
+    );
+    // Cash is collected on delivery, by the courier.
+    expect(
+      hasOnlinePayment(
+        makeOrder({ paymentMethod: "cash_on_delivery", paymentStatus: "paid" }),
+      ),
+    ).toBe(false);
   });
 
   it("offers online payment only for unpaid online orders", () => {
@@ -193,30 +237,126 @@ describe("permission helpers", () => {
     );
     expect(canPayOrder(makeOrder({ shippingStatus: "cancelled" }))).toBe(false);
   });
+});
 
-  it("refunds only paid Paymob orders with a transaction", () => {
-    const paid = { paymentStatus: "paid", paymobTransactionID: "tx" };
-    expect(hasRefundablePayment(makeOrder(paid))).toBe(true);
-    expect(hasRefundablePayment(makeOrder({ paymentStatus: "paid" }))).toBe(
-      false,
-    );
-    expect(
-      hasRefundablePayment(
-        makeOrder({ ...paid, paymentMethod: "cash_on_delivery" }),
-      ),
-    ).toBe(false);
+describe("customerWhatsAppTopic", () => {
+  it.each([
+    [
+      "a paid order the courier doesn't have yet",
+      { paymentStatus: "paid" },
+      "cancel",
+    ],
+    [
+      "a paid order waiting for the courier",
+      { paymentStatus: "paid", shippingStatus: "ready_for_pickup" },
+      "cancel",
+    ],
+    [
+      "a delivered order",
+      { paymentStatus: "paid", shippingStatus: "delivered" },
+      "return",
+    ],
+    [
+      "a delivered cash order",
+      {
+        paymentMethod: "cash_on_delivery",
+        paymentStatus: "paid",
+        shippingStatus: "delivered",
+      },
+      "return",
+    ],
+    [
+      "a paid order cancelled by the shop",
+      { paymentStatus: "paid", shippingStatus: "cancelled" },
+      "refund",
+    ],
+    [
+      "a paid order brought back",
+      { paymentStatus: "paid", shippingStatus: "returned" },
+      "refund",
+    ],
+    [
+      "an unpaid order brought back",
+      { paymentMethod: "cash_on_delivery", shippingStatus: "returned" },
+      "help",
+    ],
+    [
+      "a delivery issue",
+      { paymentStatus: "paid", shippingStatus: "exception" },
+      "help",
+    ],
+  ])("asks about %s: %s", (_, fields, topic) => {
+    expect(customerWhatsAppTopic(makeOrder(fields))).toBe(topic);
   });
 
-  it("refunds through Paymob only once the order is cancelled", () => {
-    const paid = { paymentStatus: "paid", paymobTransactionID: "tx" };
+  it.each([
+    ["an unpaid order they can cancel themselves", {}],
+    [
+      "a cash order waiting for the courier",
+      { paymentMethod: "cash_on_delivery" },
+    ],
+    [
+      "an order on its way",
+      { paymentStatus: "paid", shippingStatus: "out_for_delivery" },
+    ],
+    ["an unpaid order they cancelled", { shippingStatus: "cancelled" }],
+    [
+      "an order already refunded",
+      { paymentStatus: "refunded", shippingStatus: "cancelled" },
+    ],
+  ])("has nothing to ask about %s", (_, fields) => {
+    expect(customerWhatsAppTopic(makeOrder(fields))).toBeNull();
+  });
+});
+
+describe("needsAdminAction", () => {
+  it("flags a delivery issue", () => {
+    expect(needsAdminAction(makeOrder({ shippingStatus: "exception" }))).toBe(
+      true,
+    );
+  });
+
+  it("flags money taken for an order that won't be delivered, until it's refunded", () => {
+    for (const shippingStatus of ["cancelled", "returned"]) {
+      expect(
+        needsAdminAction(makeOrder({ shippingStatus, paymentStatus: "paid" })),
+      ).toBe(true);
+      expect(
+        needsAdminAction(
+          makeOrder({ shippingStatus, paymentStatus: "refunded" }),
+        ),
+      ).toBe(false);
+      expect(
+        needsAdminAction(
+          makeOrder({
+            shippingStatus,
+            paymentMethod: "cash_on_delivery",
+            paymentStatus: "pending",
+          }),
+        ),
+      ).toBe(false);
+    }
+  });
+
+  it("flags an order ready to ship without a Bosta shipment", () => {
+    expect(needsAdminAction(makeOrder({ paymentStatus: "paid" }))).toBe(true);
     expect(
-      canRefundOrder(makeOrder({ ...paid, shippingStatus: "cancelled" })),
+      needsAdminAction(makeOrder({ paymentMethod: "cash_on_delivery" })),
     ).toBe(true);
-    // Delivered orders are refunded in cash by Bosta when they come back.
-    for (const shippingStatus of ["processing", "delivered", "returned"]) {
-      expect(canRefundOrder(makeOrder({ ...paid, shippingStatus }))).toBe(
-        false,
-      );
+    expect(
+      needsAdminAction(
+        makeOrder({ paymentStatus: "paid", bostaOrderID: "b1" }),
+      ),
+    ).toBe(false);
+    // Waiting for the customer to pay.
+    expect(needsAdminAction(makeOrder())).toBe(false);
+  });
+
+  it("leaves orders on their way or delivered alone", () => {
+    for (const shippingStatus of ["shipped", "out_for_delivery", "delivered"]) {
+      expect(
+        needsAdminAction(makeOrder({ shippingStatus, paymentStatus: "paid" })),
+      ).toBe(false);
     }
   });
 });
@@ -331,157 +471,50 @@ describe("order lifecycle invariants (every status combination)", () => {
     }
   });
 
-  it("only refunds money Paymob took, for orders that were cancelled", () => {
-    for (const order of everyOrder) {
-      if (canRefundOrder(order)) {
-        expect(order.paymentStatus).toBe("paid");
-        expect(order.paymentMethod).not.toBe("cash_on_delivery");
-        expect(order.paymobTransactionID).toBeTruthy();
-        expect(order.shippingStatus).toBe("cancelled");
-      }
-    }
-  });
-
-  it("never cancels an order the courier has, or one being refunded", () => {
+  it("never cancels an order the courier has", () => {
     for (const order of everyOrder) {
       if (canCancelOrder(order)) {
         expect(["processing", "ready_for_pickup"]).toContain(
           order.shippingStatus,
         );
-        expect(order.paymentStatus).not.toBe("refunding");
       }
     }
   });
 
-  it("flags every cancelled-but-paid online order for a refund", () => {
+  it("never lets a customer cancel an order they paid for online", () => {
     for (const order of everyOrder) {
-      const refundDue =
-        order.shippingStatus === "cancelled" &&
-        order.paymentStatus === "paid" &&
-        order.paymentMethod !== "cash_on_delivery";
-      expect(getDisplayStatus(order) === "refund_due").toBe(refundDue);
-    }
-  });
-});
-
-describe("returns", () => {
-  const delivered = (overrides = {}) =>
-    makeOrder({
-      paymentStatus: "paid",
-      shippingStatus: "delivered",
-      ...overrides,
-    });
-
-  it("reads unknown or missing return statuses as no return", () => {
-    expect(normalizeReturnStatus(null)).toBeNull();
-    expect(normalizeReturnStatus(undefined)).toBeNull();
-    expect(normalizeReturnStatus("maybe")).toBeNull();
-    for (const status of RETURN_STATUSES) {
-      expect(normalizeReturnStatus(status)).toBe(status);
-    }
-  });
-
-  it("lets the customer ask once, and only for a delivered order", () => {
-    expect(canRequestReturn(delivered())).toBe(true);
-    expect(canRequestReturn(delivered({ returnStatus: "requested" }))).toBe(
-      false,
-    );
-    expect(canRequestReturn(delivered({ returnStatus: "rejected" }))).toBe(
-      false,
-    );
-    for (const shippingStatus of SHIPPING_STATUSES) {
-      if (shippingStatus === "delivered") continue;
-      expect(canRequestReturn(makeOrder({ shippingStatus }))).toBe(false);
-    }
-  });
-
-  it("lets the admin review a request, or re-book a pickup Bosta cancelled", () => {
-    const review = RETURN_STATUSES.filter((returnStatus) =>
-      canReviewReturn(delivered({ returnStatus })),
-    );
-    expect(review).toEqual(["requested", "pickup_failed"]);
-    expect(canReviewReturn(delivered())).toBe(false);
-  });
-
-  it.each([
-    [10, "pickup_scheduled"],
-    [20, "pickup_scheduled"],
-    [22, "pickup_scheduled"],
-    [23, "picked_up"],
-    [24, "picked_up"],
-    [30, "picked_up"],
-    [41, "picked_up"],
-    [46, "returned"],
-    ["46", "returned"],
-    [48, "pickup_failed"],
-    [49, "pickup_failed"],
-  ])("reads return pickup state %j as %s", (state, status) => {
-    expect(bostaStateToReturnStatus(state)).toBe(status);
-  });
-
-  it.each([47, 45, 100, 103, 105, "x", null])(
-    "ignores state %j on a return pickup",
-    (state) => {
-      expect(bostaStateToReturnStatus(state)).toBeNull();
-    },
-  );
-
-  it("moves a booked pickup forward only", () => {
-    expect(shouldApplyReturnUpdate("pickup_scheduled", "picked_up")).toBe(true);
-    expect(shouldApplyReturnUpdate("pickup_scheduled", "returned")).toBe(true);
-    expect(shouldApplyReturnUpdate("picked_up", "returned")).toBe(true);
-    expect(shouldApplyReturnUpdate("picked_up", "pickup_scheduled")).toBe(
-      false,
-    );
-    expect(shouldApplyReturnUpdate("returned", "picked_up")).toBe(false);
-    expect(
-      shouldApplyReturnUpdate("pickup_scheduled", "pickup_scheduled"),
-    ).toBe(false);
-  });
-
-  it("only fails a pickup before the courier has the items", () => {
-    expect(shouldApplyReturnUpdate("pickup_scheduled", "pickup_failed")).toBe(
-      true,
-    );
-    // The customer already got the cash: a late cancel can't undo that.
-    expect(shouldApplyReturnUpdate("picked_up", "pickup_failed")).toBe(false);
-    expect(shouldApplyReturnUpdate("returned", "pickup_failed")).toBe(false);
-  });
-
-  it("ignores Bosta updates for returns without a booked pickup", () => {
-    for (const current of [
-      null,
-      "requested",
-      "rejected",
-      "pickup_failed",
-    ] as const) {
-      for (const next of RETURN_STATUSES) {
-        expect(shouldApplyReturnUpdate(current, next)).toBe(false);
+      if (canCustomerCancelOrder(order)) {
+        expect(
+          order.paymentMethod !== "cash_on_delivery" &&
+            order.paymentStatus === "paid",
+        ).toBe(false);
       }
     }
   });
 
-  it.each([
-    [{ returnStatus: "requested" }, "return_requested"],
-    [{ returnStatus: "pickup_scheduled" }, "return_scheduled"],
-    [{ returnStatus: "picked_up" }, "return_refunded"],
-    [
-      {
-        returnStatus: "returned",
-        shippingStatus: "returned",
-        paymentStatus: "refunded",
-      },
-      "return_refunded",
-    ],
-    [{ returnStatus: "pickup_failed" }, "return_issue"],
-    [{ returnStatus: "rejected" }, "delivered"],
-  ])("shows %o as %s", (fields, status) => {
-    expect(getDisplayStatus(delivered(fields))).toBe(status);
+  it("sends every paid online order the customer can't cancel or receive to WhatsApp", () => {
+    for (const order of everyOrder) {
+      const paidOnline =
+        order.paymentMethod !== "cash_on_delivery" &&
+        order.paymentStatus === "paid";
+      const topic = customerWhatsAppTopic(order);
+      if (paidOnline && canCancelOrder(order)) expect(topic).toBe("cancel");
+      if (
+        paidOnline &&
+        (order.shippingStatus === "cancelled" ||
+          order.shippingStatus === "returned")
+      ) {
+        expect(topic).toBe("refund");
+        expect(needsAdminAction(order)).toBe(true);
+      }
+      if (order.shippingStatus === "delivered") expect(topic).toBe("return");
+    }
   });
 
-  it("keeps the delivery progress complete during a return", () => {
-    for (const returnStatus of RETURN_STATUSES) {
-      expect(getTrackingStepIndex(delivered({ returnStatus }))).toBe(4);
+  it("maps every RTO state to a status the app knows, never a forward one", () => {
+    for (let state = 0; state <= 200; state++) {
+      const status = bostaRtoStateToShippingStatus(state);
+      if (status !== null) expect(["exception", "returned"]).toContain(status);
     }
   });
 });

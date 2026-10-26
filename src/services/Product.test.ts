@@ -95,7 +95,7 @@ describe("getProductByID", () => {
     fake().queue("Product", { data: row(4) });
 
     expect((await getProductByID("4"))?.product.name).toBe("Blend 4");
-    expect(fake().queries[0].filters).toEqual([["eq", "id", "4"]]);
+    expect(fake().queries[0].filters).toEqual([["eq", "id", 4]]);
   });
 
   it("returns null for products that don't exist", async () => {
@@ -103,7 +103,7 @@ describe("getProductByID", () => {
     expect(await getProductByID("4")).toBeNull();
   });
 
-  it.each(["", "abc", "4.5", "-4", "4;drop", "1".repeat(19), " 4"])(
+  it.each(["", "abc", "4.5", "-4", "4;drop", "1".repeat(16), " 4"])(
     "treats the ID %j as not found, without a query",
     async (id) => {
       expect(await getProductByID(id)).toBeNull();

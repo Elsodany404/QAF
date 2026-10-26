@@ -1,6 +1,8 @@
 import {
   findDeliveryAddress,
+  MIN_STREET_LENGTH,
   normalizeEgyptianMobile,
+  STREET_TOO_SHORT_MESSAGE,
 } from "@/lib/bostaLocations";
 import { FULL_NAME_MESSAGE, isFullName } from "@/lib/fullName";
 import type {
@@ -75,9 +77,12 @@ export function parseCreateOrderForm(
     return { success: false, error: "Invalid order form data" };
   }
 
-  // The checkout form checks this too; the server never trusts it.
+  // The checkout form checks these too; the server never trusts it.
   if (!isFullName(customerName)) {
     return { success: false, error: FULL_NAME_MESSAGE };
+  }
+  if (street.trim().length < MIN_STREET_LENGTH) {
+    return { success: false, error: STREET_TOO_SHORT_MESSAGE };
   }
 
   const phone = normalizeEgyptianMobile(customerPhone);
