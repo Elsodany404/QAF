@@ -89,8 +89,6 @@ export type FormValues = {
 
 export type PaymentOptionsT = {
   value: PaymentMethod;
-  title: string;
-  desc: string;
   Icon: LucideIcon;
 }[];
 
@@ -124,6 +122,9 @@ export type CartContextT = {
 export type ProductFormInputs = {
   name: string;
   description: string;
+  /** Optional Arabic text for the Arabic site; English is shown without it. */
+  nameAr: string;
+  descriptionAr: string;
   priceRaw: number;
   /** A CATEGORIES id other than "all". */
   category: string;
@@ -137,12 +138,15 @@ export type ProductFormInputs = {
 export type ProductOptionFormInput = {
   name: string;
   description: string;
+  nameAr?: string;
+  descriptionAr?: string;
   icon: string;
   values: ProductOptionValueFormInput[];
 };
 
 export type ProductOptionValueFormInput = {
   label: string;
+  labelAr?: string;
   /**
    * Price change as a fraction of the base price: 0.1 = +10%, -0.2 = -20%.
    * (The admin form takes percent and converts.)

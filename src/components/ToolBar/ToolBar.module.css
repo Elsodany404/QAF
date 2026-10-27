@@ -68,7 +68,7 @@
   position: absolute;
 
   top: 50%;
-  left: 1rem;
+  inset-inline-start: 1rem;
 
   width: 1.1rem;
   height: 1.1rem;
@@ -88,7 +88,7 @@
   position: absolute;
 
   top: 50%;
-  right: 0.65rem;
+  inset-inline-end: 0.65rem;
 
   display: flex;
   align-items: center;
@@ -289,13 +289,13 @@
   .searchInput {
     height: 3.2rem;
 
-    padding-left: 3.1rem;
+    padding-inline-start: 3.1rem;
 
     font-size: 0.95rem;
   }
 
   .searchIcon {
-    left: 1.05rem;
+    inset-inline-start: 1.05rem;
 
     width: 1.15rem;
     height: 1.15rem;
@@ -371,8 +371,8 @@
   .searchInput {
     height: 2.75rem;
 
-    padding-left: 2.7rem;
-    padding-right: 2.6rem;
+    padding-inline-start: 2.7rem;
+    padding-inline-end: 2.6rem;
 
     border-radius: 0.8rem;
 
@@ -380,14 +380,14 @@
   }
 
   .searchIcon {
-    left: 0.85rem;
+    inset-inline-start: 0.85rem;
 
     width: 1rem;
     height: 1rem;
   }
 
   .clearButton {
-    right: 0.45rem;
+    inset-inline-end: 0.45rem;
 
     width: 1.8rem;
     height: 1.8rem;

@@ -1,9 +1,11 @@
 "use client";
 import { useForm } from "react-hook-form";
 import { useActionState, useEffect, useState, useTransition } from "react";
-import Link from "next/link";
-import { Coffee, Eye, EyeOff, UserPlus } from "lucide-react";
+import { Eye, EyeOff, UserPlus } from "lucide-react";
 import styles from "./SignUpForm.module.css";
+import AuthBrand from "@/components/PasswordReset/AuthBrand";
+import { useI18n } from "@/i18n/I18nProvider";
+import Link from "@/i18n/Link";
 import {
   rememberPendingEmail,
   signUpAction,
@@ -24,8 +26,14 @@ const initialState: ActionState = {
   message: "",
 };
 export default function SignUpForm() {
+  const { locale, t, href } = useI18n();
+  const text = t.auth;
   const [state, formAction, isPending] = useActionState(
-    signUpAction,
+    (previousState: ActionState, formData: FormData) =>
+      signUpAction(previousState, formData, {
+        locale,
+        results: text.results,
+      }),
     initialState,
   );
   const [showPassword, setShowPassword] = useState(false);
@@ -44,7 +52,7 @@ export default function SignUpForm() {
     if (state.status === "success") {
       // Not signed in yet — send them to "check your email" instead of the shop.
       rememberPendingEmail(getValues("email"));
-      router.push(VERIFY_EMAIL_PATH);
+      router.push(href(VERIFY_EMAIL_PATH));
     } else if (state.status === "failed") {
       toast.error(state.message);
     }
@@ -64,22 +72,10 @@ export default function SignUpForm() {
   return (
     <div className={styles.page}>
       <div className={styles.card}>
-        {/* Brand header */}
-        <div className={styles.brand}>
-          <div className={styles.logoMark}>
-            <div className={styles.logoMarkInner} />
-            <div className={styles.logoIcon}>
-              <Coffee size={22} />
-            </div>
-          </div>
-          <div>
-            <p className={styles.logoTitle}>Qaf</p>
-            <p className={styles.logoSubtitle}>Coffee Co.</p>
-          </div>
-        </div>
+        <AuthBrand />
 
-        <h1 className={styles.heading}>Create an account</h1>
-        <p className={styles.subheading}>Join us and enjoy premium coffee</p>
+        <h1 className={styles.heading}>{text.signUp.heading}</h1>
+        <p className={styles.subheading}>{text.signUp.subheading}</p>
 
         <form
           onSubmit={handleSubmit(onValid)}
@@ -89,20 +85,20 @@ export default function SignUpForm() {
           {/* Name */}
           <div className={styles.field}>
             <label className={styles.label} htmlFor="name">
-              Full name
+              {text.signUp.name}
             </label>
             <input
               id="name"
               type="text"
               autoComplete="name"
               maxLength={80}
-              placeholder="Ahmed Al-Rashid"
+              placeholder={text.signUp.namePlaceholder}
               className={`${styles.input} ${errors.name ? styles.inputError : ""}`}
               {...register("name", {
-                required: "Name is required",
+                required: text.signUp.nameRequired,
                 minLength: {
                   value: 2,
-                  message: "Name must be at least 2 characters",
+                  message: text.signUp.nameTooShort,
                 },
               })}
             />
@@ -114,19 +110,20 @@ export default function SignUpForm() {
           {/* Email */}
           <div className={styles.field}>
             <label className={styles.label} htmlFor="email">
-              Email address
+              {text.emailLabel}
             </label>
             <input
               id="email"
               type="email"
+              dir="ltr"
               autoComplete="email"
               placeholder="you@example.com"
               className={`${styles.input} ${errors.email ? styles.inputError : ""}`}
               {...register("email", {
-                required: "Email is required",
+                required: text.emailRequired,
                 pattern: {
                   value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                  message: "Enter a valid email address",
+                  message: text.emailInvalid,
                 },
               })}
             />
@@ -138,7 +135,7 @@ export default function SignUpForm() {
           {/* Password */}
           <div className={styles.field}>
             <label className={styles.label} htmlFor="password">
-              Password
+              {text.passwordLabel}
             </label>
             <div className={styles.passwordWrapper}>
               <input
@@ -148,10 +145,10 @@ export default function SignUpForm() {
                 placeholder="••••••••"
                 className={`${styles.input} ${errors.password ? styles.inputError : ""}`}
                 {...register("password", {
-                  required: "Password is required",
+                  required: text.passwordRequired,
                   minLength: {
                     value: 8,
-                    message: "Must be at least 8 characters",
+                    message: text.passwordMin,
                   },
                 })}
               />
@@ -159,7 +156,7 @@ export default function SignUpForm() {
                 type="button"
                 className={styles.eyeButton}
                 onClick={() => setShowPassword((v) => !v)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-label={showPassword ? text.hidePassword : text.showPassword}
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -174,7 +171,7 @@ export default function SignUpForm() {
           {/* Confirm Password */}
           <div className={styles.field}>
             <label className={styles.label} htmlFor="confirmPassword">
-              Confirm password
+              {text.signUp.confirmPassword}
             </label>
             <div className={styles.passwordWrapper}>
               <input
@@ -184,16 +181,16 @@ export default function SignUpForm() {
                 placeholder="••••••••"
                 className={`${styles.input} ${errors.confirmPassword ? styles.inputError : ""}`}
                 {...register("confirmPassword", {
-                  required: "Please confirm your password",
+                  required: text.confirmRequired,
                   validate: (val) =>
-                    val === getValues("password") || "Passwords do not match",
+                    val === getValues("password") || text.passwordsDiffer,
                 })}
               />
               <button
                 type="button"
                 className={styles.eyeButton}
                 onClick={() => setShowConfirm((v) => !v)}
-                aria-label={showConfirm ? "Hide password" : "Show password"}
+                aria-label={showConfirm ? text.hidePassword : text.showPassword}
               >
                 {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -215,14 +212,14 @@ export default function SignUpForm() {
             ) : (
               <UserPlus size={18} />
             )}
-            {isPending ? "Creating account…" : "Create Account"}
+            {isPending ? text.signUp.submitting : text.signUp.submit}
           </button>
         </form>
 
         <p className={styles.switchText}>
-          Already have an account?{" "}
+          {text.signUp.haveAccount}{" "}
           <Link href="/sign-in" className={styles.switchLink}>
-            Sign in
+            {text.signUp.signIn}
           </Link>
         </p>
       </div>

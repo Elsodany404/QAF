@@ -47,7 +47,7 @@
 .badges {
   position: absolute;
   top: 1rem;
-  left: 1rem;
+  inset-inline-start: 1rem;
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
@@ -73,10 +73,11 @@
   background: var(--gold-500);
 }
 
-/* Bottom-right of the image, clear of the category badge on narrow cards. */
+/* Bottom end corner of the image, clear of the category badge on narrow
+   cards. */
 .featuredBadge {
   position: absolute;
-  right: 1rem;
+  inset-inline-end: 1rem;
   bottom: 1rem;
 
   display: inline-flex;
@@ -237,11 +238,12 @@
 }
 
 /* A card with only one option list shows it two per line at full width,
-   so it takes as many lines as a card with Size + Roast, and spreads those
-   lines over the height so the last one ends level with that card's. */
+   so it takes as many lines as a card with Size + Roast. Its lines are
+   spaced like those two lists, so the last one ends level with that card's.
+   When the other card has more lines (its sizes wrap), the extra room stays
+   below the list instead of opening a gap in the middle of it. */
 .weightRowSingle {
-  flex-grow: 1;
-  align-content: space-between;
+  row-gap: 1.25rem;
 }
 
 .weightRowSingle .weightButton {
@@ -267,7 +269,7 @@
   font-size: 1.6rem;
   font-weight: 700;
   color: var(--espresso-700);
-  margin-right: 2.5rem;
+  margin-inline-end: 2.5rem;
 }
 
 .unitLabel {
@@ -345,6 +347,10 @@
     margin-bottom: 0.8rem;
   }
 
+  .weightRowSingle {
+    row-gap: 0.8rem;
+  }
+
   .weightButton {
     padding: 0.3rem 0.5rem;
     font-size: 0.68rem;
@@ -355,7 +361,7 @@
   }
 
   .price {
-    margin-right: 0;
+    margin-inline-end: 0;
     font-size: 1.15rem;
   }
 
@@ -370,7 +376,7 @@
 
   .badges {
     top: 0.5rem;
-    left: 0.5rem;
+    inset-inline-start: 0.5rem;
     gap: 0.25rem;
   }
 
@@ -381,7 +387,7 @@
   }
 
   .featuredBadge {
-    right: 0.5rem;
+    inset-inline-end: 0.5rem;
     bottom: 0.5rem;
     padding: 0.25rem 0.45rem;
     font-size: 0.6rem;
@@ -427,7 +433,7 @@
 
   .badges {
     top: 0.35rem;
-    left: 0.35rem;
+    inset-inline-start: 0.35rem;
     gap: 0.2rem;
   }
 
@@ -438,7 +444,7 @@
   }
 
   .featuredBadge {
-    right: 0.35rem;
+    inset-inline-end: 0.35rem;
     bottom: 0.35rem;
     padding: 0.18rem 0.45rem;
   }
@@ -457,7 +463,12 @@
     flex-basis: 40%;
   }
 
-  /* Size + Roast take four lines here, so a lone list goes one per line. */
+  /* Size + Roast take four lines here, so a lone list goes one per line,
+     over the same height: (0.3rem + 0.8rem + 0.3rem) / 3 between lines. */
+  .weightRowSingle {
+    row-gap: calc(1.4rem / 3);
+  }
+
   .weightRowSingle .weightButton {
     flex-basis: 100%;
   }

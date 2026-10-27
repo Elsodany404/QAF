@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   session: null as null | { user: { id: string } },
+  // What the proxy adds to the request: the checkout page's language.
+  headers: new Headers(),
   createOrder: vi.fn(),
   parseCreateOrderForm: vi.fn(),
   redirect: vi.fn((url: string) => {
@@ -16,7 +18,9 @@ vi.mock("@/lib/adminAccess", () => ({
 vi.mock("next/navigation", () => ({
   redirect: mocks.redirect,
   RedirectType: { push: "push", replace: "replace" },
+  unstable_rethrow: () => {},
 }));
+vi.mock("next/headers", () => ({ headers: async () => mocks.headers }));
 vi.mock("./createOrder", () => ({ createOrder: mocks.createOrder }));
 vi.mock("./parseCreateOrderForm", () => ({
   parseCreateOrderForm: mocks.parseCreateOrderForm,
@@ -29,6 +33,7 @@ const parsed = { success: true, data: { paymentMethod: "cash_on_delivery" } };
 
 beforeEach(() => {
   mocks.session = { user: { id: "user-1" } };
+  mocks.headers = new Headers();
   mocks.createOrder.mockReset();
   mocks.parseCreateOrderForm.mockReset().mockReturnValue(parsed);
   mocks.redirect.mockClear();
@@ -70,7 +75,38 @@ describe("checkout action", () => {
     expect(mocks.createOrder).toHaveBeenCalledWith({
       customerID: "user-1",
       input: parsed.data,
+      locale: "en",
     });
+  });
+
+  it("answers in the language of the checkout page", async () => {
+    mocks.headers = new Headers({ "x-locale": "ar" });
+    mocks.createOrder.mockResolvedValue({ success: true, redirectUrl: "/x" });
+    const form = new FormData();
+
+    await placeOrder(undefined, form).catch(() => {});
+
+    expect(mocks.parseCreateOrderForm).toHaveBeenCalledWith(form, "ar");
+    expect(mocks.createOrder).toHaveBeenCalledWith(
+      expect.objectContaining({ locale: "ar" }),
+    );
+
+    mocks.session = null;
+    expect(await placeOrder(undefined, form)).toEqual({
+      success: false,
+      error: "يُرجى تسجيل الدخول لإتمام طلبك",
+    });
+  });
+
+  it("ignores a language it doesn't know", async () => {
+    mocks.headers = new Headers({ "x-locale": "fr" });
+    mocks.createOrder.mockResolvedValue({ success: true, redirectUrl: "/x" });
+
+    await placeOrder(undefined, new FormData()).catch(() => {});
+
+    expect(mocks.createOrder).toHaveBeenCalledWith(
+      expect.objectContaining({ locale: "en" }),
+    );
   });
 
   it("passes failures on, including the price-changed code", async () => {

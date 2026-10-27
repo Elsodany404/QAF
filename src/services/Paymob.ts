@@ -1,4 +1,5 @@
 import "server-only";
+import { localizePath, type Locale } from "@/i18n/config";
 import { optionLabels } from "@/lib/orderItems";
 import { siteUrl } from "@/lib/siteUrl";
 import type { OrderQuery } from "@/types/customTypes";
@@ -31,8 +32,27 @@ export function parsePaymobReference(reference: unknown): number | null {
   return Number.isSafeInteger(orderID) && orderID > 0 ? orderID : null;
 }
 
-/** Creates a Paymob intention and returns the hosted checkout URL. */
-export async function createPaymobCheckout(order: OrderQuery): Promise<string> {
+/** "42-1700000000000", or "42-1700000000000-ar" for an Arabic checkout. */
+function paymobReference(orderID: number, locale: Locale) {
+  return `${orderID}-${Date.now()}${locale === "ar" ? "-ar" : ""}`;
+}
+
+/**
+ * The checkout's language, which the reference carries to the webhook so the
+ * confirmation email is in the customer's language.
+ */
+export function paymobReferenceLocale(reference: unknown): Locale {
+  return String(reference ?? "").endsWith("-ar") ? "ar" : "en";
+}
+
+/**
+ * Creates a Paymob intention and returns the hosted checkout URL. Paymob
+ * sends the customer back to the order page in `locale`.
+ */
+export async function createPaymobCheckout(
+  order: OrderQuery,
+  locale: Locale = "en",
+): Promise<string> {
   const secretKey = process.env.PAYMOB_SECRET_KEY;
   const publicKey = process.env.NEXT_PUBLIC_PAYMOB_PUBLIC_KEY;
   if (!secretKey || !publicKey) {
@@ -111,12 +131,14 @@ export async function createPaymobCheckout(order: OrderQuery): Promise<string> {
         floor: "NA",
         country: "EG",
       },
-      special_reference: `${order.id}-${Date.now()}`,
+      special_reference: paymobReference(order.id, locale),
       expiration: 3600,
       // Paymob must reach the webhook publicly, so always use the configured
       // site address rather than whatever host the request came in on.
       notification_url: siteUrl("/api/webhooks/paymob"),
-      redirection_url: siteUrl(`/order-success/${order.id}`),
+      redirection_url: siteUrl(
+        localizePath(locale, `/order-success/${order.id}`),
+      ),
     }),
     cache: "no-store",
   });

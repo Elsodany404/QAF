@@ -22,6 +22,11 @@ import type {
 
 import { refreshCart } from "@/actions/cart/refreshCart";
 import useShippingFees from "@/hooks/useShippingFees";
+import { productName } from "@/i18n/catalog";
+import type { Locale } from "@/i18n/config";
+import { format } from "@/i18n/format";
+import { useI18n } from "@/i18n/I18nProvider";
+import type { ClientMessages } from "@/i18n/messages";
 import {
   addToCart,
   applyCartRefresh,
@@ -34,38 +39,43 @@ import { MAX_CART_LINES, MAX_QUANTITY_PER_ITEM } from "@/utils/cartLimits";
 
 const cartContext = createContext<CartContextT | undefined>(undefined);
 
+type CartMessages = ClientMessages["cart"];
+
 /** Toast for the outcome of an "Add to cart" click. */
-export function announceAddToCart(result: AddItemResult, productName: string) {
+export function announceAddToCart(
+  result: AddItemResult,
+  name: string,
+  messages: CartMessages,
+) {
   if (result === "added") {
-    toast.success(`${productName} added to your cart`);
+    toast.success(format(messages.added, { name }));
   } else if (result === "max_quantity") {
-    toast.error(
-      `You can order up to ${MAX_QUANTITY_PER_ITEM} of one item. For bulk orders, please contact us.`,
-    );
+    toast.error(format(messages.maxQuantity, { max: MAX_QUANTITY_PER_ITEM }));
   } else {
-    toast.error(
-      `Your cart can hold ${MAX_CART_LINES} different items. Please check out or remove something first.`,
-    );
+    toast.error(format(messages.full, { max: MAX_CART_LINES }));
   }
 }
 
 const CART_STORAGE_KEY = "cart";
 
 /** Toasts for lines a refresh removed or re-priced. */
-function announceCartRefresh(removed: Item[], repriced: Item[]) {
+function announceCartRefresh(
+  removed: Item[],
+  repriced: Item[],
+  { locale, messages }: { locale: Locale; messages: CartMessages },
+) {
   for (const item of removed) {
     toast.error(
-      `${item.product.name} can no longer be ordered with the options you chose, so it was removed from your cart.`,
+      format(messages.removed, { name: productName(item.product, locale) }),
     );
   }
   if (repriced.length > 0) {
-    toast(
-      "Some prices changed since you added these items. Your cart shows the current prices.",
-    );
+    toast(messages.pricesChanged);
   }
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { locale, t } = useI18n();
   const [cart, setCart] = useState<Cart>([]);
   const [cartLoaded, setCartLoaded] = useState(false);
 
@@ -75,11 +85,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [paymentMethod, setPaymentMethod] =
     useState<PaymentMethod>("cash_on_delivery");
 
-  // The refresh reads the latest cart without re-subscribing to it.
+  // The refresh reads the latest cart (and text) without re-subscribing to
+  // them.
   const cartRef = useRef(cart);
   useEffect(() => {
     cartRef.current = cart;
   }, [cart]);
+  const textRef = useRef({ locale, messages: t.cart });
+  useEffect(() => {
+    textRef.current = { locale, messages: t.cart };
+  }, [locale, t.cart]);
 
   // Load cart from localStorage when the provider mounts
   useEffect(() => {
@@ -116,7 +131,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     // Applied to the cart as it is now: items may have changed meanwhile.
     setCart((current) => applyCartRefresh(current, sent, fresh).cart);
     const { removed, repriced } = applyCartRefresh(sent, sent, fresh);
-    announceCartRefresh(removed, repriced);
+    announceCartRefresh(removed, repriced, textRef.current);
   }, []);
 
   // Once per visit, as soon as the saved cart is loaded.
@@ -146,6 +161,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     cartPrice,
     paymentMethod,
     cityName,
+    errorMessage: t.checkout.shippingError,
   });
 
   /** Adds one unit. The result says whether it was added or why not. */

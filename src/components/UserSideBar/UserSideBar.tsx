@@ -14,11 +14,16 @@ import {
   Coffee,
   MessageCircle,
 } from "lucide-react";
-import Link from "next/link";
+import { INTL_LOCALE } from "@/i18n/config";
+import { format } from "@/i18n/format";
+import { useI18n } from "@/i18n/I18nProvider";
+import Link from "@/i18n/Link";
 import { useSession } from "@/lib/auth-client";
 
 function UserSideBar({ user }: { user: User }) {
   const router = useRouter();
+  const { locale, t, href } = useI18n();
+  const text = t.sidebar;
   const { refetch } = useSession();
 
   async function handleSignOut() {
@@ -29,11 +34,11 @@ function UserSideBar({ user }: { user: User }) {
     }
     toast.success(res.message);
     await refetch(); // the navbar reads the session through useSession()
-    router.replace("/");
+    router.replace(href("/"));
     router.refresh();
   }
   const memberSince = user.createdAt
-    ? new Date(user.createdAt).toLocaleDateString("en-GB", {
+    ? new Date(user.createdAt).toLocaleDateString(INTL_LOCALE[locale], {
         month: "long",
         year: "numeric",
         // Fixed zone: rendered on the server and again in the browser.
@@ -55,36 +60,38 @@ function UserSideBar({ user }: { user: User }) {
           {user.name && <p className={styles.profileName}>{user.name}</p>}
           <p className={styles.profileEmail}>{user.email}</p>
           {memberSince && (
-            <p className={styles.profileSince}>Member since {memberSince}</p>
+            <p className={styles.profileSince}>
+              {format(text.memberSince, { date: memberSince })}
+            </p>
           )}
           {user.role === "admin" && (
-            <span className={styles.adminBadge}>Admin</span>
+            <span className={styles.adminBadge}>{text.admin}</span>
           )}
         </div>
       </div>
 
       {/* Quick actions */}
       <nav className={styles.quickNav}>
-        <p className={styles.quickNavLabel}>Quick Links</p>
+        <p className={styles.quickNavLabel}>{text.quickLinks}</p>
         {[
-          { href: "/menu", Icon: Coffee, label: "Shop Coffee" },
-          { href: "/contact", Icon: MessageCircle, label: "Contact Us" },
+          { path: "/menu", Icon: Coffee, label: text.shop },
+          { path: "/contact", Icon: MessageCircle, label: text.contact },
           ...(user.role === "admin"
             ? [
                 {
-                  href: "/admin/dashboard",
+                  path: "/admin/dashboard",
                   Icon: UserIcon,
-                  label: "Dashboard",
+                  label: text.dashboard,
                 },
               ]
             : []),
-        ].map(({ href, Icon, label }) => (
-          <Link key={href} href={href} className={styles.quickLink}>
+        ].map(({ path, Icon, label }) => (
+          <Link key={path} href={path} className={styles.quickLink}>
             <Icon size={16} aria-hidden="true" />
             {label}
             <ArrowRight
               size={16}
-              className={styles.quickLinkArrow}
+              className={`${styles.quickLinkArrow} flipRtl`}
               aria-hidden="true"
             />
           </Link>
@@ -97,8 +104,8 @@ function UserSideBar({ user }: { user: User }) {
         onClick={handleSignOut}
         className={styles.signOutButton}
       >
-        <LogOut size={16} aria-hidden="true" />
-        Sign Out
+        <LogOut size={16} className="flipRtl" aria-hidden="true" />
+        {text.signOut}
       </button>
     </aside>
   );

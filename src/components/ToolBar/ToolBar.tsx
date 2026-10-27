@@ -4,9 +4,12 @@ import { Search, X } from "lucide-react";
 import styles from "./ToolBar.module.css";
 import { CATEGORIES } from "@/types/customTypes";
 import useMenuFilters from "@/hooks/useMenuFilters";
+import { categoryName } from "@/i18n/catalog";
+import { useI18n } from "@/i18n/I18nProvider";
 import { useDebouncedCallback } from "use-debounce";
 
 function ToolBar() {
+  const { t } = useI18n();
   const { handleCategoryChange, handleSearch, searchParams } =
     useMenuFilters();
 
@@ -62,8 +65,8 @@ function ToolBar() {
             type="text"
             inputMode="search"
             enterKeyHint="search"
-            aria-label="Search coffee"
-            placeholder="Search by name or flavor..."
+            aria-label={t.menu.searchLabel}
+            placeholder={t.menu.searchPlaceholder}
             value={searchValue}
             onChange={(e) => onSearchChange(e)}
             className={styles.searchInput}
@@ -73,7 +76,7 @@ function ToolBar() {
               type="button"
               onClick={handleClear}
               className={styles.clearButton}
-              aria-label="Clear search"
+              aria-label={t.menu.clearSearch}
             >
               <X aria-hidden="true" />
             </button>
@@ -84,7 +87,7 @@ function ToolBar() {
       <div
         className={styles.categoryTabs}
         role="group"
-        aria-label="Filter by category"
+        aria-label={t.menu.filterLabel}
       >
         {CATEGORIES.map((cat) => (
           <button
@@ -94,7 +97,7 @@ function ToolBar() {
             aria-pressed={category === cat.id}
             className={`${styles.categoryButton} ${category === cat.id ? styles.categoryButtonActive : ""}`}
           >
-            {cat.label}
+            {categoryName(t.categories, cat.id)}
           </button>
         ))}
       </div>

@@ -152,6 +152,7 @@ describe("createOrder", () => {
     expect(mocks.processOrderPayment).toHaveBeenCalledWith(
       77,
       "cash_on_delivery",
+      "en",
     );
   });
 

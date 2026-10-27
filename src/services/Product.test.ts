@@ -50,14 +50,22 @@ describe("getProducts", () => {
     ]);
   });
 
-  it("searches names and descriptions", async () => {
-    fake().queue("Product", { data: [] });
+  it("searches names and descriptions in both languages", async () => {
+    fake().queue("Product", { data: [] }, { data: [] });
 
     await getProducts({ search: "  espresso  " });
+    await getProducts({ search: "قهوة تركي" });
 
     expect(fake().queries[0].filters).toEqual([
-      ["or", "name.ilike.%espresso%,description.ilike.%espresso%", undefined],
+      [
+        "or",
+        "name.ilike.%espresso%,description.ilike.%espresso%,nameAr.ilike.%espresso%,descriptionAr.ilike.%espresso%",
+        undefined,
+      ],
     ]);
+    expect(fake().queries[1].filters[0][1]).toContain(
+      "nameAr.ilike.%قهوة تركي%",
+    );
   });
 
   it("strips characters that would add PostgREST filter clauses", async () => {
@@ -66,10 +74,10 @@ describe("getProducts", () => {
     await getProducts({ search: "x%,price.lt.(1):*\\" });
 
     const [[, clause]] = fake().queries[0].filters;
-    // Only the two intended clauses, and no wildcard from the customer.
-    expect(String(clause).split(",")).toHaveLength(2);
+    // Only the four intended clauses, and no wildcard from the customer.
+    expect(String(clause).split(",")).toHaveLength(4);
     expect(clause).toBe(
-      "name.ilike.%x  price lt  1%,description.ilike.%x  price lt  1%",
+      "name.ilike.%x  price lt  1%,description.ilike.%x  price lt  1%,nameAr.ilike.%x  price lt  1%,descriptionAr.ilike.%x  price lt  1%",
     );
   });
 

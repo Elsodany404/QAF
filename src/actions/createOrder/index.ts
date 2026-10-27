@@ -2,6 +2,7 @@
 
 import { redirect, RedirectType } from "next/navigation";
 
+import { getRequestMessages } from "@/i18n/request";
 import { getCurrentSession } from "@/lib/adminAccess";
 
 import { createOrder, type CreateOrderFailure } from "./createOrder";
@@ -13,16 +14,19 @@ export default async function index(
   _previousState: CreateOrderState,
   formData: FormData,
 ): Promise<CreateOrderState> {
-  const session = await getCurrentSession();
+  const [session, { locale, m }] = await Promise.all([
+    getCurrentSession(),
+    getRequestMessages(),
+  ]);
 
   if (!session?.user) {
     return {
       success: false,
-      error: "Please sign in to place your order",
+      error: m.signInToOrder,
     };
   }
 
-  const inputResult = parseCreateOrderForm(formData);
+  const inputResult = parseCreateOrderForm(formData, locale);
 
   if (!inputResult.success) {
     return inputResult;
@@ -31,6 +35,7 @@ export default async function index(
   const result = await createOrder({
     customerID: session.user.id,
     input: inputResult.data,
+    locale,
   });
 
   if (!result.success) {

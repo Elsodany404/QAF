@@ -131,7 +131,20 @@ describe("Paymob webhook", () => {
       ["pending", "failed"],
     ]);
     expect(mocks.createBostaDelivery).toHaveBeenCalledWith(42);
-    expect(mocks.sendOrderConfirmation).toHaveBeenCalledWith(42);
+    expect(mocks.sendOrderConfirmation).toHaveBeenCalledWith(42, "en");
+  });
+
+  it("emails customers who paid on the Arabic site in Arabic", async () => {
+    fake().queue("Order", { data: pendingOrder }, { data: { id: 42 } });
+    const tx = transaction({
+      order: { id: 777, merchant_order_id: "42-1700000000000-ar" },
+    });
+
+    const response = await POST(request(tx));
+
+    expect(response.status).toBe(200);
+    expect(fake().updates("Order")[0].filters).toContainEqual(["eq", "id", 42]);
+    expect(mocks.sendOrderConfirmation).toHaveBeenCalledWith(42, "ar");
   });
 
   it("is idempotent for retries of an already-paid order", async () => {
@@ -192,7 +205,7 @@ describe("Paymob webhook", () => {
     const response = await POST(request(transaction()));
 
     expect(response.status).toBe(200);
-    expect(mocks.sendOrderConfirmation).toHaveBeenCalledWith(42);
+    expect(mocks.sendOrderConfirmation).toHaveBeenCalledWith(42, "en");
   });
 
   it("ignores pending and refund callbacks", async () => {

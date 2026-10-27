@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import toast, { resolveValue, ToastBar, type Toast } from "react-hot-toast";
 
+import { useI18n } from "@/i18n/I18nProvider";
 import styles from "./Toast.module.css";
 
 const TONES: Record<Toast["type"], { Icon: LucideIcon; tone: string }> = {
@@ -26,6 +27,7 @@ const TONES: Record<Toast["type"], { Icon: LucideIcon; tone: string }> = {
  * animation; its own box is reset so only this card shows.
  */
 export default function ToastCard({ t }: { t: Toast }) {
+  const { t: text } = useI18n();
   const { Icon, tone } = TONES[t.type];
 
   return (
@@ -41,7 +43,7 @@ export default function ToastCard({ t }: { t: Toast }) {
               type="button"
               className={styles.close}
               onClick={() => toast.dismiss(t.id)}
-              aria-label="Dismiss notification"
+              aria-label={text.common.dismissNotification}
             >
               <X aria-hidden="true" />
             </button>

@@ -40,6 +40,17 @@
   );
 }
 
+/* Darkest behind the text, which starts on the right in Arabic. */
+.overlay:dir(rtl) {
+  background: linear-gradient(
+    270deg,
+    rgba(64, 38, 31, 0.8),
+    rgba(64, 38, 31, 0.7),
+    rgba(64, 38, 31, 0.2),
+    rgba(64, 38, 31, 0.1)
+  );
+}
+
 .overlayBottom {
   position: absolute;
   inset: 0;
@@ -49,7 +60,7 @@
 .glow {
   position: absolute;
   top: 0;
-  right: 0;
+  inset-inline-end: 0;
   width: min(24rem, 100%);
   height: 24rem;
   border-radius: 9999px;
@@ -96,6 +107,10 @@
   background: linear-gradient(90deg, var(--gold-400), transparent);
 }
 
+.badgeLine:dir(rtl) {
+  background: linear-gradient(270deg, var(--gold-400), transparent);
+}
+
 .badgeText {
   font-size: 0.875rem;
   font-weight: 600;
@@ -112,6 +127,11 @@
   line-height: 0.95;
   color: var(--mocha-100);
   animation: slideUp 0.7s ease-out both;
+}
+
+/* Arabic letters reach higher and lower: tight lines would touch. */
+.heading:lang(ar) {
+  line-height: 1.3;
 }
 
 .headingAccent {

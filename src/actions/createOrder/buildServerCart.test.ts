@@ -215,6 +215,28 @@ describe("buildServerCart", () => {
     });
   });
 
+  it("names an unavailable product in the checkout's language", async () => {
+    fake().queue(
+      "Product",
+      { data: [productRow({ inStock: false, nameAr: "خلطة البيت" })] },
+      { data: [productRow({ inStock: false, nameAr: "خلطة البيت" })] },
+      { data: [] },
+    );
+
+    expect(await buildServerCart([item()], "ar")).toEqual({
+      success: false,
+      error: "المنتج خلطة البيت غير متوفر حاليًا",
+    });
+    expect(await buildServerCart([item()])).toEqual({
+      success: false,
+      error: "Product House Blend is out of stock",
+    });
+    expect(await buildServerCart([item()], "ar")).toEqual({
+      success: false,
+      error: "منتج أو أكثر لم يعد متاحًا",
+    });
+  });
+
   it("rejects values that don't belong to the product", async () => {
     fake().queue("Product", { data: [productRow()] });
     expect(await buildServerCart([item({ valuesIDs: [999] })])).toMatchObject({

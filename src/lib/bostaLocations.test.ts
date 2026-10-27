@@ -7,6 +7,7 @@ import {
   findDeliveryAddress,
   findDeliveryCity,
   normalizeEgyptianMobile,
+  placeName,
 } from "./bostaLocations";
 import { firstParam } from "./searchParams";
 
@@ -18,6 +19,30 @@ describe("bilingualName", () => {
   it("doesn't repeat a name that has no translation", () => {
     expect(bilingualName("Maadi", "Maadi")).toBe("Maadi");
     expect(bilingualName("Maadi", "")).toBe("Maadi");
+  });
+});
+
+describe("placeName", () => {
+  it("puts the page's language first", () => {
+    expect(placeName("Cairo", "القاهره", "en")).toBe("Cairo · القاهره");
+    expect(placeName("Cairo", "القاهره", "ar")).toBe("القاهره · Cairo");
+  });
+
+  it("falls back to the English name without an Arabic one", () => {
+    expect(placeName("Maadi", "", "ar")).toBe("Maadi");
+    expect(placeName("Maadi", null, "ar")).toBe("Maadi");
+  });
+
+  it("labels zones in Arabic first on Arabic pages", () => {
+    const city = DELIVERY_CITIES.find((c) => c.cityName === "Cairo")!;
+    const [zone] = districtsByZone(city, "ar");
+    const { zoneName, zoneOtherName } = city.districts.find(
+      (d) => d.zoneId === zone.zoneId,
+    )!;
+    expect(zone.label).toBe(placeName(zoneName, zoneOtherName, "ar"));
+    expect(districtsByZone(city)[0].label).toBe(
+      bilingualName(zoneName, zoneOtherName),
+    );
   });
 });
 

@@ -26,8 +26,12 @@ type Props = {
 const emptyOption = (): ProductOptionFormInput => ({
   name: "",
   description: "",
+  nameAr: "",
+  descriptionAr: "",
   icon: "",
-  values: [{ label: "", priceModifier: 0, default: true, inStock: true }],
+  values: [
+    { label: "", labelAr: "", priceModifier: 0, default: true, inStock: true },
+  ],
 });
 
 export default function AddProductModal({ onClose }: Props) {
@@ -71,6 +75,8 @@ export default function AddProductModal({ onClose }: Props) {
     formData.append("name", data.name);
     formData.append("category", data.category);
     formData.append("description", data.description);
+    formData.append("nameAr", data.nameAr);
+    formData.append("descriptionAr", data.descriptionAr);
     formData.append("featured", String(data.featured));
     formData.append("inStock", String(data.inStock));
     formData.append("priceRaw", String(data.priceRaw));
@@ -199,6 +205,38 @@ export default function AddProductModal({ onClose }: Props) {
               <span className={styles.errorText}>
                 {errors.description && errors.description.message}
               </span>
+            </div>
+
+            {/* Shown on the Arabic site; the English text is used without them. */}
+            <div className={styles.row}>
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="nameAr">
+                  Arabic name
+                </label>
+                <input
+                  id="nameAr"
+                  type="text"
+                  dir="rtl"
+                  lang="ar"
+                  className={styles.input}
+                  placeholder="قهوة تركي | خلطة قاف"
+                  {...register("nameAr")}
+                />
+              </div>
+
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="descriptionAr">
+                  Arabic description
+                </label>
+                <textarea
+                  id="descriptionAr"
+                  dir="rtl"
+                  lang="ar"
+                  className={styles.textarea}
+                  rows={4}
+                  {...register("descriptionAr")}
+                />
+              </div>
             </div>
 
             <div className={styles.row}>

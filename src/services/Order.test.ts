@@ -101,8 +101,20 @@ describe("postOrder", () => {
           totalPrice: 924,
           // Only what the order history needs from each chosen value.
           options: [
-            { id: 15, optionID: 5, label: "100% Arabica", priceModifier: 0.4 },
-            { id: 23, optionID: 1, label: "500g", priceModifier: 1 },
+            {
+              id: 15,
+              optionID: 5,
+              label: "100% Arabica",
+              labelAr: null,
+              priceModifier: 0.4,
+            },
+            {
+              id: 23,
+              optionID: 1,
+              label: "500g",
+              labelAr: null,
+              priceModifier: 1,
+            },
           ],
         },
         {
@@ -110,7 +122,15 @@ describe("postOrder", () => {
           productName: "House Blend",
           quantity: 3,
           totalPrice: 600,
-          options: [{ id: 10, optionID: 100, label: "250g", priceModifier: 0 }],
+          options: [
+            {
+              id: 10,
+              optionID: 100,
+              label: "250g",
+              labelAr: null,
+              priceModifier: 0,
+            },
+          ],
         },
       ],
     });

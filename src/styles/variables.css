@@ -100,6 +100,18 @@
   --shadow-soft-xl: 0 35px 80px rgba(17, 16, 31, 0.12);
 }
 
+/* Arabic pages: Arabic letters in Cairo and El Messiri (app/[lang]/layout.tsx).
+   Those only carry Arabic, so Latin words and digits still use Outfit and
+   Playfair. */
+:root:lang(ar) {
+  --font-display:
+    var(--font-el-messiri, "El Messiri"), var(--font-playfair, "Playfair Display"),
+    Georgia, serif;
+  --font-body:
+    var(--font-cairo, "Cairo"), var(--font-outfit, "Outfit"), system-ui,
+    -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
 /* Keep in sync with .navInner in Navbar.module.css. */
 @media (max-width: 479px) {
   :root {

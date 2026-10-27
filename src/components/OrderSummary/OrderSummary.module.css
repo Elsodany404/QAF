@@ -94,7 +94,7 @@
 .summaryValue {
   font-weight: 600;
   color: var(--charcoal-900);
-  text-align: right;
+  text-align: end;
 }
 
 .summaryValueFree {

@@ -3,12 +3,27 @@ import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 import { after } from "next/server";
 import { Pool } from "pg";
-import { linkEmail, sendEmail } from "@/lib/email";
+import { DEFAULT_LOCALE, pathLocale, type Locale } from "@/i18n/config";
+import { format } from "@/i18n/format";
+import { getMessages } from "@/i18n/messages";
+import { linkEmail, linkLocale, sendEmail } from "@/lib/email";
 import { getSiteUrl } from "@/lib/siteUrl";
 
 const database = new Pool({
   connectionString: process.env.SUPABASE_CONNECTION_STRING,
 });
+
+/** The language of the page an auth request came from, by its Referer. */
+function refererLocale(request?: Request): Locale {
+  try {
+    const referer = request?.headers.get("referer");
+    return referer
+      ? (pathLocale(new URL(referer).pathname) ?? DEFAULT_LOCALE)
+      : DEFAULT_LOCALE;
+  } catch {
+    return DEFAULT_LOCALE;
+  }
+}
 
 export const auth = betterAuth({
   database,
@@ -76,14 +91,19 @@ export const auth = betterAuth({
     sendOnSignIn: true,
     autoSignInAfterVerification: true,
 
+    // The forms ask for links back to a page in their language
+    // (src/lib/authActions.ts); the email is written in that language.
     sendVerificationEmail: async ({ user, url }) => {
+      const locale = linkLocale(url);
+      const text = getMessages(locale).emails.verify;
       await linkEmail({
         to: user.email,
-        subject: "Verify your email address",
-        intro: `Hi ${user.name}, welcome to Qaf Coffee! Confirm your email address to activate your account.`,
+        subject: text.subject,
+        intro: format(text.intro, { name: user.name }),
         url,
-        action: "Verify email",
-        outro: "If you didn't create an account, you can ignore this email.",
+        action: text.action,
+        outro: text.outro,
+        locale,
       });
     },
   },
@@ -103,22 +123,25 @@ export const auth = betterAuth({
     revokeSessionsOnPasswordReset: true,
 
     sendResetPassword: async ({ user, url }) => {
+      const locale = linkLocale(url);
+      const text = getMessages(locale).emails.resetPassword;
       await linkEmail({
         to: user.email,
-        subject: "Reset your password",
-        intro: `Hi ${user.name}, we received a request to reset your Qaf Coffee password. This link is valid for 1 hour.`,
+        subject: text.subject,
+        intro: format(text.intro, { name: user.name }),
         url,
-        action: "Choose a new password",
-        outro:
-          "If you didn't ask to reset your password, you can ignore this email — your password won't change.",
+        action: text.action,
+        outro: text.outro,
+        locale,
       });
     },
 
-    onExistingUserSignUp: async ({ user }) => {
+    onExistingUserSignUp: async ({ user }, request) => {
+      const text = getMessages(refererLocale(request)).emails.existingAccount;
       await sendEmail({
         to: user.email,
-        subject: "Sign-up attempt with your email",
-        text: "Someone tried to create an account using your email address. If this was you, try signing in instead — or use “Forgot password” if you can't remember it. If not, you can safely ignore this email.",
+        subject: text.subject,
+        text: text.text,
       });
     },
   },

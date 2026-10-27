@@ -39,6 +39,15 @@ export default function OptionValueFields({
       />
       <input
         className={styles.input}
+        dir="rtl"
+        lang="ar"
+        placeholder="250 جم"
+        aria-label={`Value ${valueIndex + 1} Arabic label (optional)`}
+        title="Arabic label (optional)"
+        {...register(`options.${optionIndex}.values.${valueIndex}.labelAr`)}
+      />
+      <input
+        className={styles.input}
         type="number"
         step="any"
         aria-label={`Value ${valueIndex + 1} price change in percent`}

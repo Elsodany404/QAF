@@ -11,7 +11,9 @@ const option = (id: number, valueIDs: number[]) => ({
   optionID: {
     id,
     name: `Option ${id}`,
+    nameAr: null,
     description: "",
+    descriptionAr: null,
     icon: "",
     OptionValues: valueIDs.map((valueID, index) =>
       makeOptionValue({ id: valueID, optionID: id, default: index === 0 }),

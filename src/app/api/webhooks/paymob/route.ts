@@ -4,7 +4,11 @@ import { NextResponse } from "next/server";
 import { normalizePaymentStatus } from "@/lib/orderStatus";
 import { createBostaDelivery } from "@/services/Bosta";
 import { sendOrderConfirmation } from "@/services/OrderEmails";
-import { parsePaymobReference, toCents } from "@/services/Paymob";
+import {
+  parsePaymobReference,
+  paymobReferenceLocale,
+  toCents,
+} from "@/services/Paymob";
 import supabaseAdmin from "@/supabase/admin";
 
 export const runtime = "nodejs";
@@ -194,8 +198,11 @@ export async function POST(req: Request) {
         }
 
         // The conditional update above only succeeds once per order, so the
-        // customer gets exactly one confirmation.
-        await sendOrderConfirmation(orderID);
+        // customer gets exactly one confirmation, in the checkout's language.
+        await sendOrderConfirmation(
+          orderID,
+          paymobReferenceLocale(transaction.order?.merchant_order_id),
+        );
       }
     }
 

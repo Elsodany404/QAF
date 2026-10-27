@@ -1,3 +1,5 @@
+import { localizePath, type Locale } from "@/i18n/config";
+
 /**
  * Only allow same-site relative paths as post-login destinations, so a link
  * like /sign-in?next=https://evil.example can't bounce users off-site.
@@ -19,6 +21,10 @@ export function safeRedirectPath(value: unknown, fallback = "/user"): string {
   return `${url.pathname}${url.search}${url.hash}`;
 }
 
-export function signInPath(next: string) {
-  return `/sign-in?next=${encodeURIComponent(next)}`;
+/** The sign-in page in a language, sending the visitor back to `next` after. */
+export function signInPath(next: string, locale: Locale = "en") {
+  return localizePath(
+    locale,
+    `/sign-in?next=${encodeURIComponent(localizePath(locale, next))}`,
+  );
 }

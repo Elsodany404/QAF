@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ActionState } from "@/types/customTypes";
 
 const mocks = vi.hoisted(() => ({
+  headers: new Headers(),
   allowRequest: vi.fn(),
   sendEmail: vi.fn(),
   updateUser: vi.fn(),
@@ -17,7 +18,7 @@ vi.mock("@/lib/rateLimit", () => ({ allowRequest: mocks.allowRequest }));
 vi.mock("@/lib/auth", () => ({
   auth: { api: { updateUser: mocks.updateUser } },
 }));
-vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
+vi.mock("next/headers", () => ({ headers: async () => mocks.headers }));
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
 
 const { default: sendContactMessage } = await import("./sendContactMessage");
@@ -34,6 +35,7 @@ function form(values: Record<string, string>) {
 }
 
 beforeEach(() => {
+  mocks.headers = new Headers();
   mocks.allowRequest.mockReset().mockResolvedValue(true);
   mocks.sendEmail.mockReset().mockResolvedValue(true);
   mocks.updateUser.mockReset().mockResolvedValue({});
@@ -140,7 +142,17 @@ describe("updateProfile", () => {
     expect(mocks.updateUser).toHaveBeenCalledWith(
       expect.objectContaining({ body: { name: "Sara Ahmed" } }),
     );
-    expect(mocks.revalidatePath).toHaveBeenCalledWith("/user");
+    // The account page in both languages (their /en and /ar routes).
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/user");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/ar/user");
+  });
+
+  it("answers in Arabic on the Arabic account page", async () => {
+    mocks.headers = new Headers({ "x-locale": "ar" });
+    expect(await updateProfile("S")).toEqual({
+      success: false,
+      error: "يجب أن يتراوح الاسم بين حرفين و80 حرفًا",
+    });
   });
 
   it.each(["S", "   ", "x".repeat(81)])("rejects the name %j", async (name) => {

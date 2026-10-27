@@ -1,7 +1,12 @@
+import type { Locale } from "../i18n/config";
 import { CATEGORIES } from "../types/customTypes";
 import type { OptionValue, Product } from "../types/db";
 
-/** "turkish" → "Turkish Coffee". Unknown IDs are shown as they are. */
+/**
+ * "turkish" → "Turkish Coffee", in English (the dashboard). The storefront
+ * uses categoryName() from src/i18n/catalog.ts. Unknown IDs are shown as they
+ * are.
+ */
 export function categoryLabel(categoryID: string | null | undefined) {
   if (!categoryID) return "";
   return CATEGORIES.find((c) => c.id === categoryID)?.label ?? categoryID;
@@ -36,7 +41,13 @@ const amountFormat = new Intl.NumberFormat("en-EG", {
   maximumFractionDigits: 0,
 });
 
-/** "1,250 EGP". (The previous "ar-US" format prefixed an invisible RTL mark.) */
-export function formatCurrency(amount: number): string {
-  return `${amountFormat.format(amount)} EGP`;
+const CURRENCY: Record<Locale, string> = { en: "EGP", ar: "ج.م" };
+
+/**
+ * "1,250 EGP", or "1,250 ج.م" on Arabic pages: Western digits in both, like
+ * the phone and order numbers. (The previous "ar-US" format prefixed an
+ * invisible RTL mark.)
+ */
+export function formatCurrency(amount: number, locale: Locale = "en"): string {
+  return `${amountFormat.format(amount)} ${CURRENCY[locale]}`;
 }

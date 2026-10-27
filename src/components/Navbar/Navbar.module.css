@@ -31,7 +31,8 @@
       color: white;
 
       .menuButton,
-      .cartButton {
+      .cartButton,
+      .languageButton {
         color: white;
       }
 
@@ -57,7 +58,8 @@
     }
 
     .cartButton,
-    .menuButton {
+    .menuButton,
+    .languageButton {
       color: var(--espresso-900);
     }
   }
@@ -101,7 +103,7 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    text-align: left;
+    text-align: start;
     flex-shrink: 0;
   }
 
@@ -187,7 +189,9 @@
   .desktopNav {
     display: none;
     align-items: center;
-    gap: 2rem;
+    /* Tighter below 1180px, where the bar also has to fit the language
+       switch. */
+    gap: 1.25rem;
 
     /*
      * Desktop navigation starts at 891px.
@@ -198,6 +202,10 @@
     }
 
     @media (min-width: 1024px) {
+      gap: 1.75rem;
+    }
+
+    @media (min-width: 1180px) {
       gap: 2.5rem;
     }
   }
@@ -226,7 +234,7 @@
       content: "";
 
       position: absolute;
-      left: 0;
+      inset-inline-start: 0;
       bottom: -0.35rem;
 
       width: 0;
@@ -309,6 +317,74 @@
   }
 
   /* =========================
+     Language Switch
+     ========================= */
+
+  .languageButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+
+    height: 2.75rem;
+    padding: 0 0.75rem;
+
+    border-radius: 0.75rem;
+
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+
+    color: var(--espresso-100);
+
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease;
+
+    svg {
+      width: 1.15rem;
+      height: 1.15rem;
+      flex-shrink: 0;
+    }
+
+    &:hover {
+      background: var(--mocha-100);
+      color: var(--espresso-900);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--gold-400);
+      outline-offset: 3px;
+    }
+
+    /* From the desktop menu's arrival to 1180px the bar is full: the icon
+       alone, with the language name kept for screen readers. */
+    @media (min-width: 891px) and (max-width: 1179px) {
+      padding: 0 0.7rem;
+
+      span {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+      }
+    }
+
+    /* Small phones: the language name alone. */
+    @media (max-width: 479px) {
+      height: 2.5rem;
+      padding: 0 0.5rem;
+      font-size: 0.8rem;
+
+      svg {
+        display: none;
+      }
+    }
+  }
+
+  /* =========================
      Cart Badge
      ========================= */
 
@@ -320,7 +396,7 @@
   .cartBadge {
     position: absolute;
     top: -0.25rem;
-    right: -0.25rem;
+    inset-inline-end: -0.25rem;
 
     display: inline-flex;
     align-items: center;
@@ -368,7 +444,7 @@
 
     font-size: 0.95rem;
     font-weight: 600;
-    text-align: left;
+    text-align: start;
 
     transition:
       background-color 0.2s ease,
@@ -505,6 +581,7 @@
     .navLink::after,
     .cartButton,
     .menuButton,
+    .languageButton,
     .mobileLink,
     .signInButton,
     .signUpButton,

@@ -4,6 +4,7 @@ import { makeOrder } from "@/test/fixtures";
 
 const mocks = vi.hoisted(() => ({
   session: null as null | { user: { id: string; role?: string } },
+  headers: new Headers(),
   getOrderWithItems: vi.fn(),
   createPaymobCheckout: vi.fn(),
 }));
@@ -17,11 +18,13 @@ vi.mock("@/services/Order", () => ({
 vi.mock("@/services/Paymob", () => ({
   createPaymobCheckout: mocks.createPaymobCheckout,
 }));
+vi.mock("next/headers", () => ({ headers: async () => mocks.headers }));
 
 const { payOrder } = await import("./payOrder");
 
 beforeEach(() => {
   mocks.session = { user: { id: "user-1" } };
+  mocks.headers = new Headers();
   mocks.getOrderWithItems.mockReset();
   mocks.createPaymobCheckout.mockReset().mockResolvedValue("https://pay.test");
 });
@@ -60,8 +63,27 @@ describe("payOrder", () => {
         success: true,
         data: "https://pay.test",
       });
-      expect(mocks.createPaymobCheckout).toHaveBeenLastCalledWith(order);
+      expect(mocks.createPaymobCheckout).toHaveBeenLastCalledWith(order, "en");
     }
+  });
+
+  it("pays in the language of the account page", async () => {
+    mocks.headers = new Headers({ "x-locale": "ar" });
+    const order = makeOrder();
+    mocks.getOrderWithItems.mockResolvedValue(order);
+
+    await payOrder(42);
+    expect(mocks.createPaymobCheckout).toHaveBeenLastCalledWith(order, "ar");
+
+    mocks.createPaymobCheckout.mockRejectedValue(new Error("Paymob 500"));
+    expect(await payOrder(42)).toEqual({
+      success: false,
+      error: "حدث خطأ غير متوقع",
+    });
+    expect(await payOrder(0)).toEqual({
+      success: false,
+      error: "طلب غير صالح",
+    });
   });
 
   it.each([

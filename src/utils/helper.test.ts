@@ -175,6 +175,13 @@ describe("formatCurrency", () => {
 
   it("has no invisible direction marks", () => {
     expect(formatCurrency(30000)).not.toMatch(/[‎‏؜]/);
+    expect(formatCurrency(30000, "ar")).not.toMatch(/[‎‏؜]/);
+  });
+
+  it("uses the Arabic currency abbreviation and Western digits in Arabic", () => {
+    expect(formatCurrency(1250, "ar")).toBe("1,250 ج.م");
+    expect(formatCurrency(199.6, "ar")).toBe("200 ج.م");
+    expect(formatCurrency(1250, "en")).toBe("1,250 EGP");
   });
 });
 

@@ -1,5 +1,6 @@
 "use server";
 
+import { getRequestMessages } from "@/i18n/request";
 import { sendEmail, shopInbox } from "@/lib/email";
 import { HONEYPOT_FIELD } from "@/lib/honeypot";
 import { allowRequest } from "@/lib/rateLimit";
@@ -12,6 +13,7 @@ export default async function sendContactMessage(
   _previousState: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const { m } = await getRequestMessages();
   const name = formData.get("name");
   const email = formData.get("email");
   const subject = formData.get("subject");
@@ -19,7 +21,7 @@ export default async function sendContactMessage(
 
   // Pretend it worked so bots don't learn to skip the field.
   if (formData.get(HONEYPOT_FIELD)) {
-    return { status: "success", message: "Thanks. Your message has been sent." };
+    return { status: "success", message: m.messageSent };
   }
 
   if (
@@ -32,7 +34,7 @@ export default async function sendContactMessage(
     !subject.trim() ||
     !message.trim()
   ) {
-    return { status: "failed", message: "Please complete all fields." };
+    return { status: "failed", message: m.completeAllFields };
   }
 
   if (
@@ -41,18 +43,17 @@ export default async function sendContactMessage(
     subject.length > 200 ||
     message.length > 5000
   ) {
-    return { status: "failed", message: "Your message is too long." };
+    return { status: "failed", message: m.messageTooLong };
   }
 
   if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
-    return { status: "failed", message: "Please enter a valid email address." };
+    return { status: "failed", message: m.invalidEmail };
   }
 
   if (!(await allowRequest("contact", MESSAGE_LIMIT))) {
     return {
       status: "failed",
-      message:
-        "You've sent several messages in a row. Please wait a few minutes and try again.",
+      message: m.tooManyMessages,
     };
   }
 
@@ -71,6 +72,6 @@ export default async function sendContactMessage(
   });
 
   return sent
-    ? { status: "success", message: "Thanks. Your message has been sent." }
-    : { status: "failed", message: "Unable to send your message." };
+    ? { status: "success", message: m.messageSent }
+    : { status: "failed", message: m.messageNotSent };
 }

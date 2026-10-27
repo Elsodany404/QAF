@@ -1,10 +1,11 @@
 "use client";
 
 import { useActionState, useState, useTransition } from "react";
-import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { Eye, EyeOff, KeyRound } from "lucide-react";
 
+import { useI18n } from "@/i18n/I18nProvider";
+import Link from "@/i18n/Link";
 import { resetPasswordAction } from "@/lib/authActions";
 import type { ActionState } from "@/types/customTypes";
 import styles from "../SignInForm/SignInForm.module.css";
@@ -15,8 +16,14 @@ type ResetFields = { password: string; confirmPassword: string };
 const initialState: ActionState = { status: "idle", message: "" };
 
 export default function ResetPasswordForm({ token }: { token: string | null }) {
+  const { locale, t } = useI18n();
+  const text = t.auth;
   const [state, formAction, isPending] = useActionState(
-    resetPasswordAction,
+    (previousState: ActionState, formData: FormData) =>
+      resetPasswordAction(previousState, formData, {
+        locale,
+        results: text.results,
+      }),
     initialState,
   );
   const [, startTransition] = useTransition();
@@ -41,9 +48,9 @@ export default function ResetPasswordForm({ token }: { token: string | null }) {
   if (!token) {
     content = (
       <p className={`${styles.notice} ${styles.noticeError}`} role="alert">
-        This reset link is invalid or has expired.{" "}
+        {text.reset.invalidLink}{" "}
         <Link href="/forgot-password" className={styles.switchLink}>
-          Request a new one
+          {text.reset.requestNew}
         </Link>
         .
       </p>
@@ -55,7 +62,7 @@ export default function ResetPasswordForm({ token }: { token: string | null }) {
           {state.message}
         </p>
         <Link href="/sign-in" className={styles.submitButton}>
-          Go to sign in
+          {text.reset.goToSignIn}
         </Link>
       </>
     );
@@ -66,14 +73,14 @@ export default function ResetPasswordForm({ token }: { token: string | null }) {
           <p className={`${styles.notice} ${styles.noticeError}`} role="alert">
             {state.message}{" "}
             <Link href="/forgot-password" className={styles.switchLink}>
-              Request a new link
+              {text.reset.requestNewLink}
             </Link>
           </p>
         )}
 
         <div className={styles.field}>
           <label className={styles.label} htmlFor="password">
-            New password
+            {text.reset.newPassword}
           </label>
           <div className={styles.passwordWrapper}>
             <input
@@ -83,14 +90,14 @@ export default function ResetPasswordForm({ token }: { token: string | null }) {
               placeholder="••••••••"
               className={`${styles.input} ${errors.password ? styles.inputError : ""}`}
               {...register("password", {
-                required: "Password is required",
+                required: text.passwordRequired,
                 minLength: {
                   value: 8,
-                  message: "Must be at least 8 characters",
+                  message: text.passwordMin,
                 },
                 maxLength: {
                   value: 128,
-                  message: "Must be at most 128 characters",
+                  message: text.passwordMax,
                 },
               })}
             />
@@ -98,7 +105,7 @@ export default function ResetPasswordForm({ token }: { token: string | null }) {
               type="button"
               className={styles.eyeButton}
               onClick={() => setShowPassword((v) => !v)}
-              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-label={showPassword ? text.hidePassword : text.showPassword}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -110,7 +117,7 @@ export default function ResetPasswordForm({ token }: { token: string | null }) {
 
         <div className={styles.field}>
           <label className={styles.label} htmlFor="confirmPassword">
-            Confirm new password
+            {text.reset.confirmNewPassword}
           </label>
           <input
             id="confirmPassword"
@@ -119,9 +126,9 @@ export default function ResetPasswordForm({ token }: { token: string | null }) {
             placeholder="••••••••"
             className={`${styles.input} ${errors.confirmPassword ? styles.inputError : ""}`}
             {...register("confirmPassword", {
-              required: "Please confirm your password",
+              required: text.confirmRequired,
               validate: (value) =>
-                value === getValues("password") || "Passwords do not match",
+                value === getValues("password") || text.passwordsDiffer,
             })}
           />
           {errors.confirmPassword && (
@@ -141,7 +148,7 @@ export default function ResetPasswordForm({ token }: { token: string | null }) {
           ) : (
             <KeyRound size={18} />
           )}
-          {isPending ? "Saving…" : "Reset password"}
+          {isPending ? text.reset.submitting : text.reset.submit}
         </button>
       </form>
     );
@@ -151,10 +158,8 @@ export default function ResetPasswordForm({ token }: { token: string | null }) {
     <div className={styles.page}>
       <div className={styles.card}>
         <AuthBrand />
-        <h1 className={styles.heading}>Choose a new password</h1>
-        <p className={styles.subheading}>
-          You&apos;ll be signed out of every other device.
-        </p>
+        <h1 className={styles.heading}>{text.reset.heading}</h1>
+        <p className={styles.subheading}>{text.reset.subheading}</p>
         {content}
       </div>
     </div>

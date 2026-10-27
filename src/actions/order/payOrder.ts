@@ -1,5 +1,6 @@
 "use server";
 
+import { getRequestMessages } from "@/i18n/request";
 import { errorMessage, isValidOrderID } from "@/lib/actionHelpers";
 import { getCurrentSession } from "@/lib/adminAccess";
 import { canPayOrder } from "@/lib/orderStatus";
@@ -12,25 +13,31 @@ import type { ActionReturnType } from "@/types/customTypes";
  * current user. Returns the Paymob checkout URL in `data`.
  */
 export async function payOrder(orderID: number): Promise<ActionReturnType> {
+  const { locale, m } = await getRequestMessages();
   try {
     const session = await getCurrentSession();
     if (!session?.user) {
-      return { success: false, error: "Please sign in to pay for your order" };
+      return { success: false, error: m.signInToPay };
     }
     if (!isValidOrderID(orderID)) {
-      return { success: false, error: "Invalid order" };
+      return { success: false, error: m.invalidOrder };
     }
 
     const order = await getOrderWithItems(orderID);
     if (!order || order.customer_ID !== session.user.id) {
-      return { success: false, error: "Order not found" };
+      return { success: false, error: m.orderNotFound };
     }
     if (!canPayOrder(order)) {
-      return { success: false, error: "This order cannot be paid online" };
+      return { success: false, error: m.cannotPayOnline };
     }
 
-    return { success: true, data: await createPaymobCheckout(order) };
+    // Paymob sends the customer back to the order page in this language.
+    return { success: true, data: await createPaymobCheckout(order, locale) };
   } catch (err) {
-    return { success: false, error: errorMessage(err) };
+    // The underlying errors are in English.
+    return {
+      success: false,
+      error: locale === "en" ? errorMessage(err) : m.unexpected,
+    };
   }
 }

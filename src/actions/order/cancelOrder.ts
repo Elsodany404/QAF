@@ -1,7 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-
+import { getRequestMessages } from "@/i18n/request";
+import { revalidateEveryLanguage } from "@/i18n/revalidate";
 import { errorMessage, isValidOrderID } from "@/lib/actionHelpers";
 import { getCurrentSession } from "@/lib/adminAccess";
 import {
@@ -22,13 +22,16 @@ import type { ActionReturnType } from "@/types/customTypes";
  * agreed. The order row is kept for records.
  */
 export async function cancelOrder(orderID: number): Promise<ActionReturnType> {
+  // Customers get answers in the language of their page; the dashboard is
+  // English.
+  const { locale, m } = await getRequestMessages();
   try {
     const session = await getCurrentSession();
     if (!session?.user) {
-      return { success: false, error: "Please sign in to manage your orders" };
+      return { success: false, error: m.signInToManageOrders };
     }
     if (!isValidOrderID(orderID)) {
-      return { success: false, error: "Invalid order" };
+      return { success: false, error: m.invalidOrder };
     }
 
     const { data: order, error } = await supabaseAdmin
@@ -43,24 +46,22 @@ export async function cancelOrder(orderID: number): Promise<ActionReturnType> {
       !order ||
       (!isAdmin && order.customer_ID !== session.user.id)
     ) {
-      return { success: false, error: "Order not found" };
+      return { success: false, error: m.orderNotFound };
     }
 
     if (normalizeShippingStatus(order.shippingStatus) === "cancelled") {
-      return { success: false, error: "This order is already cancelled" };
+      return { success: false, error: m.alreadyCancelled };
     }
     if (!canCancelOrder(order)) {
       return {
         success: false,
-        error:
-          "This order has already been handed to the courier and can no longer be cancelled. Please message us on WhatsApp.",
+        error: m.withCourier,
       };
     }
     if (!isAdmin && !canCustomerCancelOrder(order)) {
       return {
         success: false,
-        error:
-          "You've paid for this order online, so please message us on WhatsApp to cancel it and arrange your refund.",
+        error: m.paidOnline,
       };
     }
 
@@ -72,7 +73,7 @@ export async function cancelOrder(orderID: number): Promise<ActionReturnType> {
           success: false,
           error: isAdmin
             ? `Could not cancel the Bosta shipment: ${errorMessage(err)}`
-            : "We couldn't cancel the courier shipment. Please message us on WhatsApp and we'll cancel it for you.",
+            : m.courierCancelFailed,
         };
       }
     }
@@ -90,7 +91,7 @@ export async function cancelOrder(orderID: number): Promise<ActionReturnType> {
     if (updateError || !cancelled) {
       return {
         success: false,
-        error: "The order status just changed. Please refresh and try again.",
+        error: m.statusChanged,
       };
     }
 
@@ -98,11 +99,15 @@ export async function cancelOrder(orderID: number): Promise<ActionReturnType> {
     const message =
       isAdmin && hasOnlinePayment(order)
         ? "Order cancelled. It was paid online: refund the customer in your Paymob dashboard, then set its payment to Refunded."
-        : "Order cancelled";
+        : m.orderCancelled;
 
-    revalidatePath("/user");
+    revalidateEveryLanguage("/user");
     return { success: true, data: message };
   } catch (err) {
-    return { success: false, error: errorMessage(err) };
+    // The underlying errors are in English.
+    return {
+      success: false,
+      error: locale === "en" ? errorMessage(err) : m.unexpected,
+    };
   }
 }

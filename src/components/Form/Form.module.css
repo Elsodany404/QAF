@@ -84,6 +84,10 @@
   background-size: 0.65rem auto;
 }
 
+.dropdown select:dir(rtl) {
+  background-position: left 1rem top 50%;
+}
+
 .dropdown select:focus {
   outline: none;
   border-color: var(--gold-500);
@@ -254,7 +258,7 @@
   border: 2px solid var(--cream-200);
   border-radius: 0.9rem;
   background: white;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   transition:
     border-color 0.2s ease,

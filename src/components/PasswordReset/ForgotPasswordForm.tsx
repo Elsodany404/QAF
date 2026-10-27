@@ -1,10 +1,11 @@
 "use client";
 
 import { useActionState, useTransition } from "react";
-import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { Mail } from "lucide-react";
 
+import { useI18n } from "@/i18n/I18nProvider";
+import Link from "@/i18n/Link";
 import { requestPasswordResetAction } from "@/lib/authActions";
 import type { ActionState } from "@/types/customTypes";
 import styles from "../SignInForm/SignInForm.module.css";
@@ -13,8 +14,14 @@ import AuthBrand from "./AuthBrand";
 const initialState: ActionState = { status: "idle", message: "" };
 
 export default function ForgotPasswordForm() {
+  const { locale, t } = useI18n();
+  const text = t.auth;
   const [state, formAction, isPending] = useActionState(
-    requestPasswordResetAction,
+    (previousState: ActionState, formData: FormData) =>
+      requestPasswordResetAction(previousState, formData, {
+        locale,
+        results: text.results,
+      }),
     initialState,
   );
   const [, startTransition] = useTransition();
@@ -35,10 +42,8 @@ export default function ForgotPasswordForm() {
       <div className={styles.card}>
         <AuthBrand />
 
-        <h1 className={styles.heading}>Forgot your password?</h1>
-        <p className={styles.subheading}>
-          Enter your email and we&apos;ll send you a link to choose a new one.
-        </p>
+        <h1 className={styles.heading}>{text.forgot.heading}</h1>
+        <p className={styles.subheading}>{text.forgot.subheading}</p>
 
         {state.status === "success" ? (
           <p className={styles.notice} role="status">
@@ -61,19 +66,20 @@ export default function ForgotPasswordForm() {
 
             <div className={styles.field}>
               <label className={styles.label} htmlFor="email">
-                Email address
+                {text.emailLabel}
               </label>
               <input
                 id="email"
                 type="email"
+                dir="ltr"
                 autoComplete="email"
                 placeholder="you@example.com"
                 className={`${styles.input} ${errors.email ? styles.inputError : ""}`}
                 {...register("email", {
-                  required: "Email is required",
+                  required: text.emailRequired,
                   pattern: {
                     value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                    message: "Enter a valid email address",
+                    message: text.emailInvalid,
                   },
                 })}
               />
@@ -92,15 +98,15 @@ export default function ForgotPasswordForm() {
               ) : (
                 <Mail size={18} />
               )}
-              {isPending ? "Sending…" : "Send reset link"}
+              {isPending ? text.forgot.submitting : text.forgot.submit}
             </button>
           </form>
         )}
 
         <p className={styles.switchText}>
-          Remembered it?{" "}
+          {text.forgot.remembered}{" "}
           <Link href="/sign-in" className={styles.switchLink}>
-            Back to sign in
+            {text.forgot.back}
           </Link>
         </p>
       </div>

@@ -72,6 +72,31 @@ describe("parseCreateOrderForm", () => {
     },
   );
 
+  it("explains problems in the checkout's language", () => {
+    expect(parseCreateOrderForm(form({ street: "Nasr" }), "ar")).toEqual({
+      success: false,
+      error:
+        "يُرجى إدخال عنوان الشارع كاملًا (6 أحرف على الأقل)، مثال: 12 شارع النصر",
+    });
+    expect(parseCreateOrderForm(form({ name: "سارة" }), "ar")).toEqual({
+      success: false,
+      error: "يُرجى إدخال اسمك بالكامل: الاسم الأول واسم العائلة",
+    });
+    expect(parseCreateOrderForm(form({ phone: "123" }), "ar")).toEqual({
+      success: false,
+      error: "يُرجى إدخال رقم موبايل مصري صحيح",
+    });
+    expect(parseCreateOrderForm(form({ email: null }), "ar")).toEqual({
+      success: false,
+      error: "بيانات الطلب غير صالحة",
+    });
+    // Same checks, English by default.
+    expect(parseCreateOrderForm(form({ name: "Sara" }))).toEqual({
+      success: false,
+      error: FULL_NAME_MESSAGE,
+    });
+  });
+
   it("accepts a street long enough for Bosta", () => {
     const result = parseCreateOrderForm(form({ street: " 9 Road " }));
     expect(result.success && result.data.street).toBe("9 Road");

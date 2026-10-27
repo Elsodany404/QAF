@@ -51,6 +51,12 @@
   margin-bottom: 1.75rem;
 }
 
+/* The wordmark keeps its left-to-right order (AuthBrand) but sits on the
+   start side of an Arabic form, above the heading. */
+html[dir="rtl"] .brand {
+  justify-content: flex-end;
+}
+
 .logoMark {
   position: relative;
   width: 2.75rem;
@@ -166,12 +172,12 @@
 }
 
 .passwordWrapper .input {
-  padding-right: 3rem;
+  padding-inline-end: 3rem;
 }
 
 .eyeButton {
   position: absolute;
-  right: 0.85rem;
+  inset-inline-end: 0.85rem;
   top: 50%;
   transform: translateY(-50%);
   color: var(--charcoal-400);
@@ -189,7 +195,7 @@
   font-size: 0.775rem;
   font-weight: 500;
   color: var(--danger-600);
-  padding-left: 0.25rem;
+  padding-inline-start: 0.25rem;
 }
 
 /* ── Submit button ──────────────────── */

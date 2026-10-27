@@ -2,9 +2,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { makeOrder } from "@/test/fixtures";
 
-const { createPaymobCheckout, parsePaymobReference, toCents } = await import(
-  "./Paymob"
-);
+const {
+  createPaymobCheckout,
+  parsePaymobReference,
+  paymobReferenceLocale,
+  toCents,
+} = await import("./Paymob");
 const fetchMock = vi.fn();
 
 beforeEach(() => {
@@ -19,6 +22,31 @@ const jsonResponse = (body: unknown, ok = true) =>
 it("converts pounds to integer cents", () => {
   expect(toCents(460)).toBe(46000);
   expect(toCents(19.995)).toBe(2000);
+});
+
+it("carries the checkout's language through Paymob and back", async () => {
+  fetchMock.mockResolvedValue(jsonResponse({ client_secret: "s" }));
+
+  await createPaymobCheckout(makeOrder(), "ar");
+  await createPaymobCheckout(makeOrder());
+
+  const arabic = JSON.parse(fetchMock.mock.calls[0][1].body);
+  const english = JSON.parse(fetchMock.mock.calls[1][1].body);
+  expect(arabic.redirection_url).toBe("https://shop.test/ar/order-success/42");
+  expect(english.redirection_url).toBe("https://shop.test/order-success/42");
+  // The webhook reads the language back from the reference.
+  expect(arabic.special_reference).toMatch(/^42-\d+-ar$/);
+  expect(paymobReferenceLocale(arabic.special_reference)).toBe("ar");
+  expect(paymobReferenceLocale(english.special_reference)).toBe("en");
+  expect(parsePaymobReference(arabic.special_reference)).toBe(42);
+  // The notification address stays the same: Paymob adds ?hmac= to it.
+  expect(arabic.notification_url).toBe(english.notification_url);
+});
+
+it("treats an unknown reference as English", () => {
+  expect(paymobReferenceLocale(undefined)).toBe("en");
+  expect(paymobReferenceLocale(42)).toBe("en");
+  expect(paymobReferenceLocale("42-1700000000000-fr")).toBe("en");
 });
 
 it("extracts the order id from a retried special_reference", () => {

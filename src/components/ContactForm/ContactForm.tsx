@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef, useTransition } from "react";
 import sendContactMessage from "@/actions/sendContactMessage";
+import { useI18n } from "@/i18n/I18nProvider";
 import { HONEYPOT_FIELD } from "@/lib/honeypot";
 import styles from "./ContactForm.module.css";
 
@@ -11,6 +12,8 @@ const initialState = {
 };
 
 export default function ContactForm() {
+  const { t } = useI18n();
+  const text = t.contactForm;
   const [state, formAction] = useActionState(sendContactMessage, initialState);
   const [isPending, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
@@ -31,15 +34,15 @@ export default function ContactForm() {
     <form ref={formRef} className={styles.form} onSubmit={handleSubmit}>
       <div className={styles.header}>
         <div>
-          <p className={styles.eyebrow}>Send an email</p>
-          <h3 className={styles.title}>Contact Us</h3>
+          <p className={styles.eyebrow}>{text.eyebrow}</p>
+          <h3 className={styles.title}>{text.title}</h3>
         </div>
         <span className={styles.recipient}>sales@qafcoffee.store</span>
       </div>
 
       <div className={styles.grid}>
         <label className={styles.field}>
-          Name
+          {text.name}
           <input
             type="text"
             name="name"
@@ -49,9 +52,10 @@ export default function ContactForm() {
           />
         </label>
         <label className={styles.field}>
-          Email
+          {text.email}
           <input
             type="email"
+            dir="ltr"
             name="email"
             autoComplete="email"
             maxLength={254}
@@ -61,12 +65,12 @@ export default function ContactForm() {
       </div>
 
       <label className={styles.field}>
-        Subject
+        {text.subject}
         <input type="text" name="subject" maxLength={200} required />
       </label>
 
       <label className={styles.field}>
-        Message
+        {text.message}
         <textarea name="message" rows={4} maxLength={5000} required />
       </label>
 
@@ -88,7 +92,7 @@ export default function ContactForm() {
           {state.message}
         </p>
         <button type="submit" className={styles.submit} disabled={isPending}>
-          {isPending ? "Sending..." : "Send Message"}
+          {isPending ? text.sending : text.send}
         </button>
       </div>
     </form>

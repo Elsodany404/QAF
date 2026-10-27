@@ -7,6 +7,10 @@ import type {
 } from "@/types/customTypes";
 import type { OptionValue } from "@/types/db";
 
+import { productName } from "@/i18n/catalog";
+import type { Locale } from "@/i18n/config";
+import { format } from "@/i18n/format";
+import { getMessages, type Messages } from "@/i18n/messages";
 import supabaseAdmin from "@/supabase/admin";
 
 import {
@@ -30,6 +34,8 @@ type BuildServerCartResult =
 type PricedLine =
   { success: true; item: Item } | { success: false; error: string };
 
+type ServerMessages = Messages["server"];
+
 const isPositiveInteger = (value: unknown): value is number =>
   Number.isSafeInteger(value) && (value as number) > 0;
 
@@ -37,9 +43,12 @@ const isPositiveInteger = (value: unknown): value is number =>
  * Structural checks on what the browser sent, before anything touches the
  * database. Returns the problem, or null when the cart is well formed.
  */
-function checkCartShape(secureCart: unknown): string | null {
-  if (!Array.isArray(secureCart)) return "Invalid cart item";
-  if (secureCart.length > MAX_CART_LINES) return "Too many items in the cart";
+function checkCartShape(
+  secureCart: unknown,
+  m: ServerMessages,
+): string | null {
+  if (!Array.isArray(secureCart)) return m.invalidCartItem;
+  if (secureCart.length > MAX_CART_LINES) return m.tooManyItems;
 
   for (const line of secureCart) {
     if (
@@ -51,14 +60,14 @@ function checkCartShape(secureCart: unknown): string | null {
       !isPositiveInteger(line.quantity) ||
       line.quantity > MAX_QUANTITY_PER_ITEM
     ) {
-      return "Invalid cart item";
+      return m.invalidCartItem;
     }
 
     if (
       !line.optionsIDs.every(isPositiveInteger) ||
       !line.valuesIDs.every(isPositiveInteger)
     ) {
-      return "Invalid option or value selection";
+      return m.invalidSelection;
     }
   }
   return null;
@@ -110,14 +119,19 @@ const uniqueProductIDs = (secureCart: SecureCart) => [
 /**
  * Checks one cart line against its product (stock, options, values) and
  * prices one unit with the same formula as the storefront, so the customer
- * is charged exactly what they saw.
+ * is charged exactly what they saw. Problems are explained in `locale`.
  */
 export function priceCartLine(
   dataItem: DataItem | undefined,
   line: SecureItem,
+  locale: Locale = "en",
 ): PricedLine {
+  const m = getMessages(locale).server;
   if (!dataItem) {
-    return { success: false, error: `Product ${line.productID} not found` };
+    return {
+      success: false,
+      error: format(m.productNotFound, { id: line.productID }),
+    };
   }
 
   const { product, options } = dataItem;
@@ -125,7 +139,9 @@ export function priceCartLine(
   if (!product.inStock) {
     return {
       success: false,
-      error: `Product ${product.name} is out of stock`,
+      error: format(m.productOutOfStock, {
+        name: productName(product, locale),
+      }),
     };
   }
 
@@ -138,7 +154,7 @@ export function priceCartLine(
   ) {
     return {
       success: false,
-      error: `Invalid option selection for product ${product.id}`,
+      error: format(m.invalidOptions, { id: product.id }),
     };
   }
 
@@ -153,13 +169,13 @@ export function priceCartLine(
     if (!value) {
       return {
         success: false,
-        error: `Value ${valueID} does not belong to product ${product.id}`,
+        error: format(m.valueNotInProduct, { value: valueID, id: product.id }),
       };
     }
     if (!value.inStock) {
       return {
         success: false,
-        error: `Selected option value ${valueID} is out of stock`,
+        error: format(m.valueOutOfStock, { value: valueID }),
       };
     }
     selectedValues.push(value);
@@ -173,7 +189,7 @@ export function priceCartLine(
     if (valuesForOption.length !== 1) {
       return {
         success: false,
-        error: `Invalid value selection for option ${option.id}`,
+        error: format(m.invalidValues, { id: option.id }),
       };
     }
   }
@@ -184,7 +200,7 @@ export function priceCartLine(
   if (!Number.isFinite(itemPrice) || itemPrice <= 0) {
     return {
       success: false,
-      error: `Invalid price for product ${product.id}`,
+      error: format(m.invalidPrice, { id: product.id }),
     };
   }
 
@@ -200,23 +216,28 @@ export function priceCartLine(
   };
 }
 
-/** The cart an order is placed for, built only from database prices. */
+/**
+ * The cart an order is placed for, built only from database prices.
+ * Problems are explained in `locale`, the checkout's language.
+ */
 export async function buildServerCart(
   secureCart: SecureCart,
+  locale: Locale = "en",
 ): Promise<BuildServerCartResult> {
-  const shapeError = checkCartShape(secureCart);
+  const m = getMessages(locale).server;
+  const shapeError = checkCartShape(secureCart, m);
   if (shapeError) {
     return { success: false, error: shapeError };
   }
   if (secureCart.length === 0) {
-    return { success: false, error: "Your cart is empty" };
+    return { success: false, error: m.cartEmpty };
   }
 
   const lines = mergeDuplicateLines(secureCart);
   if (lines.some((line) => line.quantity > MAX_QUANTITY_PER_ITEM)) {
     return {
       success: false,
-      error: `You can order up to ${MAX_QUANTITY_PER_ITEM} of one item`,
+      error: format(m.maxPerItem, { max: MAX_QUANTITY_PER_ITEM }),
     };
   }
 
@@ -226,14 +247,14 @@ export async function buildServerCart(
   if (!dataItems) {
     return {
       success: false,
-      error: "We couldn't load your cart's products. Please try again.",
+      error: m.productsNotLoaded,
     };
   }
 
   if (dataItems.length !== productIDs.length) {
     return {
       success: false,
-      error: "One or more products are no longer available",
+      error: m.productsUnavailable,
     };
   }
 
@@ -243,6 +264,7 @@ export async function buildServerCart(
     const priced = priceCartLine(
       dataItems.find((item) => item.product.id === line.productID),
       line,
+      locale,
     );
     if (!priced.success) return priced;
     cart.push(priced.item);
@@ -263,7 +285,7 @@ export async function buildServerCart(
 export async function repriceCart(
   secureCart: SecureCart,
 ): Promise<(Item | null)[] | null> {
-  if (checkCartShape(secureCart)) return null;
+  if (checkCartShape(secureCart, getMessages("en").server)) return null;
   if (secureCart.length === 0) return [];
 
   const dataItems = await loadProducts(uniqueProductIDs(secureCart));

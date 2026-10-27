@@ -19,6 +19,7 @@ import {
 } from "@/actions/dashboard/createManualOrder";
 import { useDialog } from "@/hooks/useDialog";
 import useShippingFees from "@/hooks/useShippingFees";
+import { useI18n } from "@/i18n/I18nProvider";
 import {
   bilingualName,
   DELIVERY_CITIES,
@@ -73,6 +74,7 @@ function percentLabel(modifier: number) {
 
 export default function CreateOrderModal({ onClose }: Props) {
   const queryClient = useQueryClient();
+  const { t } = useI18n();
   const dialogRef = useDialog<HTMLDivElement>(true, onClose);
   const [isPending, startTransition] = useTransition();
   const [result, setResult] = useState<Result | null>(null);
@@ -137,6 +139,8 @@ export default function CreateOrderModal({ onClose }: Props) {
     cityName: city?.cityName ?? null,
     cartPrice: subtotal,
     paymentMethod,
+    // The dashboard is English only.
+    errorMessage: t.checkout.shippingError,
   });
   const manualShipping =
     shippingOverride.trim() === "" ? null : Number(shippingOverride);

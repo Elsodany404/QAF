@@ -84,7 +84,7 @@
 .imageStack {
   position: relative;
   padding-bottom: 2rem;
-  padding-left: 2rem;
+  padding-inline-start: 2rem;
 }
 
 .imageMain,
@@ -109,7 +109,7 @@
 .imageSecondary {
   position: absolute;
   bottom: 0;
-  left: 0;
+  inset-inline-start: 0;
   width: 10rem;
   height: 10rem;
   border: 6px solid white;
@@ -162,7 +162,7 @@
 
   .imageStack {
     padding-bottom: 2rem;
-    padding-left: 2rem;
+    padding-inline-start: 2rem;
   }
 
   .imageSecondary {
@@ -180,7 +180,7 @@
 
   .imageSecondary {
     bottom: -1rem;
-    left: -1rem;
+    inset-inline-start: -1rem;
   }
 }
 

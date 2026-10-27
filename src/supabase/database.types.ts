@@ -76,21 +76,27 @@ export type Database = {
       Options: {
         Row: {
           description: string
+          descriptionAr: string | null
           icon: string
           id: number
           name: string
+          nameAr: string | null
         }
         Insert: {
           description: string
+          descriptionAr?: string | null
           icon: string
           id?: number
           name: string
+          nameAr?: string | null
         }
         Update: {
           description?: string
+          descriptionAr?: string | null
           icon?: string
           id?: number
           name?: string
+          nameAr?: string | null
         }
         Relationships: []
       }
@@ -100,6 +106,7 @@ export type Database = {
           id: number
           inStock: boolean
           label: string
+          labelAr: string | null
           optionID: number
           priceModifier: number
         }
@@ -108,6 +115,7 @@ export type Database = {
           id?: number
           inStock?: boolean
           label: string
+          labelAr?: string | null
           optionID: number
           priceModifier?: number
         }
@@ -116,6 +124,7 @@ export type Database = {
           id?: number
           inStock?: boolean
           label?: string
+          labelAr?: string | null
           optionID?: number
           priceModifier?: number
         }
@@ -271,33 +280,39 @@ export type Database = {
           "blurred-image": string
           category: string
           description: string
+          descriptionAr: string | null
           featured: boolean
           id: number
           imageUrl: string
           inStock: boolean
           name: string
+          nameAr: string | null
           price: number
         }
         Insert: {
           "blurred-image": string
           category: string
           description: string
+          descriptionAr?: string | null
           featured?: boolean
           id?: number
           imageUrl: string
           inStock?: boolean
           name: string
+          nameAr?: string | null
           price: number
         }
         Update: {
           "blurred-image"?: string
           category?: string
           description?: string
+          descriptionAr?: string | null
           featured?: boolean
           id?: number
           imageUrl?: string
           inStock?: boolean
           name?: string
+          nameAr?: string | null
           price?: number
         }
         Relationships: []

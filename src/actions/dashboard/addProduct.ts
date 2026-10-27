@@ -1,8 +1,8 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import sharp from "sharp";
 
+import { revalidateEveryLanguage } from "@/i18n/revalidate";
 import { isAdminUser } from "@/lib/adminAccess";
 import { isAllowedImageUrl } from "@/lib/imageHosts";
 import supabaseAdmin from "@/supabase/admin";
@@ -41,6 +41,15 @@ function fail(message: string): AddProductResult {
   return { type: "error", message };
 }
 
+/**
+ * The optional Arabic version of a field, as columns to insert: left out
+ * when empty, so the insert also works before the Arabic columns exist.
+ */
+function arabic<Key extends string>(key: Key, value: unknown) {
+  const text = typeof value === "string" ? value.trim() : "";
+  return (text ? { [key]: text } : {}) as Partial<Record<Key, string>>;
+}
+
 /** Removes a partially created product so a failed insert leaves no orphans. */
 async function rollbackProduct(productID: number, optionIDs: number[]) {
   await supabaseAdmin
@@ -65,6 +74,8 @@ export async function addProduct(
 
     const name = (formData.get("name") as string | null)?.trim();
     const description = (formData.get("description") as string | null)?.trim();
+    const nameAr = formData.get("nameAr");
+    const descriptionAr = formData.get("descriptionAr");
     const priceRaw = formData.get("priceRaw") as string | null;
     const category = formData.get("category") as string | null;
     const imageUrl = (formData.get("imageUrl") as string | null)?.trim();
@@ -195,6 +206,8 @@ export async function addProduct(
       .insert({
         name,
         description,
+        ...arabic("nameAr", nameAr),
+        ...arabic("descriptionAr", descriptionAr),
         price,
         category,
         imageUrl,
@@ -223,6 +236,8 @@ export async function addProduct(
         .insert({
           name: option.name.trim(),
           description: option.description?.trim() || "",
+          ...arabic("nameAr", option.nameAr),
+          ...arabic("descriptionAr", option.descriptionAr),
           icon: option.icon?.trim() || "",
         })
         .select("id")
@@ -241,6 +256,7 @@ export async function addProduct(
           option.values.map((value) => ({
             optionID: optionData.id,
             label: value.label.trim(),
+            ...arabic("labelAr", value.labelAr),
             priceModifier: Number(value.priceModifier) || 0,
             default: Boolean(value.default),
             inStock: value.inStock !== false,
@@ -264,9 +280,10 @@ export async function addProduct(
       }
     }
 
-    // Show the new product on the home page and give it a product page.
-    revalidatePath("/");
-    revalidatePath(`/products/${data.id}`);
+    // Show the new product on the home page and give it a product page, in
+    // both languages.
+    revalidateEveryLanguage("/");
+    revalidateEveryLanguage(`/products/${data.id}`);
     return {
       type: "success",
       message: "Product created",

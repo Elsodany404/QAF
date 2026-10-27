@@ -23,7 +23,8 @@
 .toast::before {
   content: "";
   position: absolute;
-  inset: 0 auto 0 0;
+  inset-block: 0;
+  inset-inline-start: 0;
   width: 4px;
   background: var(--accent);
 }

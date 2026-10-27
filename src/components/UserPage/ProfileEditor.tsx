@@ -4,7 +4,10 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Save } from "lucide-react";
 import { updateProfile } from "@/actions/auth/updateProfile";
+import { useI18n } from "@/i18n/I18nProvider";
 import styles from "./ProfileEditor.module.css";
+
+type Feedback = { saved: boolean; message: string };
 
 export default function ProfileEditor({
   initialName,
@@ -12,22 +15,23 @@ export default function ProfileEditor({
   initialName: string;
 }) {
   const router = useRouter();
+  const { t } = useI18n();
   const [name, setName] = useState(initialName);
-  const [feedback, setFeedback] = useState("");
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setFeedback("");
+    setFeedback(null);
 
     startTransition(async () => {
       const result = await updateProfile(name);
       if (!result.success) {
-        setFeedback(result.error);
+        setFeedback({ saved: false, message: result.error });
         return;
       }
 
-      setFeedback("Profile updated");
+      setFeedback({ saved: true, message: t.profile.updated });
       router.refresh();
     });
   }
@@ -35,7 +39,7 @@ export default function ProfileEditor({
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
       <label className={styles.label} htmlFor="profile-name">
-        Display name
+        {t.profile.displayName}
       </label>
       <div className={styles.controls}>
         <input
@@ -53,17 +57,15 @@ export default function ProfileEditor({
           type="submit"
           disabled={isPending}
         >
-          {feedback === "Profile updated" ? <Check /> : <Save />}
-          {isPending ? "Saving…" : "Save profile"}
+          {feedback?.saved ? <Check /> : <Save />}
+          {isPending ? t.profile.saving : t.profile.save}
         </button>
       </div>
       <p
-        className={
-          feedback === "Profile updated" ? styles.success : styles.feedback
-        }
+        className={feedback?.saved ? styles.success : styles.feedback}
         role="status"
       >
-        {feedback}
+        {feedback?.message}
       </p>
     </form>
   );

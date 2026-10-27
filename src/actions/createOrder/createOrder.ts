@@ -1,3 +1,6 @@
+import type { Locale } from "@/i18n/config";
+import { format } from "@/i18n/format";
+import { getMessages } from "@/i18n/messages";
 import { postOrder } from "@/services/Order";
 import { getBostaFees, MAX_COD_AMOUNT } from "@/services/Bosta";
 
@@ -9,6 +12,8 @@ import { processOrderPayment } from "./processOrderPayment";
 type CreateOrderParams = {
   customerID: string;
   input: CreateOrderInput;
+  /** The checkout's language: errors, the confirmation page and email. */
+  locale?: Locale;
 };
 
 export type CreateOrderFailure = {
@@ -28,14 +33,17 @@ type CreateOrderResult =
 export async function createOrder({
   customerID,
   input,
+  locale = "en",
 }: CreateOrderParams): Promise<CreateOrderResult> {
+  const m = getMessages(locale).server;
+
   /*
    * =========================================================
    * BUILD SERVER-TRUSTED CART
    * =========================================================
    */
 
-  const cartResult = await buildServerCart(input.secureCart);
+  const cartResult = await buildServerCart(input.secureCart, locale);
 
   if (!cartResult.success) {
     return {
@@ -57,7 +65,7 @@ export async function createOrder({
   if (!Number.isFinite(cartTotal) || cartTotal < 0) {
     return {
       success: false,
-      error: "Invalid cart total",
+      error: m.invalidCartTotal,
     };
   }
 
@@ -77,14 +85,14 @@ export async function createOrder({
   } catch {
     return {
       success: false,
-      error: "Failed to calculate shipping fees",
+      error: m.shippingFailed,
     };
   }
 
   if (!Number.isFinite(shippingFees) || shippingFees < 0) {
     return {
       success: false,
-      error: "Invalid shipping fee",
+      error: m.invalidShipping,
     };
   }
 
@@ -98,8 +106,7 @@ export async function createOrder({
   ) {
     return {
       success: false,
-      error:
-        "Prices changed since you added these items. Please check the new total and place your order again.",
+      error: m.pricesChanged,
       code: "price_changed",
     };
   }
@@ -111,7 +118,7 @@ export async function createOrder({
   ) {
     return {
       success: false,
-      error: `Cash on delivery is limited to ${MAX_COD_AMOUNT} EGP. Please pay online or split your order.`,
+      error: format(m.codLimit, { max: MAX_COD_AMOUNT }),
     };
   }
 
@@ -149,6 +156,7 @@ export async function createOrder({
     const paymentResult = await processOrderPayment(
       orderID,
       orderPayload.paymentMethod,
+      locale,
     );
 
     return paymentResult;
@@ -176,7 +184,7 @@ export async function createOrder({
     });
     return {
       success: false,
-      error: "Unexpected error happened",
+      error: m.unexpected,
     };
   }
 }

@@ -1,4 +1,5 @@
 import bostaAddresses from "@/assets/data/bostaDistricts.json";
+import type { Locale } from "@/i18n/config";
 import type { BostaCity, BostaDistrict } from "@/types/customTypes";
 
 /*
@@ -38,6 +39,20 @@ export function bilingualName(name: string, otherName?: string | null) {
   return otherName && otherName !== name ? `${name} · ${otherName}` : name;
 }
 
+/**
+ * bilingualName with the page's language first: "القاهره · Cairo" on
+ * Arabic pages, where otherName (Bosta's Arabic spelling) leads.
+ */
+export function placeName(
+  name: string,
+  otherName: string | null | undefined,
+  locale: Locale,
+) {
+  return locale === "ar" && otherName
+    ? bilingualName(otherName, name)
+    : bilingualName(name, otherName);
+}
+
 export type DistrictZone = {
   zoneId: string;
   label: string;
@@ -48,14 +63,17 @@ export type DistrictZone = {
  * A city's districts grouped by Bosta zone (in Bosta's order), for <optgroup>s.
  * Large cities have hundreds of districts; the zones make them findable.
  */
-export function districtsByZone(city: BostaCity): DistrictZone[] {
+export function districtsByZone(
+  city: BostaCity,
+  locale: Locale = "en",
+): DistrictZone[] {
   const zones = new Map<string, DistrictZone>();
   for (const district of city.districts) {
     let zone = zones.get(district.zoneId);
     if (!zone) {
       zone = {
         zoneId: district.zoneId,
-        label: bilingualName(district.zoneName, district.zoneOtherName),
+        label: placeName(district.zoneName, district.zoneOtherName, locale),
         districts: [],
       };
       zones.set(district.zoneId, zone);

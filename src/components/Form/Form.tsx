@@ -15,46 +15,39 @@ import {
 
 import createOrder from "@/actions/createOrder";
 import { useCart } from "@/context/CartContext";
+import { format } from "@/i18n/format";
+import { useI18n } from "@/i18n/I18nProvider";
 import { useSession } from "@/lib/auth-client";
 import {
-  bilingualName,
   DELIVERY_CITIES,
   districtsByZone,
   MAX_COD_AMOUNT,
   MIN_STREET_LENGTH,
   normalizeEgyptianMobile,
-  STREET_TOO_SHORT_MESSAGE,
+  placeName,
 } from "@/lib/bostaLocations";
-import { FULL_NAME_MESSAGE, isFullName } from "@/lib/fullName";
+import { isFullName } from "@/lib/fullName";
 import { isOnlinePayment } from "@/lib/orderStatus";
 import type { FormValues, PaymentOptionsT } from "@/types/customTypes";
 import { toSecureCart } from "@/utils/cart";
 import { formatCurrency } from "@/utils/helper";
 import styles from "./Form.module.css";
 
+// Their titles and descriptions are in the dictionary, by value.
 const paymentOptions: PaymentOptionsT = [
-  {
-    value: "paymob_card",
-    title: "Online card",
-    desc: "Pay securely through Paymob.",
-    Icon: CreditCard,
-  },
-  {
-    value: "mobile_wallet",
-    title: "Mobile wallet",
-    desc: "Complete wallet payment through Paymob.",
-    Icon: Smartphone,
-  },
-  {
-    value: "cash_on_delivery",
-    title: "Cash on delivery",
-    desc: "Pay in cash when your order arrives.",
-    Icon: Wallet,
-  },
+  { value: "paymob_card", Icon: CreditCard },
+  { value: "mobile_wallet", Icon: Smartphone },
+  { value: "cash_on_delivery", Icon: Wallet },
 ];
 
 function Form() {
   const router = useRouter();
+  const { locale, t, href } = useI18n();
+  const text = t.checkout;
+  const fullNameMessage = t.validation.fullName;
+  const streetTooShortMessage = format(t.validation.streetTooShort, {
+    min: MIN_STREET_LENGTH,
+  });
   const {
     paymentMethod,
     setPaymentMethod,
@@ -71,9 +64,9 @@ function Form() {
 
   useEffect(() => {
     if (cartLoaded && cart.length === 0) {
-      router.replace("/empty-cart");
+      router.replace(href("/empty-cart"));
     }
-  }, [cart.length, router, cartLoaded]);
+  }, [cart.length, router, cartLoaded, href]);
 
   // The form starts without a city on every visit, so the quote must too.
   useEffect(() => () => setCityName(null), [setCityName]);
@@ -124,7 +117,7 @@ function Form() {
 
   const selectedCity = useWatch({ control, name: "city" });
   const city = DELIVERY_CITIES.find((c) => c.cityName === selectedCity) ?? null;
-  const zones = city ? districtsByZone(city) : [];
+  const zones = city ? districtsByZone(city, locale) : [];
 
   // The district select holds the district ID: some cities have two
   // districts with the same name.
@@ -145,11 +138,11 @@ function Form() {
 
   function onValid(data: FormValues) {
     if (!city || !district) {
-      toast.error("Please choose your city and district");
+      toast.error(text.chooseCityAndDistrict);
       return;
     }
     if (shippingFees === null) {
-      toast.error("Shipping is still being calculated");
+      toast.error(text.shippingPending);
       return;
     }
 
@@ -178,21 +171,24 @@ function Form() {
   }
 
   const submitLabel = isPending
-    ? "Placing your order…"
+    ? text.placing
     : shippingFeesLoading
-      ? "Calculating shipping…"
+      ? text.calculatingShipping
       : shippingFees === null
-        ? "Complete purchase"
-        : `${online ? "Continue to payment" : "Place order"} — ${formatCurrency(total)}`;
+        ? text.completePurchase
+        : format(text.submitWithTotal, {
+            action: online ? text.continueToPayment : text.placeOrder,
+            total: formatCurrency(total, locale),
+          });
 
   return (
     <form onSubmit={handleSubmit(onValid)} className={styles.formSection}>
       <div className={styles.card}>
-        <h2 className={styles.cardTitle}>Contact Information</h2>
+        <h2 className={styles.cardTitle}>{text.contactTitle}</h2>
 
         <div className={styles.fieldGrid}>
           <div>
-            <label htmlFor="name">Full Name</label>
+            <label htmlFor="name">{text.fullName}</label>
             <input
               id="name"
               aria-invalid={Boolean(errors.name)}
@@ -200,12 +196,12 @@ function Form() {
               className={`${styles.input} ${errors.name ? styles.inputError : ""}`}
               type="text"
               autoComplete="name"
-              placeholder="e.g. Ahmed Hassan"
+              placeholder={text.fullNamePlaceholder}
               maxLength={100}
               {...register("name", {
-                required: FULL_NAME_MESSAGE,
+                required: fullNameMessage,
                 // Checked here so a one-word name never reaches the server.
-                validate: (value) => isFullName(value) || FULL_NAME_MESSAGE,
+                validate: (value) => isFullName(value) || fullNameMessage,
               })}
             />
             <span id="name-error" className={styles.errorText}>
@@ -214,9 +210,10 @@ function Form() {
           </div>
 
           <div>
-            <label htmlFor="email">Email Address</label>
+            <label htmlFor="email">{text.email}</label>
             <input
               id="email"
+              dir="ltr"
               aria-invalid={Boolean(errors.email)}
               aria-describedby="email-error"
               className={`${styles.input} ${errors.email ? styles.inputError : ""}`}
@@ -225,10 +222,10 @@ function Form() {
               placeholder="you@example.com"
               maxLength={254}
               {...register("email", {
-                required: "Please enter your email address",
+                required: text.emailRequired,
                 pattern: {
                   value: /^\s*[^\s@]+@[^\s@]+\.[^\s@]+\s*$/,
-                  message: "Please enter a valid email address",
+                  message: text.emailInvalid,
                 },
               })}
             />
@@ -238,9 +235,10 @@ function Form() {
           </div>
 
           <div>
-            <label htmlFor="phone">Mobile Number</label>
+            <label htmlFor="phone">{text.mobile}</label>
             <input
               id="phone"
+              dir="ltr"
               aria-invalid={Boolean(errors.phone)}
               aria-describedby="phone-error"
               className={`${styles.input} ${errors.phone ? styles.inputError : ""}`}
@@ -249,10 +247,9 @@ function Form() {
               autoComplete="tel"
               placeholder="01xxxxxxxxx"
               {...register("phone", {
-                required: "Please enter your mobile number",
+                required: text.mobileRequired,
                 validate: (value) =>
-                  normalizeEgyptianMobile(value) !== null ||
-                  "Please enter a valid Egyptian mobile number (01xxxxxxxxx)",
+                  normalizeEgyptianMobile(value) !== null || text.mobileInvalid,
               })}
             />
             <span id="phone-error" className={styles.errorText}>
@@ -263,18 +260,18 @@ function Form() {
       </div>
 
       <div className={styles.card}>
-        <h2 className={styles.cardTitle}>Shipping Address</h2>
+        <h2 className={styles.cardTitle}>{text.addressTitle}</h2>
 
         <div className={styles.fieldGrid}>
           <div className={styles.dropdown}>
-            <label htmlFor="city">City</label>
+            <label htmlFor="city">{text.city}</label>
             <select
               id="city"
               aria-invalid={Boolean(errors.city)}
               aria-describedby="city-error"
               className={errors.city ? styles.inputError : undefined}
               {...register("city", {
-                required: "Please choose your city",
+                required: text.cityRequired,
                 onChange: (event) => {
                   setCityName(event.target.value || null);
                   // The chosen district belonged to the previous city.
@@ -282,10 +279,10 @@ function Form() {
                 },
               })}
             >
-              <option value="">Select your city</option>
+              <option value="">{text.selectCity}</option>
               {DELIVERY_CITIES.map((c) => (
                 <option key={c.cityId} value={c.cityName}>
-                  {bilingualName(c.cityName, c.cityOtherName)}
+                  {placeName(c.cityName, c.cityOtherName, locale)}
                 </option>
               ))}
             </select>
@@ -295,25 +292,25 @@ function Form() {
           </div>
 
           <div className={styles.dropdown}>
-            <label htmlFor="district">District</label>
+            <label htmlFor="district">{text.district}</label>
             <select
               id="district"
               aria-invalid={Boolean(errors.district)}
               aria-describedby="district-error"
               className={errors.district ? styles.inputError : undefined}
               {...register("district", {
-                required: "Please choose your district",
+                required: text.districtRequired,
               })}
               disabled={!city}
             >
               <option value="">
-                {city ? "Select your district" : "Choose a city first"}
+                {city ? text.selectDistrict : text.chooseCityFirst}
               </option>
               {zones.map((zone) => (
                 <optgroup key={zone.zoneId} label={zone.label}>
                   {zone.districts.map((d) => (
                     <option key={d.districtId} value={d.districtId}>
-                      {bilingualName(d.districtName, d.districtOtherName)}
+                      {placeName(d.districtName, d.districtOtherName, locale)}
                     </option>
                   ))}
                 </optgroup>
@@ -325,7 +322,7 @@ function Form() {
           </div>
 
           <div>
-            <label htmlFor="street">Street</label>
+            <label htmlFor="street">{text.street}</label>
             <input
               id="street"
               aria-invalid={Boolean(errors.street)}
@@ -333,13 +330,13 @@ function Form() {
               className={`${styles.input} ${errors.street ? styles.inputError : ""}`}
               type="text"
               autoComplete="address-line1"
-              placeholder="e.g. 12 El Nasr Street"
+              placeholder={text.streetPlaceholder}
               maxLength={200}
               {...register("street", {
-                required: "Please enter your street",
+                required: text.streetRequired,
                 validate: (value) =>
                   value.trim().length >= MIN_STREET_LENGTH ||
-                  STREET_TOO_SHORT_MESSAGE,
+                  streetTooShortMessage,
               })}
             />
             <span id="street-error" className={styles.errorText}>
@@ -348,7 +345,7 @@ function Form() {
           </div>
 
           <div>
-            <label htmlFor="apartment">Building &amp; Apartment</label>
+            <label htmlFor="apartment">{text.apartment}</label>
             <input
               id="apartment"
               aria-invalid={Boolean(errors.apartment)}
@@ -356,13 +353,12 @@ function Form() {
               className={`${styles.input} ${errors.apartment ? styles.inputError : ""}`}
               type="text"
               autoComplete="address-line2"
-              placeholder="e.g. Building 4, floor 2, apt 7"
+              placeholder={text.apartmentPlaceholder}
               maxLength={100}
               {...register("apartment", {
-                required: "Please enter your building and apartment",
+                required: text.apartmentRequired,
                 validate: (value) =>
-                  value.trim().length > 0 ||
-                  "Please enter your building and apartment",
+                  value.trim().length > 0 || text.apartmentRequired,
               })}
             />
             <span id="apartment-error" className={styles.errorText}>
@@ -373,14 +369,14 @@ function Form() {
       </div>
 
       <div className={styles.card}>
-        <h2 className={styles.cardTitle}>Payment Method</h2>
+        <h2 className={styles.cardTitle}>{text.paymentTitle}</h2>
 
         <div
           className={styles.paymentChoices}
           role="group"
-          aria-label="Payment method"
+          aria-label={text.paymentGroup}
         >
-          {paymentOptions.map(({ value, title, desc, Icon }) => (
+          {paymentOptions.map(({ value, Icon }) => (
             <button
               key={value}
               type="button"
@@ -395,8 +391,12 @@ function Form() {
               </span>
 
               <span>
-                <span className={styles.paymentChoiceTitle}>{title}</span>
-                <span className={styles.paymentChoiceDesc}>{desc}</span>
+                <span className={styles.paymentChoiceTitle}>
+                  {text.paymentMethods[value].title}
+                </span>
+                <span className={styles.paymentChoiceDesc}>
+                  {text.paymentMethods[value].description}
+                </span>
               </span>
             </button>
           ))}
@@ -411,30 +411,29 @@ function Form() {
 
           {online ? (
             <div>
-              <h3 className={styles.paymentTitle}>Secure online payment</h3>
-              <p className={styles.paymentBody}>
-                You&apos;ll be redirected to Paymob&apos;s secure checkout to
-                complete your payment.
-              </p>
+              <h3 className={styles.paymentTitle}>{text.onlineTitle}</h3>
+              <p className={styles.paymentBody}>{text.onlineText}</p>
               <div className={styles.paymentSecurity}>
                 <Lock aria-hidden="true" />
-                256-bit SSL encrypted
+                {text.encrypted}
               </div>
             </div>
           ) : (
             <div>
-              <h3 className={styles.paymentTitle}>Pay on delivery</h3>
+              <h3 className={styles.paymentTitle}>{text.codTitle}</h3>
               {codTooHigh ? (
                 <p className={styles.paymentWarning} role="alert">
-                  Cash on delivery is available for orders up to{" "}
-                  {formatCurrency(MAX_COD_AMOUNT)}. Please pay online by card
-                  or mobile wallet.
+                  {format(text.codTooHigh, {
+                    max: formatCurrency(MAX_COD_AMOUNT, locale),
+                  })}
                 </p>
               ) : (
                 <p className={styles.paymentBody}>
                   {shippingFees === null
-                    ? "Pay the courier in cash when your order arrives."
-                    : `Please have ${formatCurrency(total)} ready in cash for the courier.`}
+                    ? text.codText
+                    : format(text.codReady, {
+                        total: formatCurrency(total, locale),
+                      })}
                 </p>
               )}
             </div>
@@ -451,7 +450,7 @@ function Form() {
             onClick={retryShippingFees}
           >
             <RefreshCw aria-hidden="true" />
-            Try again
+            {text.tryAgain}
           </button>
         </div>
       )}

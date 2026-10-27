@@ -56,6 +56,8 @@ export async function postOrder(orderPayload: orderPayloadT): Promise<number> {
       id: option.id,
       optionID: option.optionID,
       label: option.label,
+      // So customers on the Arabic site see their choices in Arabic.
+      labelAr: option.labelAr ?? null,
       priceModifier: option.priceModifier,
     })),
   }));

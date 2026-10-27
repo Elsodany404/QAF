@@ -12,6 +12,10 @@ import {
  * shop that looks like it has no products.
  */
 
+// A search finds a product by its English or Arabic text, whatever the page's
+// language.
+const SEARCHED_COLUMNS = ["name", "description", "nameAr", "descriptionAr"];
+
 export async function getProducts({
   search = "",
   category = "all",
@@ -35,7 +39,9 @@ export async function getProducts({
     .slice(0, 100);
   if (safeSearch) {
     query = query.or(
-      `name.ilike.%${safeSearch}%,description.ilike.%${safeSearch}%`,
+      SEARCHED_COLUMNS.map((column) => `${column}.ilike.%${safeSearch}%`).join(
+        ",",
+      ),
     );
   }
 

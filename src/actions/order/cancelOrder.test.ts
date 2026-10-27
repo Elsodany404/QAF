@@ -5,6 +5,8 @@ import { makeOrder } from "@/test/fixtures";
 
 const mocks = vi.hoisted(() => ({
   fake: null as ReturnType<typeof createFakeSupabase> | null,
+  headers: new Headers(),
+  revalidatePath: vi.fn(),
   session: null as null | { user: { id: string; role: string } },
   terminateBostaDelivery: vi.fn(),
 }));
@@ -14,7 +16,8 @@ vi.mock("@/supabase/admin", async () => {
   mocks.fake = createFakeSupabase();
   return { default: mocks.fake.client };
 });
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
+vi.mock("next/headers", () => ({ headers: async () => mocks.headers }));
 vi.mock("@/lib/adminAccess", () => ({
   getCurrentSession: async () => mocks.session,
 }));
@@ -30,6 +33,8 @@ const admin = { user: { id: "admin-1", role: "admin" } };
 beforeEach(() => {
   fake().reset();
   mocks.session = customer;
+  mocks.headers = new Headers();
+  mocks.revalidatePath.mockReset();
   mocks.terminateBostaDelivery.mockReset();
 });
 
@@ -90,6 +95,46 @@ describe("cancelOrder", () => {
       "ready_for_pickup",
     ]);
     expect(result).toEqual({ success: true, data: "Order cancelled" });
+    // The account page in both languages.
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/user");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/ar/user");
+  });
+
+  it("answers customers on the Arabic site in Arabic", async () => {
+    mocks.headers = new Headers({ "x-locale": "ar" });
+    fake().queue(
+      "Order",
+      { data: makeOrder({ shippingStatus: "shipped" }) },
+      { data: makeOrder({ paymentMethod: "cash_on_delivery" }) },
+      { data: { id: 42 } },
+    );
+
+    expect(await cancelOrder(42)).toEqual({
+      success: false,
+      error:
+        "تم تسليم هذا الطلب لشركة الشحن ولم يعد من الممكن إلغاؤه. يُرجى مراسلتنا على واتساب.",
+    });
+    expect(await cancelOrder(42)).toEqual({
+      success: true,
+      data: "تم إلغاء الطلب",
+    });
+  });
+
+  it("keeps the dashboard's messages in English", async () => {
+    mocks.session = admin;
+    mocks.headers = new Headers({ "x-locale": "ar" });
+    mocks.terminateBostaDelivery.mockRejectedValue(new Error("Bosta 500"));
+    fake().queue("Order", {
+      data: makeOrder({
+        shippingStatus: "ready_for_pickup",
+        bostaTrackingNumber: "TRK1",
+      }),
+    });
+
+    expect(await cancelOrder(42)).toEqual({
+      success: false,
+      error: "Could not cancel the Bosta shipment: Bosta 500",
+    });
   });
 
   it("sends a customer who paid online to WhatsApp instead of cancelling", async () => {

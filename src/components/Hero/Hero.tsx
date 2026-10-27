@@ -1,9 +1,13 @@
 import styles from "./Hero.module.css";
 import Image from "next/image";
 import heroImage from "@/assets/images/hero.jpg";
-import Link from "next/link";
+import Link from "@/i18n/Link";
+import { getI18n } from "@/i18n/server";
 
-export default function Hero() {
+export default async function Hero() {
+  const { t } = await getI18n();
+  const hero = t.home.hero;
+
   return (
     <section className={styles.hero}>
       <div className={styles.background}>
@@ -11,7 +15,7 @@ export default function Hero() {
           className={styles.image}
           src={heroImage}
           placeholder="blur"
-          alt="coffee roaster for hero section"
+          alt={hero.imageAlt}
           quality={50}
           loading="eager"
           fetchPriority="high"
@@ -25,26 +29,22 @@ export default function Hero() {
         <div className={styles.copy}>
           <div className={styles.badge}>
             <div className={styles.badgeLine} />
-            <span className={styles.badgeText}>Premium Artisan Coffee</span>
+            <span className={styles.badgeText}>{hero.badge}</span>
           </div>
 
           <h1 className={styles.heading}>
-            <span>Elevate Your</span>
-            <span className={styles.headingAccent}>Coffee Ritual</span>
+            <span>{hero.headingTop}</span>
+            <span className={styles.headingAccent}>{hero.headingAccent}</span>
           </h1>
 
-          <p className={styles.subheading}>
-            Discover exceptional, hand-roasted blends sourced from Ethiopia,
-            Colombia, and Yemen. Each cup tells a story of craft, tradition, and
-            uncompromising quality.
-          </p>
+          <p className={styles.subheading}>{hero.text}</p>
 
           <div className={styles.actions}>
             <Link href={"/menu"} className={styles.primaryButton}>
               <span className={styles.buttonContent}>
-                Explore Collection
+                {hero.explore}
                 <svg
-                  className={styles.icon}
+                  className={`${styles.icon} flipRtl`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -60,16 +60,12 @@ export default function Hero() {
             </Link>
 
             <Link href={"/about"} className={styles.secondaryButton}>
-              Learn Our Story
+              {hero.story}
             </Link>
           </div>
 
           <div className={styles.stats}>
-            {[
-              { label: "Coffee Origins", value: "3 Continents" },
-              { label: "Roast Masters", value: "Q-Certified" },
-              { label: "Flavor Profiles", value: "10+ Blends" },
-            ].map((stat) => (
+            {hero.stats.map((stat) => (
               <div key={stat.label} className={styles.stat}>
                 <p className={styles.statLabel}>{stat.label}</p>
                 <p className={styles.statValue}>{stat.value}</p>
@@ -80,7 +76,7 @@ export default function Hero() {
       </div>
 
       <div className={styles.scrollIndicator}>
-        <p className={styles.scrollText}>Scroll to explore</p>
+        <p className={styles.scrollText}>{hero.scroll}</p>
         <div className={styles.scrollWheel}>
           <div className={styles.scrollDot} />
         </div>

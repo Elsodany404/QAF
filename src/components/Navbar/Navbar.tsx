@@ -1,24 +1,30 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Coffee, Menu, ShoppingCart, X } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 import signOut from "@/actions/auth/signOut";
+import LanguageSwitch from "@/components/LanguageSwitch/LanguageSwitch";
 import { useCart } from "@/context/CartContext";
+import { pagePath } from "@/i18n/config";
+import { format } from "@/i18n/format";
+import { useI18n } from "@/i18n/I18nProvider";
+import Link from "@/i18n/Link";
 import { useSession } from "@/lib/auth-client";
 import styles from "./Navbar.module.css";
 
 const LINKS = [
-  { label: "Home", href: "/" },
-  { label: "Shop", href: "/menu" },
-  { label: "About us", href: "/about" },
-  { label: "Contact", href: "/contact" },
-  { label: "Our Policies", href: "/policies" },
-  { label: "Account", href: "/user" },
-];
+  { key: "home", href: "/" },
+  { key: "shop", href: "/menu" },
+  { key: "about", href: "/about" },
+  { key: "contact", href: "/contact" },
+  { key: "policies", href: "/policies" },
+  { key: "account", href: "/user" },
+] as const;
+
+const DASHBOARD_LINK = { key: "dashboard", href: "/admin/dashboard" } as const;
 
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
@@ -30,11 +36,11 @@ function isActive(pathname: string, href: string) {
 }
 
 export default function Navbar() {
-  // Vercel's ISR re-render of the home page reports "/index", which would
-  // bake the solid bar into the cached HTML.
-  const rawPathname = usePathname();
-  const pathname = rawPathname === "/index" ? "/" : rawPathname;
+  // Compared without the language prefix, the same way on the server and in
+  // the browser (see pagePath).
+  const pathname = pagePath(usePathname());
   const router = useRouter();
+  const { t, href } = useI18n();
   const { totalItems, openCart } = useCart();
   const { data: session, isPending, refetch } = useSession();
   const [scrolled, setScrolled] = useState(false);
@@ -72,16 +78,14 @@ export default function Navbar() {
 
   const signedIn = Boolean(session?.user?.id);
   const links =
-    session?.user?.role === "admin"
-      ? [...LINKS, { label: "Dashboard", href: "/admin/dashboard" }]
-      : LINKS;
+    session?.user?.role === "admin" ? [...LINKS, DASHBOARD_LINK] : LINKS;
 
   async function handleSignOut() {
     const res = await signOut();
     if (res.status === "success") {
       toast.success(res.message);
       await refetch(); // updates every useSession() consumer, including this Navbar
-      router.push("/");
+      router.push(href("/"));
       router.refresh(); // re-syncs any server-rendered bits that also read the session
     } else {
       toast.error(res.message);
@@ -96,10 +100,11 @@ export default function Navbar() {
   }`;
 
   return (
-    <nav className={navbarClass} aria-label="Main">
+    <nav className={navbarClass} aria-label={t.nav.label}>
       <div className={styles.container}>
         <div className={styles.navInner}>
-          <Link href="/" className={styles.logoButton}>
+          {/* The wordmark stays English, left to right, on Arabic pages too. */}
+          <Link href="/" className={styles.logoButton} lang="en" dir="ltr">
             <div className={styles.logoMark}>
               <div className={styles.logoMarkInner} />
               <div className={styles.logoIcon}>
@@ -122,25 +127,29 @@ export default function Navbar() {
                   className={`${styles.navLink} ${active ? styles.navLinkActive : ""}`}
                   aria-current={active ? "page" : undefined}
                 >
-                  {link.label}
+                  {t.nav[link.key]}
                 </Link>
               );
             })}
           </div>
 
           <div className={styles.actions}>
+            <LanguageSwitch className={styles.languageButton} />
+
             <button
               type="button"
               onClick={openCart}
               className={styles.cartButton}
               aria-label={
-                totalItems > 0
-                  ? `Open cart (${totalItems} item${totalItems === 1 ? "" : "s"})`
-                  : "Open cart"
+                totalItems === 0
+                  ? t.nav.openCart
+                  : totalItems === 1
+                    ? t.nav.openCartOne
+                    : format(t.nav.openCartMany, { count: totalItems })
               }
             >
               <span className={styles.cartIcon}>
-                <ShoppingCart aria-hidden="true" />
+                <ShoppingCart className="flipRtl" aria-hidden="true" />
                 {totalItems > 0 && (
                   <span className={styles.cartBadge} aria-hidden="true">
                     {totalItems > 9 ? "9+" : totalItems}
@@ -153,7 +162,7 @@ export default function Navbar() {
               type="button"
               className={styles.menuButton}
               onClick={() => setMobileOpen((v) => !v)}
-              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              aria-label={mobileOpen ? t.nav.closeMenu : t.nav.openMenu}
               aria-expanded={mobileOpen}
               aria-controls="mobile-menu"
             >
@@ -164,10 +173,10 @@ export default function Navbar() {
               {isPending ? null : !signedIn ? (
                 <>
                   <Link href="/sign-up" className={styles.signUpButton}>
-                    Sign Up
+                    {t.nav.signUp}
                   </Link>
                   <Link href="/sign-in" className={styles.signInButton}>
-                    Sign In
+                    {t.nav.signIn}
                   </Link>
                 </>
               ) : (
@@ -176,7 +185,7 @@ export default function Navbar() {
                   onClick={handleSignOut}
                   className={styles.signOutButton}
                 >
-                  Sign Out
+                  {t.nav.signOut}
                 </button>
               )}
             </div>
@@ -197,7 +206,7 @@ export default function Navbar() {
                   className={`${styles.mobileLink} ${active ? styles.mobileLinkActive : styles.mobileLinkDefault}`}
                   aria-current={active ? "page" : undefined}
                 >
-                  {link.label}
+                  {t.nav[link.key]}
                 </Link>
               );
             })}
@@ -211,7 +220,7 @@ export default function Navbar() {
                 }}
                 className={`${styles.mobileLink} ${styles.mobileLinkDefault}`}
               >
-                Sign Out
+                {t.nav.signOut}
               </button>
             ) : (
               <>
@@ -220,14 +229,14 @@ export default function Navbar() {
                   onClick={() => setMobileOpen(false)}
                   className={`${styles.mobileLink} ${isActive(pathname, "/sign-up") ? styles.mobileLinkActive : styles.mobileLinkDefault}`}
                 >
-                  Sign Up
+                  {t.nav.signUp}
                 </Link>
                 <Link
                   href="/sign-in"
                   onClick={() => setMobileOpen(false)}
                   className={`${styles.mobileLink} ${isActive(pathname, "/sign-in") ? styles.mobileLinkActive : styles.mobileLinkDefault}`}
                 >
-                  Sign In
+                  {t.nav.signIn}
                 </Link>
               </>
             )}

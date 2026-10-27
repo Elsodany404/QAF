@@ -19,7 +19,8 @@ vi.mock("resend", () => ({
   },
 }));
 
-const { emailButton, linkEmail, sendEmail } = await import("./email");
+const { emailButton, emailLayout, linkEmail, linkLocale, sendEmail } =
+  await import("./email");
 
 const message = {
   to: "customer@example.com",
@@ -265,6 +266,57 @@ describe("linkEmail", () => {
       'href="https://shop.test/reset?token=a&amp;b=1"',
     );
     expect(sent.html).not.toContain("<Sara>");
+  });
+});
+
+describe("linkLocale", () => {
+  it("reads the language of the page the link returns to", () => {
+    expect(
+      linkLocale(
+        "https://shop.test/api/auth/verify-email?token=t&callbackURL=%2Far%2Fverify-email",
+      ),
+    ).toBe("ar");
+    expect(
+      linkLocale(
+        "https://shop.test/api/auth/reset-password/abc?callbackURL=%2Far%2Freset-password",
+      ),
+    ).toBe("ar");
+    expect(
+      linkLocale(
+        "https://shop.test/api/auth/verify-email?token=t&callbackURL=%2Fverify-email",
+      ),
+    ).toBe("en");
+  });
+
+  it("falls back to English", () => {
+    expect(linkLocale("https://shop.test/api/auth/verify-email?token=t")).toBe(
+      "en",
+    );
+    expect(linkLocale("not a url")).toBe("en");
+    expect(
+      linkLocale("https://shop.test/x?callbackURL=%2Farchive%2Fverify-email"),
+    ).toBe("en");
+  });
+});
+
+describe("emailLayout", () => {
+  it("lays Arabic emails out right to left", () => {
+    const html = emailLayout("عنوان", "<p>نص</p>", "ar");
+    expect(html).toContain('<html lang="ar" dir="rtl">');
+    expect(html).toContain("text-align:right");
+    expect(html).toContain("قهوة قاف");
+    expect(html).toContain(
+      "لديك سؤال؟ ردّ على هذه الرسالة أو راسلنا على sales@qafcoffee.store.",
+    );
+  });
+
+  it("keeps English emails as they were", () => {
+    const html = emailLayout("Title", "<p>Body</p>");
+    expect(html).toContain('<html lang="en" dir="ltr">');
+    expect(html).toContain("Qaf Coffee");
+    expect(html).toContain(
+      "Questions? Reply to this email or write to sales@qafcoffee.store.",
+    );
   });
 });
 

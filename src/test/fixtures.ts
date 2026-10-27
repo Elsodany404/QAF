@@ -5,7 +5,9 @@ export function makeProduct(overrides: Partial<Product> = {}): Product {
   return {
     id: 1,
     name: "House Blend",
+    nameAr: null,
     description: "Smooth and chocolatey",
+    descriptionAr: null,
     category: "espresso",
     price: 200,
     imageUrl: "https://img.test/p.jpg",
@@ -23,6 +25,7 @@ export function makeOptionValue(
     id: 10,
     optionID: 100,
     label: "250g",
+    labelAr: null,
     priceModifier: 0,
     default: true,
     inStock: true,

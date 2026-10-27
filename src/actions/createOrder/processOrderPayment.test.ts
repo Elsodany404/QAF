@@ -49,8 +49,18 @@ describe("processOrderPayment", () => {
         redirectUrl: "/order-success/77",
       });
       expect(mocks.createBostaDelivery).toHaveBeenCalledWith(77);
-      expect(mocks.sendOrderConfirmation).toHaveBeenCalledWith(77);
+      expect(mocks.sendOrderConfirmation).toHaveBeenCalledWith(77, "en");
       expect(mocks.createPaymobCheckout).not.toHaveBeenCalled();
+    });
+
+    it("confirms an Arabic checkout in Arabic", async () => {
+      mocks.createBostaDelivery.mockResolvedValue({ trackingNumber: "T1" });
+
+      expect(await processOrderPayment(77, "cash_on_delivery", "ar")).toEqual({
+        success: true,
+        redirectUrl: "/ar/order-success/77",
+      });
+      expect(mocks.sendOrderConfirmation).toHaveBeenCalledWith(77, "ar");
     });
 
     it("still confirms the saved order when Bosta is down", async () => {
@@ -60,7 +70,7 @@ describe("processOrderPayment", () => {
         success: true,
         redirectUrl: "/order-success/77",
       });
-      expect(mocks.sendOrderConfirmation).toHaveBeenCalledWith(77);
+      expect(mocks.sendOrderConfirmation).toHaveBeenCalledWith(77, "en");
     });
   });
 
@@ -74,7 +84,7 @@ describe("processOrderPayment", () => {
         success: true,
         redirectUrl: "https://pay.test/77",
       });
-      expect(mocks.createPaymobCheckout).toHaveBeenCalledWith(order);
+      expect(mocks.createPaymobCheckout).toHaveBeenCalledWith(order, "en");
       // Both happen in the Paymob webhook once the payment succeeds.
       expect(mocks.sendOrderConfirmation).not.toHaveBeenCalled();
       expect(mocks.createBostaDelivery).not.toHaveBeenCalled();
@@ -97,6 +107,19 @@ describe("processOrderPayment", () => {
         success: false,
         error: "Order not found",
       });
+    });
+
+    it("sends an Arabic checkout to Paymob in Arabic", async () => {
+      const order = makeOrder({ id: 77, paymentMethod: method });
+      mocks.getOrderWithItems.mockResolvedValue(order);
+      mocks.createPaymobCheckout.mockRejectedValueOnce(new Error("bad phone"));
+
+      expect(await processOrderPayment(77, method, "ar")).toEqual({
+        success: false,
+        error:
+          "حفظنا طلبك لكن تعذّر بدء عملية الدفع. يمكنك إعادة المحاولة من صفحة حسابك.",
+      });
+      expect(mocks.createPaymobCheckout).toHaveBeenCalledWith(order, "ar");
     });
   });
 });

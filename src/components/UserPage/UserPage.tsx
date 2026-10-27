@@ -1,5 +1,7 @@
 import styles from "./UserPage.module.css";
-import Link from "next/link";
+import Link from "@/i18n/Link";
+import { rich } from "@/i18n/rich";
+import { getI18n } from "@/i18n/server";
 import type { OrderQuery, User } from "@/types/customTypes";
 import UserSideBar from "../UserSideBar/UserSideBar";
 import {
@@ -15,13 +17,15 @@ import ProfileEditor from "./ProfileEditor";
 import { getDisplayStatus } from "@/lib/orderStatus";
 import { SHOP_WHATSAPP_DISPLAY, shopWhatsAppUrl } from "@/lib/whatsapp";
 
-export default function UserPage({
+export default async function UserPage({
   user,
   orders,
 }: {
   user: User;
   orders: OrderQuery[];
 }) {
+  const { t } = await getI18n();
+  const text = t.account;
   const statuses = orders.map(getDisplayStatus);
   const activeOrders = statuses.filter(
     (status) =>
@@ -38,12 +42,12 @@ export default function UserPage({
         <div className={styles.glow} />
         <div className={styles.heroContent}>
           <div className={styles.heroBadge}>
-            <p className={styles.heroBadgeText}>My Account</p>
+            <p className={styles.heroBadgeText}>{text.badge}</p>
           </div>
           <h1 className={styles.heroTitle}>
-            Welcome back,{" "}
+            {text.welcome}{" "}
             <span className={styles.heroTitleAccent}>
-              {user.name || "Coffee Lover"}
+              {user.name || text.fallbackName}
             </span>
           </h1>
         </div>
@@ -56,19 +60,21 @@ export default function UserPage({
 
           {/* ── Right column ─────────────────────────────────────────── */}
           <div className={styles.main}>
-            <section className={styles.overview} aria-label="Account overview">
+            <section className={styles.overview} aria-label={text.overview}>
               <div className={styles.overviewItem}>
                 <ShoppingBag aria-hidden="true" />
                 <div>
                   <span className={styles.overviewValue}>{orders.length}</span>
-                  <span className={styles.overviewLabel}>Orders placed</span>
+                  <span className={styles.overviewLabel}>
+                    {text.ordersPlaced}
+                  </span>
                 </div>
               </div>
               <div className={styles.overviewItem}>
                 <Clock3 aria-hidden="true" />
                 <div>
                   <span className={styles.overviewValue}>{activeOrders}</span>
-                  <span className={styles.overviewLabel}>In progress</span>
+                  <span className={styles.overviewLabel}>{text.inProgress}</span>
                 </div>
               </div>
               <div className={styles.overviewItem}>
@@ -77,7 +83,7 @@ export default function UserPage({
                   <span className={styles.overviewValue}>
                     {deliveredOrders}
                   </span>
-                  <span className={styles.overviewLabel}>Delivered</span>
+                  <span className={styles.overviewLabel}>{text.delivered}</span>
                 </div>
               </div>
             </section>
@@ -85,14 +91,14 @@ export default function UserPage({
             <section className={styles.section}>
               <div className={styles.sectionHeader}>
                 <UserRound aria-hidden="true" />
-                <h2 className={styles.sectionTitle}>Profile details</h2>
+                <h2 className={styles.sectionTitle}>{text.profileTitle}</h2>
                 <span
                   className={
                     user.emailVerified ? styles.verified : styles.unverified
                   }
                 >
                   <BadgeCheck aria-hidden="true" />
-                  {user.emailVerified ? "Email verified" : "Email not verified"}
+                  {user.emailVerified ? text.emailVerified : text.emailNotVerified}
                 </span>
               </div>
               <ProfileEditor initialName={user.name} />
@@ -102,7 +108,7 @@ export default function UserPage({
             <section className={styles.section}>
               <div className={styles.sectionHeader}>
                 <ShoppingBag aria-hidden="true" />
-                <h2 className={styles.sectionTitle}>Your Orders</h2>
+                <h2 className={styles.sectionTitle}>{text.ordersTitle}</h2>
               </div>
 
               <OrdersList orders={orders} />
@@ -112,15 +118,10 @@ export default function UserPage({
             <section className={styles.section}>
               <div className={styles.sectionHeader}>
                 <Mail aria-hidden="true" />
-                <h2 className={styles.sectionTitle}>Need Help?</h2>
+                <h2 className={styles.sectionTitle}>{text.helpTitle}</h2>
               </div>
               <div className={styles.helpCard}>
-                <p className={styles.helpText}>
-                  Returns, refunds and cancelling an order you paid for online
-                  are handled on WhatsApp: message us with your order number
-                  and we&apos;ll take care of it. For anything else, you can
-                  also send us a message.
-                </p>
+                <p className={styles.helpText}>{text.helpText}</p>
                 <div className={styles.helpLinks}>
                   <a
                     href={shopWhatsAppUrl()}
@@ -128,10 +129,13 @@ export default function UserPage({
                     rel="noreferrer"
                     className={styles.helpLink}
                   >
-                    WhatsApp: {SHOP_WHATSAPP_DISPLAY}
+                    {rich(text.whatsapp, {
+                      // Keeps "+20 103 …" in order inside Arabic text.
+                      number: <span dir="ltr">{SHOP_WHATSAPP_DISPLAY}</span>,
+                    })}
                   </a>
                   <Link href="/contact" className={styles.helpLink}>
-                    Send us a message
+                    {text.sendMessage}
                   </Link>
                 </div>
               </div>

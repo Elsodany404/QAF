@@ -37,7 +37,7 @@
   background: var(--charcoal-950);
   box-shadow: var(--shadow-soft);
   cursor: pointer;
-  text-align: left;
+  text-align: start;
   animation: slideUp 0.7s ease-out both;
 }
 

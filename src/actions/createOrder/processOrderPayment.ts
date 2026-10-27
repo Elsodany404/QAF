@@ -1,3 +1,5 @@
+import { localizePath, type Locale } from "@/i18n/config";
+import { getMessages } from "@/i18n/messages";
 import { createBostaDelivery } from "@/services/Bosta";
 import { getOrderWithItems } from "@/services/Order";
 import { sendOrderConfirmation } from "@/services/OrderEmails";
@@ -14,14 +16,20 @@ type ProcessOrderPaymentResult =
       error: string;
     };
 
+/**
+ * `locale` is the checkout's language: the confirmation page, the email and
+ * Paymob's return address use it.
+ */
 export async function processOrderPayment(
   orderID: number,
   paymentMethod: PaymentMethod,
+  locale: Locale = "en",
 ): Promise<ProcessOrderPaymentResult> {
+  const m = getMessages(locale).server;
   if (!Number.isInteger(orderID) || orderID <= 0) {
     return {
       success: false,
-      error: "Invalid order ID",
+      error: m.invalidOrderID,
     };
   }
 
@@ -42,11 +50,11 @@ export async function processOrderPayment(
     }
 
     // COD orders are confirmed as soon as they're placed.
-    await sendOrderConfirmation(orderID);
+    await sendOrderConfirmation(orderID, locale);
 
     return {
       success: true,
-      redirectUrl: `/order-success/${orderID}`,
+      redirectUrl: localizePath(locale, `/order-success/${orderID}`),
     };
   }
 
@@ -59,20 +67,19 @@ export async function processOrderPayment(
   try {
     const order = await getOrderWithItems(orderID);
     if (!order) {
-      return { success: false, error: "Order not found" };
+      return { success: false, error: m.orderNotFound };
     }
 
     return {
       success: true,
-      redirectUrl: await createPaymobCheckout(order),
+      redirectUrl: await createPaymobCheckout(order, locale),
     };
   } catch (error) {
     console.error(`Paymob payment for order ${orderID} failed:`, error);
 
     return {
       success: false,
-      error:
-        "Your order was saved but we couldn't start the payment. You can retry from your account page.",
+      error: m.paymentNotStarted,
     };
   }
 }

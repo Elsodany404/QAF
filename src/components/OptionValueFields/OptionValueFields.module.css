@@ -1,6 +1,8 @@
 .valueRow {
   display: grid;
-  grid-template-columns: minmax(7rem, 1fr) minmax(7rem, 0.8fr) auto auto auto;
+  grid-template-columns:
+    minmax(6rem, 1fr) minmax(6rem, 1fr) minmax(6rem, 0.8fr)
+    auto auto auto;
   align-items: center;
   gap: 0.5rem;
 }
@@ -72,7 +74,7 @@
 
 @media (max-width: 600px) {
   .valueRow {
-    grid-template-columns: 1fr 1fr auto;
+    grid-template-columns: 1fr 1fr 1fr;
   }
 
   .checkLabel {

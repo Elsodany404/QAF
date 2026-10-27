@@ -6,9 +6,12 @@ import {
   useSyncExternalStore,
   useTransition,
 } from "react";
-import Link from "next/link";
 import { MailCheck, RefreshCw } from "lucide-react";
 
+import { format } from "@/i18n/format";
+import { useI18n } from "@/i18n/I18nProvider";
+import Link from "@/i18n/Link";
+import { rich } from "@/i18n/rich";
 import { readPendingEmail, resendVerificationEmail } from "@/lib/authActions";
 import type { ActionState } from "@/types/customTypes";
 import styles from "../SignInForm/SignInForm.module.css";
@@ -22,6 +25,8 @@ export default function VerifyEmailNotice({
 }: {
   linkFailed: boolean;
 }) {
+  const { locale, t } = useI18n();
+  const text = t.auth.verify;
   // sessionStorage only exists in the browser; render without it on the server.
   const pendingEmail = useSyncExternalStore(
     noopSubscribe,
@@ -44,7 +49,10 @@ export default function VerifyEmailNotice({
   function handleResend(event: React.FormEvent) {
     event.preventDefault();
     startTransition(async () => {
-      const response = await resendVerificationEmail(email);
+      const response = await resendVerificationEmail(email, {
+        locale,
+        results: t.auth.results,
+      });
       setResult(response);
       if (response.status === "success") {
         setCooldown(RESEND_COOLDOWN_SECONDS);
@@ -62,28 +70,17 @@ export default function VerifyEmailNotice({
         </div>
 
         <h1 className={styles.heading}>
-          {linkFailed ? "This link has expired" : "Check your email"}
+          {linkFailed ? text.expiredHeading : text.checkHeading}
         </h1>
         <p className={styles.subheading}>
-          {linkFailed ? (
-            "Verification links are valid for a limited time. Send yourself a new one below."
-          ) : pendingEmail ? (
-            <>
-              We sent a verification link to <strong>{pendingEmail}</strong>.
-              Click it to activate your account — then you can sign in and
-              order.
-            </>
-          ) : (
-            "We sent you a verification link. Click it to activate your account — then you can sign in and order."
-          )}
+          {linkFailed
+            ? text.expiredText
+            : pendingEmail
+              ? rich(text.sentTo, { email: <strong>{pendingEmail}</strong> })
+              : text.sent}
         </p>
 
-        {!linkFailed && (
-          <p className={styles.notice}>
-            Can&apos;t find it? Check your spam or promotions folder. The email
-            comes from Qaf Coffee.
-          </p>
-        )}
+        {!linkFailed && <p className={styles.notice}>{text.spamNote}</p>}
 
         <form onSubmit={handleResend} className={styles.form} noValidate>
           {result && (
@@ -100,11 +97,12 @@ export default function VerifyEmailNotice({
           {!pendingEmail && (
             <div className={styles.field}>
               <label className={styles.label} htmlFor="email">
-                Email address
+                {t.auth.emailLabel}
               </label>
               <input
                 id="email"
                 type="email"
+                dir="ltr"
                 autoComplete="email"
                 placeholder="you@example.com"
                 className={styles.input}
@@ -126,21 +124,21 @@ export default function VerifyEmailNotice({
               <RefreshCw size={18} />
             )}
             {isPending
-              ? "Sending…"
+              ? text.sending
               : cooldown > 0
-                ? `Resend available in ${cooldown}s`
-                : "Resend verification email"}
+                ? format(text.resendIn, { seconds: cooldown })
+                : text.resend}
           </button>
         </form>
 
         <p className={styles.switchText}>
-          Already verified?{" "}
+          {text.alreadyVerified}{" "}
           <Link href="/sign-in" className={styles.switchLink}>
-            Sign in
+            {text.signIn}
           </Link>
           {" · "}
           <Link href="/sign-up" className={styles.switchLink}>
-            Use a different email
+            {text.differentEmail}
           </Link>
         </p>
       </div>

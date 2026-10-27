@@ -1,7 +1,8 @@
 # Qaf Coffee
 
 Online store for Qaf Coffee: product catalog, cart and checkout, customer
-accounts, and an admin dashboard for orders.
+accounts, and an admin dashboard for orders. The storefront is in English and
+Arabic.
 
 - **Next.js 16** (App Router) and React 19
 - **Supabase** Postgres and storage (product catalog, orders)
@@ -49,7 +50,8 @@ Railway, a VPS with `npm run build && npm start`, ...).
    `NEXT_PUBLIC_SUPABASE_URL` (`https://<ref>.supabase.co`). The admin "Add
    product" form needs `20261026060915_catalog_identity_ids.sql`: before it,
    products, options and option values have no automatic ids and every
-   insert fails.
+   insert fails. Apply `20261027120000_arabic_catalog.sql` before deploying
+   the Arabic site: the shop's search looks in its columns.
 3. **Email.** Either verify the sending domain of `RESEND_FROM_EMAIL` in
    Resend, or set the `SMTP_*` variables to a mailbox (see `.env.example`).
    Without one of them, verification and order emails are not delivered and
@@ -94,6 +96,24 @@ In the dashboard, an order paid online that won't reach the customer
 Paymob dashboard, or however you agreed with the customer, then set its
 payment to Refunded. A return pickup you book in Bosta's dashboard doesn't
 change the order: update its status by hand.
+
+### English and Arabic
+
+English pages keep their addresses (`/menu`); the Arabic ones are under `/ar`
+(`/ar/menu`), right to left. All pages live in `src/app/[lang]`, and
+`src/proxy.ts` serves English addresses from the `/en` routes without showing
+the prefix. The navbar switches language and remembers the choice in the
+`NEXT_LOCALE` cookie; a first visit from a browser set to Arabic opens the
+Arabic site. The admin dashboard is English only.
+
+- The site's text is in `src/i18n/messages/en.ts` and `ar.ts`. Both must
+  have the same keys and `{placeholders}`; TypeScript and the tests check.
+- Product names, descriptions, options and values have optional Arabic
+  versions (`nameAr`, `descriptionAr`, `labelAr`), filled in through the
+  "Add product" form or the Supabase table editor. Without them the English
+  text shows on the Arabic site.
+- Emails go out in the language the customer used: sign-up, password reset
+  and order confirmations.
 
 ### Notes
 

@@ -53,7 +53,7 @@
 @media (min-width: 480px) and (max-width: 767px) {
   .profileCard {
     flex-direction: row;
-    text-align: left;
+    text-align: start;
   }
 
   .profileInfo {
@@ -173,7 +173,7 @@
 }
 
 .quickLinkArrow {
-  margin-left: auto;
+  margin-inline-start: auto;
   opacity: 0;
   transition:
     opacity 0.15s,

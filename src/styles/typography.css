@@ -20,3 +20,9 @@ h6 {
 p {
   margin: 0;
 }
+
+/* Arabic letters reach higher and lower than Latin ones: headings that wrap
+   need more room between their lines. */
+:is(h1, h2, h3):lang(ar) {
+  line-height: 1.35;
+}

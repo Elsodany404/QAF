@@ -18,7 +18,7 @@
 .drawer {
   position: fixed;
   top: 0;
-  right: 0;
+  inset-inline-end: 0;
   z-index: 50;
 
   display: flex;
@@ -29,7 +29,7 @@
 
   background: linear-gradient(180deg, #fffdf9 0%, #faf5ed 100%);
 
-  border-left: 1px solid rgba(91, 65, 45, 0.08);
+  border-inline-start: 1px solid rgba(91, 65, 45, 0.08);
   box-shadow: -12px 0 40px rgba(50, 35, 25, 0.12);
 
   overflow: hidden;
@@ -49,6 +49,15 @@
   transition:
     transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     visibility 0s linear 0.3s;
+}
+
+/* Arabic pages: the drawer comes in from the left. */
+.drawer:dir(rtl) {
+  box-shadow: 12px 0 40px rgba(50, 35, 25, 0.12);
+}
+
+.closed:dir(rtl) {
+  transform: translateX(-100%);
 }
 
 /* =========================
@@ -109,7 +118,7 @@
 }
 
 .count {
-  margin-left: 0.4rem;
+  margin-inline-start: 0.4rem;
 
   font-family: inherit;
   font-size: 0.9rem;
@@ -360,7 +369,7 @@
 /* A dot between options (an "×" read like a quantity). */
 .itemOptions span + span::before {
   content: "·";
-  margin-right: 0.85rem;
+  margin-inline-end: 0.85rem;
 
   color: var(--espresso-400);
 }
@@ -574,7 +583,7 @@
   margin: 0 0 1rem;
 
   font-size: 0.7rem;
-  text-align: right;
+  text-align: end;
 
   color: var(--charcoal-400);
 }

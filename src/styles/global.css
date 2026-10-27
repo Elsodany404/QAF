@@ -63,17 +63,17 @@ button {
 }
 
 .glow {
-  right: 0;
+  inset-inline-end: 0;
   background: rgba(218, 144, 14, 0.05);
 }
 
 .glowLeft {
-  left: 0;
+  inset-inline-start: 0;
   background: rgba(114, 68, 61, 0.05);
 }
 
 .glowDark {
-  right: 0;
+  inset-inline-end: 0;
   background: rgba(218, 144, 14, 0.1);
 }
 
@@ -243,6 +243,29 @@ button {
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+/*
+ * Right-to-left (Arabic) pages. Layout uses logical properties
+ * (inset-inline-start, margin-inline-end…), which turn around by themselves;
+ * these cover what they can't.
+ */
+
+/* Arrows and other icons that point "forward" face the other way. The scale
+   property composes with a transform, so hover nudges turn around too. */
+.flipRtl:dir(rtl) {
+  scale: -1 1;
+}
+
+/* Arabic letters join up: spacing them out breaks the words apart. */
+:lang(ar) {
+  letter-spacing: normal !important;
+}
+
+/* Email and phone fields are typed left to right; keep them lined up with
+   the rest of an Arabic form. */
+input[dir="ltr"]:dir(rtl) {
+  text-align: right;
 }
 
 /* Visually hidden but still read by screen readers. */

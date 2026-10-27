@@ -2,6 +2,15 @@ import "server-only";
 import nodemailer from "nodemailer";
 import { Resend } from "resend";
 
+import {
+  DEFAULT_LOCALE,
+  localeDirection,
+  pathLocale,
+  type Locale,
+} from "@/i18n/config";
+import { format } from "@/i18n/format";
+import { getMessages } from "@/i18n/messages";
+
 /*
  * Server-only transactional email. Every send is best-effort: failures are
  * logged and reported to the caller, never thrown, so an email outage cannot
@@ -116,26 +125,54 @@ export async function sendEmail(message: EmailMessage): Promise<boolean> {
   }
 }
 
-/** Wraps body HTML in the shared, inline-styled email layout. */
-export function emailLayout(title: string, bodyHtml: string) {
+/**
+ * The language of an auth email, from the page its link returns to:
+ * "…/verify-email?token=…&callbackURL=%2Far%2Fverify-email" is Arabic.
+ */
+export function linkLocale(url: string): Locale {
+  try {
+    const callbackURL = new URL(url).searchParams.get("callbackURL") ?? "";
+    return pathLocale(callbackURL) ?? DEFAULT_LOCALE;
+  } catch {
+    return DEFAULT_LOCALE;
+  }
+}
+
+/**
+ * Wraps body HTML in the shared, inline-styled email layout, laid out right
+ * to left for Arabic.
+ */
+export function emailLayout(
+  title: string,
+  bodyHtml: string,
+  locale: Locale = DEFAULT_LOCALE,
+) {
+  const t = getMessages(locale);
+  const dir = localeDirection(locale);
+  const align = dir === "rtl" ? "right" : "left";
+  // Georgia has no Arabic letters; the client's own Arabic font looks better
+  // than a fallback picked by chance.
+  const displayFont =
+    locale === "ar" ? "Tahoma,Arial,sans-serif" : "Georgia,serif";
+
   return `<!doctype html>
-<html>
-  <body style="margin:0;padding:24px;background:#fff9f0;font-family:Arial,Helvetica,sans-serif;color:#11101f;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #f1e0ca;border-radius:12px;">
+<html lang="${locale}" dir="${dir}">
+  <body dir="${dir}" style="margin:0;padding:24px;background:#fff9f0;font-family:Arial,Helvetica,sans-serif;color:#11101f;text-align:${align};">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" dir="${dir}" style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #f1e0ca;border-radius:12px;">
       <tr>
-        <td style="padding:24px 28px;border-bottom:1px solid #f8efe0;">
-          <span style="font-family:Georgia,serif;font-size:22px;font-weight:bold;color:#40261f;">Qaf Coffee</span>
+        <td style="padding:24px 28px;border-bottom:1px solid #f8efe0;text-align:${align};">
+          <span style="font-family:${displayFont};font-size:22px;font-weight:bold;color:#40261f;">${escapeHtml(t.common.brand)}</span>
         </td>
       </tr>
       <tr>
-        <td style="padding:28px;">
-          <h1 style="margin:0 0 16px;font-family:Georgia,serif;font-size:22px;color:#11101f;">${escapeHtml(title)}</h1>
+        <td style="padding:28px;text-align:${align};">
+          <h1 style="margin:0 0 16px;font-family:${displayFont};font-size:22px;color:#11101f;">${escapeHtml(title)}</h1>
           ${bodyHtml}
         </td>
       </tr>
       <tr>
-        <td style="padding:16px 28px;border-top:1px solid #f8efe0;font-size:12px;color:#5b5876;">
-          Questions? Reply to this email or write to ${SHOP_EMAIL}.
+        <td style="padding:16px 28px;border-top:1px solid #f8efe0;font-size:12px;color:#5b5876;text-align:${align};">
+          ${escapeHtml(format(t.emails.footer, { email: SHOP_EMAIL }))}
         </td>
       </tr>
     </table>
@@ -154,6 +191,7 @@ export function linkEmail({
   url,
   action,
   outro,
+  locale = DEFAULT_LOCALE,
 }: {
   to: string;
   subject: string;
@@ -161,6 +199,7 @@ export function linkEmail({
   url: string;
   action: string;
   outro: string;
+  locale?: Locale;
 }) {
   return sendEmail({
     to,
@@ -171,6 +210,7 @@ export function linkEmail({
       `<p style="margin:0;line-height:1.6;">${escapeHtml(intro)}</p>
        ${emailButton(url, action)}
        <p style="margin:0;font-size:13px;line-height:1.6;color:#5b5876;">${escapeHtml(outro)}</p>`,
+      locale,
     ),
   });
 }

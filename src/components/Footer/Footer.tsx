@@ -1,9 +1,14 @@
 import { Coffee, Mail, Phone, MapPin } from "lucide-react";
 import styles from "./Footer.module.css";
 import { SiInstagram, SiFacebook } from "@icons-pack/react-simple-icons";
-import Link from "next/link";
+import Link from "@/i18n/Link";
+import { format } from "@/i18n/format";
+import { getI18n } from "@/i18n/server";
 
-export default function Footer() {
+export default async function Footer() {
+  const { t } = await getI18n();
+  const footer = t.footer;
+
   return (
     <footer className={styles.footer}>
       <div className={styles.mainFooter}>
@@ -14,24 +19,21 @@ export default function Footer() {
                 <Coffee aria-hidden="true" />
               </div>
               <div>
-                <p className={styles.brandTitle}>Qaf Coffee</p>
-                <p className={styles.brandSubtitle}>Artisan Roasters</p>
+                <p className={styles.brandTitle}>{t.common.brand}</p>
+                <p className={styles.brandSubtitle}>{footer.subtitle}</p>
               </div>
             </div>
-            <p className={styles.brandDescription}>
-              Small-batch roasted coffee from the world&apos;s finest origins.
-              Crafted with passion, served with purpose.
-            </p>
+            <p className={styles.brandDescription}>{footer.description}</p>
             <div className={styles.socials}>
               {[
                 {
                   Icon: SiInstagram,
-                  label: "Qaf Coffee on Instagram",
+                  label: footer.instagram,
                   href: "https://www.instagram.com/qafcoffeebn/",
                 },
                 {
                   Icon: SiFacebook,
-                  label: "Qaf Coffee on Facebook",
+                  label: footer.facebook,
                   href: "https://www.facebook.com/QAFCOFFEE/?locale=ar_AR",
                 },
               ].map(({ Icon, label, href }) => (
@@ -50,11 +52,11 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className={styles.sectionHeading}>Contact</h4>
+            <h4 className={styles.sectionHeading}>{footer.contact}</h4>
             <ul className={styles.contactList}>
               <li className={styles.contactItem}>
                 <MapPin aria-hidden="true" />
-                <span>C8, 10th of Ramadan, Al-Sharqya, Egypt</span>
+                <span>{t.common.address}</span>
               </li>
               <li className={styles.contactItem}>
                 <Phone aria-hidden="true" />
@@ -72,27 +74,26 @@ export default function Footer() {
 
         <div className={styles.bottomBar}>
           <p className={styles.copyright}>
-            &copy; {new Date().getFullYear()} Qaf Coffee Co. All rights
-            reserved.
+            {format(footer.copyright, { year: new Date().getFullYear() })}
           </p>
           <div className={styles.legalLinks}>
             <Link
               href="/policies#privacy-policy"
               className={styles.legalLink}
             >
-              Privacy Policy
+              {footer.privacy}
             </Link>
             <Link
               href="/policies#delivery-shipping-policy"
               className={styles.legalLink}
             >
-              Delivery &amp; Shipping
+              {footer.delivery}
             </Link>
             <Link
               href="/policies#return-refund-policy"
               className={styles.legalLink}
             >
-              Returns &amp; Refunds
+              {footer.returns}
             </Link>
           </div>
         </div>

@@ -158,7 +158,55 @@ describe("addProduct", () => {
       ],
       ["ProductOptions", { productID: 9, optionID: 300 }],
     ]);
-    expect(mocks.revalidatePath).toHaveBeenCalledWith("/products/9");
+    // In both languages: the routes behind /products/9 and /ar/products/9.
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/products/9");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/ar/products/9");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/ar");
+  });
+
+  it("saves the optional Arabic text, trimmed", async () => {
+    queueSuccessfulInserts();
+
+    await run(
+      form({ nameAr: " إسبريسو ", descriptionAr: " غني وداكن " }, [
+        sizeOption({
+          nameAr: " الحجم ",
+          descriptionAr: "اختر العبوة",
+          values: [
+            {
+              label: "250g",
+              labelAr: " 250 جم ",
+              priceModifier: 0,
+              default: true,
+              inStock: true,
+            },
+            // Left empty: the English label is used on the Arabic site.
+            {
+              label: "500g",
+              labelAr: "  ",
+              priceModifier: 1,
+              default: false,
+              inStock: true,
+            },
+          ],
+        }),
+      ]),
+    );
+
+    const inserts = fake().queries.filter((q) => q.operation === "insert");
+    expect(inserts[0].payload).toMatchObject({
+      name: "Espresso",
+      nameAr: "إسبريسو",
+      descriptionAr: "غني وداكن",
+    });
+    expect(inserts[1].payload).toMatchObject({
+      name: "Size",
+      nameAr: "الحجم",
+      descriptionAr: "اختر العبوة",
+    });
+    const [first, second] = inserts[2].payload as Record<string, unknown>[];
+    expect(first.labelAr).toBe("250 جم");
+    expect(second).not.toHaveProperty("labelAr");
   });
 
   it("removes what it created when a later insert fails", async () => {

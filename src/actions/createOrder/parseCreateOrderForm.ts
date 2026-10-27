@@ -1,10 +1,12 @@
+import type { Locale } from "@/i18n/config";
+import { format } from "@/i18n/format";
+import { getMessages } from "@/i18n/messages";
 import {
   findDeliveryAddress,
   MIN_STREET_LENGTH,
   normalizeEgyptianMobile,
-  STREET_TOO_SHORT_MESSAGE,
 } from "@/lib/bostaLocations";
-import { FULL_NAME_MESSAGE, isFullName } from "@/lib/fullName";
+import { isFullName } from "@/lib/fullName";
 import type {
   orderPayloadT,
   PaymentMethod,
@@ -24,9 +26,12 @@ export type CreateOrderInput = Omit<
 type ParseCreateOrderFormResult =
   { success: true; data: CreateOrderInput } | { success: false; error: string };
 
+/** The checkout form's fields, checked; errors in the checkout's language. */
 export function parseCreateOrderForm(
   formData: FormData,
+  locale: Locale = "en",
 ): ParseCreateOrderFormResult {
+  const { server: m, validation } = getMessages(locale);
   const paymentMethod = formData.get("paymentMethod");
   const customerName = formData.get("name");
   const customerEmail = formData.get("email");
@@ -52,7 +57,7 @@ export function parseCreateOrderForm(
   ) {
     return {
       success: false,
-      error: "Invalid order form data",
+      error: m.invalidOrderForm,
     };
   }
 
@@ -74,22 +79,25 @@ export function parseCreateOrderForm(
     street.length > 200 ||
     apartment.length > 100
   ) {
-    return { success: false, error: "Invalid order form data" };
+    return { success: false, error: m.invalidOrderForm };
   }
 
   // The checkout form checks these too; the server never trusts it.
   if (!isFullName(customerName)) {
-    return { success: false, error: FULL_NAME_MESSAGE };
+    return { success: false, error: validation.fullName };
   }
   if (street.trim().length < MIN_STREET_LENGTH) {
-    return { success: false, error: STREET_TOO_SHORT_MESSAGE };
+    return {
+      success: false,
+      error: format(validation.streetTooShort, { min: MIN_STREET_LENGTH }),
+    };
   }
 
   const phone = normalizeEgyptianMobile(customerPhone);
   if (!phone) {
     return {
       success: false,
-      error: "Please enter a valid Egyptian mobile number",
+      error: m.invalidMobile,
     };
   }
 
@@ -99,7 +107,7 @@ export function parseCreateOrderForm(
   if (!address) {
     return {
       success: false,
-      error: "We don't deliver to the selected area. Please choose another.",
+      error: m.noDelivery,
     };
   }
 
@@ -108,7 +116,7 @@ export function parseCreateOrderForm(
   if (typeof secureCartValue !== "string" || !secureCartValue) {
     return {
       success: false,
-      error: "Cart is missing",
+      error: m.cartMissing,
     };
   }
 
@@ -119,7 +127,7 @@ export function parseCreateOrderForm(
   } catch {
     return {
       success: false,
-      error: "Invalid cart data",
+      error: m.invalidCartData,
     };
   }
 
@@ -131,7 +139,7 @@ export function parseCreateOrderForm(
   ) {
     return {
       success: false,
-      error: "Invalid cart structure",
+      error: m.invalidCartStructure,
     };
   }
 
@@ -144,7 +152,7 @@ export function parseCreateOrderForm(
         ? Number(expectedTotalValue)
         : NaN;
     if (!Number.isFinite(expectedTotal) || expectedTotal < 0) {
-      return { success: false, error: "Invalid order form data" };
+      return { success: false, error: m.invalidOrderForm };
     }
   }
 

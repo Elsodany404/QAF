@@ -117,12 +117,49 @@ export default function OptionFields({
         />
       </div>
 
+      {/* Shown on the Arabic site; the English text is used without them. */}
+      <div className={styles.row}>
+        <div className={styles.field}>
+          <label
+            className={styles.label}
+            htmlFor={`option-${optionIndex}-name-ar`}
+          >
+            Arabic name
+          </label>
+          <input
+            id={`option-${optionIndex}-name-ar`}
+            className={styles.input}
+            dir="rtl"
+            lang="ar"
+            placeholder="الحجم"
+            {...register(`options.${optionIndex}.nameAr`)}
+          />
+        </div>
+
+        <div className={styles.field}>
+          <label
+            className={styles.label}
+            htmlFor={`option-${optionIndex}-description-ar`}
+          >
+            Arabic description
+          </label>
+          <input
+            id={`option-${optionIndex}-description-ar`}
+            className={styles.input}
+            dir="rtl"
+            lang="ar"
+            {...register(`options.${optionIndex}.descriptionAr`)}
+          />
+        </div>
+      </div>
+
       <div className={styles.valuesHeader}>
         <span className={styles.label}>
           Option values *
           <small className={styles.hint}>
-            Price change is a percentage of the base price: 25 = +25%, -10 =
-            −10%, 0 = same price.
+            Label, Arabic label (optional), price change. The price change is
+            a percentage of the base price: 25 = +25%, -10 = −10%, 0 = same
+            price.
           </small>
         </span>
         <button
@@ -131,6 +168,7 @@ export default function OptionFields({
           onClick={() =>
             append({
               label: "",
+              labelAr: "",
               priceModifier: 0,
               default: false,
               inStock: true,

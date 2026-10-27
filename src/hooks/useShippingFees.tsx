@@ -5,9 +5,11 @@ type UseShippingFeesProps = {
   paymentMethod: PaymentMethod;
   cartPrice: number;
   cityName: string | null;
+  /** Shown when Bosta couldn't price the city. */
+  errorMessage: string;
 };
 
-type Quote = { key: string; fees: number | null; error: string | null };
+type Quote = { key: string; fees: number | null; failed: boolean };
 
 /**
  * Live Bosta shipping quote for the checkout. `shippingFees` stays null until
@@ -19,6 +21,7 @@ export default function useShippingFees({
   cityName,
   cartPrice,
   paymentMethod,
+  errorMessage,
 }: UseShippingFeesProps) {
   // Bosta prices cash-on-delivery shipments by the amount collected, so the
   // cart total only matters for COD.
@@ -44,16 +47,12 @@ export default function useShippingFees({
             typeof data?.error === "string" ? data.error : `HTTP ${response.status}`,
           );
         }
-        setQuote({ key, fees, error: null });
+        setQuote({ key, fees, failed: false });
       })
       .catch((error: unknown) => {
         if (controller.signal.aborted) return;
         console.error("Shipping fee request failed:", error);
-        setQuote({
-          key,
-          fees: null,
-          error: "We couldn't calculate shipping to this city. Please try again.",
-        });
+        setQuote({ key, fees: null, failed: true });
       });
 
     return () => controller.abort();
@@ -67,7 +66,7 @@ export default function useShippingFees({
   return {
     shippingFees: current?.fees ?? null,
     shippingFeesLoading: key !== null && current === null,
-    shippingFeesError: current?.error ?? null,
+    shippingFeesError: current?.failed ? errorMessage : null,
     retryShippingFees,
   };
 }

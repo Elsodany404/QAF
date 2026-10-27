@@ -1,16 +1,20 @@
 "use server";
+import { getRequestMessages } from "@/i18n/request";
 import { auth } from "@/lib/auth";
 import { ActionState } from "@/types/customTypes";
 import { headers } from "next/headers";
 
 export default async function signOut(): Promise<ActionState> {
+  const { locale, m } = await getRequestMessages();
   try {
     await auth.api.signOut({ headers: await headers() });
-    return { status: "success", message: "Signed out successfully" };
+    return { status: "success", message: m.signedOut };
   } catch (err) {
     return {
       status: "failed",
-      message: err instanceof Error ? err.message : "Unexpected error happened",
+      // Better Auth's errors are in English.
+      message:
+        locale === "en" && err instanceof Error ? err.message : m.unexpected,
     };
   }
 }

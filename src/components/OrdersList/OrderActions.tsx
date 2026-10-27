@@ -7,15 +7,22 @@ import { CreditCard, X } from "lucide-react";
 
 import { cancelOrder } from "@/actions/order/cancelOrder";
 import { payOrder } from "@/actions/order/payOrder";
+import { format } from "@/i18n/format";
+import { useI18n } from "@/i18n/I18nProvider";
 import { formatOrderNumber } from "@/lib/orderStatus";
 import styles from "./OrdersList.module.css";
 
 export function CancelOrderButton({ orderID }: { orderID: number }) {
   const router = useRouter();
+  const { t } = useI18n();
+  const text = t.orderActions;
   const [isPending, startTransition] = useTransition();
 
   function handleCancel() {
-    if (!window.confirm(`Cancel order ${formatOrderNumber(orderID)}?`)) return;
+    const question = format(text.confirmCancel, {
+      number: formatOrderNumber(orderID),
+    });
+    if (!window.confirm(question)) return;
 
     startTransition(async () => {
       const result = await cancelOrder(orderID);
@@ -24,7 +31,7 @@ export function CancelOrderButton({ orderID }: { orderID: number }) {
         return;
       }
       toast.success(
-        typeof result.data === "string" ? result.data : "Order cancelled",
+        typeof result.data === "string" ? result.data : text.cancelled,
       );
       router.refresh();
     });
@@ -38,19 +45,21 @@ export function CancelOrderButton({ orderID }: { orderID: number }) {
       disabled={isPending}
     >
       <X aria-hidden="true" />
-      {isPending ? "Cancelling…" : "Cancel order"}
+      {isPending ? text.cancelling : text.cancel}
     </button>
   );
 }
 
 export function PayOrderButton({ orderID }: { orderID: number }) {
+  const { t } = useI18n();
+  const text = t.orderActions;
   const [isPending, startTransition] = useTransition();
 
   function handlePay() {
     startTransition(async () => {
       const result = await payOrder(orderID);
       if (!result.success || typeof result.data !== "string") {
-        toast.error(result.success ? "Could not start payment" : result.error);
+        toast.error(result.success ? text.paymentFailed : result.error);
         return;
       }
       window.location.assign(result.data);
@@ -65,7 +74,7 @@ export function PayOrderButton({ orderID }: { orderID: number }) {
       disabled={isPending}
     >
       <CreditCard aria-hidden="true" />
-      {isPending ? "Redirecting…" : "Complete payment"}
+      {isPending ? text.redirecting : text.pay}
     </button>
   );
 }

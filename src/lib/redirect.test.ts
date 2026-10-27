@@ -49,3 +49,11 @@ it("builds an encoded sign-in link", () => {
     "/sign-in?next=%2Forder-success%2F5",
   );
 });
+
+it("keeps Arabic visitors on Arabic pages through sign-in", () => {
+  expect(signInPath("/checkout", "ar")).toBe(
+    "/ar/sign-in?next=%2Far%2Fcheckout",
+  );
+  // The way back is the page they came from, in their language.
+  expect(safeRedirectPath("/ar/checkout")).toBe("/ar/checkout");
+});

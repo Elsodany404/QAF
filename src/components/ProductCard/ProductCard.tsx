@@ -2,21 +2,25 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { ShoppingCart, Star } from "lucide-react";
 
 import { announceAddToCart, useCart } from "@/context/CartContext";
+import {
+  categoryName,
+  optionName,
+  productName,
+  valueLabel,
+} from "@/i18n/catalog";
+import { format } from "@/i18n/format";
+import { useI18n } from "@/i18n/I18nProvider";
+import Link from "@/i18n/Link";
 import type { DataItem } from "@/types/customTypes";
 import type { OptionValue } from "@/types/db";
-import {
-  calcPrice,
-  categoryLabel,
-  formatCurrency,
-  generateItemID,
-} from "@/utils/helper";
+import { calcPrice, formatCurrency, generateItemID } from "@/utils/helper";
 import styles from "./ProductCard.module.css";
 
-// Options a shopper can change on the card; the rest use their default.
+// Options a shopper can change on the card (by their English name); the rest
+// use their default.
 const CARD_OPTIONS = ["Size", "Roast"];
 
 type ProductCardProps = {
@@ -26,10 +30,12 @@ type ProductCardProps = {
 };
 
 export default function ProductCard({ dataItem, eager = false }: ProductCardProps) {
+  const { locale, t } = useI18n();
   const { addItem } = useCart();
   const [imageLoading, setImageLoading] = useState(true);
   const [chosen, setChosen] = useState<Record<number, OptionValue>>({});
   const { product, options } = dataItem;
+  const name = productName(product, locale);
   const cardOptions = options.filter((option) =>
     CARD_OPTIONS.includes(option.name),
   );
@@ -53,12 +59,13 @@ export default function ProductCard({ dataItem, eager = false }: ProductCardProp
       quantity: 1,
       itemPrice: finalPrice,
     });
-    announceAddToCart(result, product.name);
+    announceAddToCart(result, name, t.cart);
   }
 
   const link = `/products/${product.id}`;
-  // Turkish blends are named "Turkish coffee | <Blend>"; badge the blend.
-  const blendName = product.name?.split("|")[1]?.trim();
+  // Turkish blends are named "Turkish coffee | <Blend>" (in Arabic too);
+  // badge the blend.
+  const blendName = name.split("|")[1]?.trim();
 
   return (
     <article className={styles.card}>
@@ -76,7 +83,7 @@ export default function ProductCard({ dataItem, eager = false }: ProductCardProp
         <Image
           fill
           src={product.imageUrl}
-          alt={product.name}
+          alt={name}
           sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw"
           className={styles.image}
           loading={eager ? "eager" : "lazy"}
@@ -89,21 +96,21 @@ export default function ProductCard({ dataItem, eager = false }: ProductCardProp
           </div>
         ) : (
           <div className={`${styles.badges} ${styles.badge}`}>
-            {categoryLabel(product.category).toUpperCase()}
+            {categoryName(t.categories, product.category).toUpperCase()}
           </div>
         )}
         {product.featured && (
           <div className={styles.featuredBadge}>
             <Star aria-hidden="true" />
-            Featured
+            {t.product.featured}
           </div>
         )}
 
         {!product.inStock && (
           <div className={styles.outOfStockOverlay}>
             <div className={styles.outOfStockBox}>
-              <p className={styles.outOfStockTitle}>Coming Soon</p>
-              <p className={styles.outOfStockText}>Currently restocking</p>
+              <p className={styles.outOfStockTitle}>{t.product.comingSoon}</p>
+              <p className={styles.outOfStockText}>{t.product.restocking}</p>
             </div>
           </div>
         )}
@@ -112,7 +119,9 @@ export default function ProductCard({ dataItem, eager = false }: ProductCardProp
       <div className={styles.content}>
         <h3 className={styles.title}>
           <Link href={link} className={styles.titleLink}>
-            {product.name}
+            {/* An English name (no Arabic text yet) keeps its own order on
+                Arabic pages. */}
+            <bdi>{name}</bdi>
           </Link>
         </h3>
 
@@ -124,7 +133,7 @@ export default function ProductCard({ dataItem, eager = false }: ProductCardProp
                 key={option.id}
                 className={`${styles.weightRow} ${cardOptions.length === 1 ? styles.weightRowSingle : ""}`}
                 role="group"
-                aria-label={option.name}
+                aria-label={optionName(option, locale)}
               >
                 {option.values.map((value) => (
                   <button
@@ -135,10 +144,10 @@ export default function ProductCard({ dataItem, eager = false }: ProductCardProp
                     }
                     disabled={!value.inStock}
                     aria-pressed={active?.id === value.id}
-                    title={value.inStock ? undefined : "Sold out"}
+                    title={value.inStock ? undefined : t.product.soldOut}
                     className={`${styles.weightButton} ${active?.id === value.id ? styles.weightButtonActive : ""}`}
                   >
-                    {value.label}
+                    {valueLabel(value, locale)}
                   </button>
                 ))}
               </div>
@@ -148,8 +157,10 @@ export default function ProductCard({ dataItem, eager = false }: ProductCardProp
 
         <div className={styles.footer}>
           <div className={styles.priceWrap}>
-            <span className={styles.price}>{formatCurrency(finalPrice)}</span>
-            <span className={styles.unitLabel}>Per unit</span>
+            <span className={styles.price}>
+              {formatCurrency(finalPrice, locale)}
+            </span>
+            <span className={styles.unitLabel}>{t.product.perUnit}</span>
           </div>
 
           <button
@@ -157,12 +168,13 @@ export default function ProductCard({ dataItem, eager = false }: ProductCardProp
             onClick={handleAdd}
             disabled={!isAvailable}
             className={styles.addButton}
-            aria-label={
-              isAvailable ? `Add ${product.name} to cart` : `${product.name} is sold out`
-            }
+            aria-label={format(
+              isAvailable ? t.product.addLabel : t.product.soldOutLabel,
+              { name },
+            )}
           >
-            <ShoppingCart aria-hidden="true" />
-            {isAvailable ? "Add" : "Sold out"}
+            <ShoppingCart className="flipRtl" aria-hidden="true" />
+            {isAvailable ? t.product.add : t.product.soldOut}
           </button>
         </div>
       </div>

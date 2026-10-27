@@ -1,30 +1,16 @@
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
-import Link from "next/link";
+import Link from "@/i18n/Link";
+import { getI18n } from "@/i18n/server";
 import styles from "./SignatureSection.module.css";
 
 import signatureCoffeePhotoSmall from "@/assets/images/signature_coffee_photo_small.jpg";
 import signatureCoffeePhotoBig from "@/assets/images/signature_coffee_photo_big.jpg";
 
-const BLENDS = [
-  {
-    name: "Qaf Blend",
-    desc: "Deep chocolate, rich body, our signature taste",
-    icon: "◆",
-  },
-  {
-    name: "Colombian Blend",
-    desc: "Bright acidity, caramel sweetness, vibrant origin",
-    icon: "◆",
-  },
-  {
-    name: "Golden Blend",
-    desc: "Honey, dried fruits, warming spice, our finest",
-    icon: "◆",
-  },
-];
+async function SignatureSection() {
+  const { t } = await getI18n();
+  const signature = t.home.signature;
 
-function SignatureSection() {
   return (
     <section className="section">
       <div className="glowLeft" />
@@ -33,49 +19,46 @@ function SignatureSection() {
         <div className={styles.signatureGrid}>
           <div className={styles.signatureCopy}>
             <div className={styles.signatureBadge}>
-              <p className={styles.signatureBadgeText}>Our Signature</p>
+              <p className={styles.signatureBadgeText}>{signature.badge}</p>
             </div>
 
             <h2 className={styles.signatureTitle}>
-              Turkish Coffee <span className="titleAccent">Reimagined</span>
+              {signature.titleStart}{" "}
+              <span className="titleAccent">{signature.titleAccent}</span>
             </h2>
 
-            <p className={styles.signatureText}>
-              Three distinct blends that honor centuries of tradition while
-              pushing flavor boundaries. Each tells a story of origin, craft,
-              and devotion.
-            </p>
+            <p className={styles.signatureText}>{signature.text}</p>
 
             <div className={styles.blendList}>
-              {BLENDS.map((blend) => (
+              {signature.blends.map((blend) => (
                 <div key={blend.name} className={styles.blendItem}>
-                  <div className={styles.blendIcon}>{blend.icon}</div>
+                  <div className={styles.blendIcon}>◆</div>
 
                   <div>
                     <p className={styles.blendName}>{blend.name}</p>
-                    <p className={styles.blendDesc}>{blend.desc}</p>
+                    <p className={styles.blendDesc}>{blend.description}</p>
                   </div>
                 </div>
               ))}
             </div>
 
             <Link href="/menu?category=turkish" className={styles.viewAllButton}>
-              <span>Shop Turkish Coffee</span>
-              <ArrowRight className={styles.viewAllIcon} />
+              <span>{signature.shop}</span>
+              <ArrowRight className={`${styles.viewAllIcon} flipRtl`} />
             </Link>
           </div>
 
           <div className={styles.imageStack}>
             <Image
               src={signatureCoffeePhotoBig}
-              alt="Turkish Coffee"
+              alt={signature.imageAlt}
               placeholder="blur"
               className={styles.imageMain}
             />
 
             <Image
               src={signatureCoffeePhotoSmall}
-              alt="Coffee beans"
+              alt={signature.secondImageAlt}
               placeholder="blur"
               className={styles.imageSecondary}
             />
