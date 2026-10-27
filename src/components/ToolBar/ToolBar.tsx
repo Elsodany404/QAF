@@ -11,7 +11,22 @@ function ToolBar() {
     useMenuFilters();
 
   const searchParam = searchParams.get("search") ?? "";
-  const category = searchParams.get("category") ?? "all";
+  const categoryParam = searchParams.get("category") ?? "all";
+
+  // Highlight the tapped chip immediately instead of waiting for navigation
+  const [category, setCategory] = useState(categoryParam);
+  const [prevCategoryParam, setPrevCategoryParam] = useState(categoryParam);
+
+  if (categoryParam !== prevCategoryParam) {
+    setCategory(categoryParam);
+    setPrevCategoryParam(categoryParam);
+  }
+
+  const onCategoryClick = (id: string) => {
+    if (id === category) return;
+    setCategory(id);
+    handleCategoryChange(id);
+  };
 
   // Local state ensures the input updates smoothly without waiting for URL navigation
   const [searchValue, setSearchValue] = useState(searchParam);
@@ -75,7 +90,7 @@ function ToolBar() {
           <button
             type="button"
             key={cat.id}
-            onClick={() => handleCategoryChange(cat.id)}
+            onClick={() => onCategoryClick(cat.id)}
             aria-pressed={category === cat.id}
             className={`${styles.categoryButton} ${category === cat.id ? styles.categoryButtonActive : ""}`}
           >

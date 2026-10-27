@@ -154,9 +154,11 @@
   font-size: 1.1rem;
   font-weight: 700;
   line-height: 1.35;
+  letter-spacing: -0.01em;
   color: var(--charcoal-950);
   /* Same casing as the product page heading. */
   text-transform: capitalize;
+  text-wrap: balance;
   transition: color 0.2s ease;
 }
 
@@ -392,7 +394,7 @@
   }
 
   .title {
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     line-height: 1.25;
   }
 

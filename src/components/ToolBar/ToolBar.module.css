@@ -269,6 +269,14 @@
   }
 }
 
+/* Tablet: buttons stretch to fill each wrapped row, so a lone
+   button never sits stranded at the start of the last line. */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .categoryButton {
+    flex: 1 1 auto;
+  }
+}
+
 /* =========================================================
    DESKTOP
    ========================================================= */
@@ -323,6 +331,31 @@
 
   .categoryButton {
     padding-inline: 1.2rem;
+  }
+}
+
+/* =========================================================
+   MOBILE CATEGORY GRID — equal, centered, never overflows
+   ========================================================= */
+
+@media (max-width: 639px) {
+  .categoryTabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    overflow: visible;
+  }
+
+  .categoryButton {
+    min-width: 0;
+
+    text-align: center;
+    white-space: normal;
+  }
+
+  /* odd one out spans the full row so the grid stays balanced */
+  .categoryButton:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
   }
 }
 
