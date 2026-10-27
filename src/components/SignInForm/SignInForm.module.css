@@ -51,12 +51,6 @@
   margin-bottom: 1.75rem;
 }
 
-/* The wordmark keeps its left-to-right order (AuthBrand) but sits on the
-   start side of an Arabic form, above the heading. */
-html[dir="rtl"] .brand {
-  justify-content: flex-end;
-}
-
 .logoMark {
   position: relative;
   width: 2.75rem;

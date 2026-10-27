@@ -13,7 +13,7 @@ describe("buildOrderConfirmationEmail", () => {
 
     expect(email.subject).toBe("Your Qaf Coffee order #00042 is confirmed");
     expect(email.text).toContain("House Blend (250g) × 2");
-    expect(email.text).toContain("https://shop.test/user");
+    expect(email.text).toContain("https://shop.test/en/user");
     expect(email.html).toContain("Track your order");
     expect(email.text).toContain("Your payment was received.");
   });
@@ -46,7 +46,8 @@ describe("buildOrderConfirmationEmail", () => {
     expect(email.text).toContain("يُرجى تجهيز 460 ج.م عند وصول المندوب.");
     expect(email.text).toContain("الدفع: الدفع عند الاستلام");
     // The account page in Arabic.
-    expect(email.text).toContain("https://shop.test/ar/user");
+    expect(email.text).toContain("https://shop.test/user");
+    expect(email.text).not.toContain("/en/user");
     expect(email.html).toContain('dir="rtl"');
     expect(email.html).toContain("تتبّع طلبك");
     // Amounts line up on the left in a right-to-left table.

@@ -6,7 +6,6 @@ import {
   localizeHref,
   localizePath,
   pathLocale,
-  preferredLocale,
   routePath,
   stripLocale,
 } from "./config";
@@ -49,37 +48,42 @@ describe("pathLocale / stripLocale", () => {
 });
 
 describe("localizePath", () => {
-  it("leaves English paths without a prefix", () => {
-    expect(localizePath("en", "/menu")).toBe("/menu");
-    expect(localizePath("en", "/")).toBe("/");
-    expect(localizePath("en", "/sign-in?next=%2Fcheckout")).toBe(
+  it("leaves Arabic paths without a prefix", () => {
+    expect(localizePath("ar", "/menu")).toBe("/menu");
+    expect(localizePath("ar", "/")).toBe("/");
+    expect(localizePath("ar", "/sign-in?next=%2Fcheckout")).toBe(
       "/sign-in?next=%2Fcheckout",
     );
   });
 
-  it("prefixes Arabic paths", () => {
-    expect(localizePath("ar", "/menu")).toBe("/ar/menu");
-    expect(localizePath("ar", "/")).toBe("/ar");
-    expect(localizePath("ar", "/?category=turkish")).toBe(
-      "/ar?category=turkish",
+  it("prefixes English paths", () => {
+    expect(localizePath("en", "/menu")).toBe("/en/menu");
+    expect(localizePath("en", "/")).toBe("/en");
+    expect(localizePath("en", "/?category=turkish")).toBe(
+      "/en?category=turkish",
     );
-    expect(localizePath("ar", "/policies#privacy-policy")).toBe(
-      "/ar/policies#privacy-policy",
+    expect(localizePath("en", "/policies#privacy-policy")).toBe(
+      "/en/policies#privacy-policy",
     );
-    expect(localizePath("ar", "/products/3?x=1")).toBe("/ar/products/3?x=1");
+    expect(localizePath("en", "/products/3?x=1")).toBe("/en/products/3?x=1");
+  });
+
+  it("keeps the English-only dashboard at its plain address", () => {
+    expect(localizePath("en", "/admin/dashboard")).toBe("/admin/dashboard");
+    expect(localizePath("ar", "/admin")).toBe("/admin");
   });
 
   it("moves a localized path to the other language", () => {
-    expect(localizePath("en", "/ar/menu?x=1")).toBe("/menu?x=1");
-    expect(localizePath("en", "/ar")).toBe("/");
-    expect(localizePath("ar", "/ar/menu")).toBe("/ar/menu");
-    expect(localizePath("ar", "/en/menu")).toBe("/ar/menu");
+    expect(localizePath("ar", "/en/menu?x=1")).toBe("/menu?x=1");
+    expect(localizePath("ar", "/en")).toBe("/");
+    expect(localizePath("en", "/en/menu")).toBe("/en/menu");
+    expect(localizePath("en", "/ar/menu")).toBe("/en/menu");
   });
 });
 
 describe("localizeHref", () => {
   it("only rewrites site paths", () => {
-    expect(localizeHref("ar", "/contact")).toBe("/ar/contact");
+    expect(localizeHref("en", "/contact")).toBe("/en/contact");
     for (const href of [
       "https://wa.me/201031200143",
       "//cdn.example/x",
@@ -87,7 +91,7 @@ describe("localizeHref", () => {
       "tel:+201031200143",
       "#top",
     ]) {
-      expect(localizeHref("ar", href)).toBe(href);
+      expect(localizeHref("en", href)).toBe(href);
     }
   });
 });
@@ -98,28 +102,5 @@ describe("routePath", () => {
     expect(routePath("en", "/menu")).toBe("/en/menu");
     expect(routePath("ar", "/products/3")).toBe("/ar/products/3");
     expect(routePath("en", "/ar/user")).toBe("/en/user");
-  });
-});
-
-describe("preferredLocale", () => {
-  it.each([
-    ["ar-EG,ar;q=0.9,en-US;q=0.8,en;q=0.7", "ar"],
-    ["en-US,en;q=0.9,ar;q=0.8", "en"],
-    ["fr-FR,fr;q=0.9,ar;q=0.8,en;q=0.7", "ar"],
-    // Weights decide, not the order they are written in.
-    ["en;q=0.5,ar;q=0.9", "ar"],
-    ["AR", "ar"],
-    ["*", null],
-    ["fr,de", null],
-    ["", null],
-    // q=0 means "not this language".
-    ["ar;q=0,en;q=0.1", "en"],
-    ["ar;q=abc,en", "en"],
-  ])("%j → %s", (header, locale) => {
-    expect(preferredLocale(header)).toBe(locale);
-  });
-
-  it("handles a missing header", () => {
-    expect(preferredLocale(null)).toBeNull();
   });
 });

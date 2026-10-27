@@ -2,135 +2,112 @@ import { describe, expect, it } from "vitest";
 
 import { routeRequest, type RouteRequest } from "./routing";
 
-const ARABIC_BROWSER = "ar-EG,ar;q=0.9,en;q=0.8";
-const ENGLISH_BROWSER = "en-US,en;q=0.9";
-
 function route(overrides: Partial<RouteRequest>) {
-  return routeRequest({
-    pathname: "/",
-    method: "GET",
-    acceptLanguage: ENGLISH_BROWSER,
-    ...overrides,
-  });
+  return routeRequest({ pathname: "/", method: "GET", ...overrides });
 }
 
 describe("routeRequest", () => {
-  it("serves English addresses from the /en routes", () => {
+  it("serves plain addresses in Arabic, from the /ar routes", () => {
     expect(route({ pathname: "/menu" })).toEqual({
       action: "rewrite",
-      path: "/en/menu",
-      locale: "en",
+      path: "/ar/menu",
+      locale: "ar",
     });
     expect(route({ pathname: "/" })).toEqual({
       action: "rewrite",
-      path: "/en",
-      locale: "en",
+      path: "/ar",
+      locale: "ar",
     });
     expect(route({ pathname: "/products/3" })).toMatchObject({
-      path: "/en/products/3",
+      path: "/ar/products/3",
     });
   });
 
-  it("serves Arabic addresses as they are", () => {
-    expect(route({ pathname: "/ar/menu", savedLocale: "ar" })).toEqual({
-      action: "next",
+  it("is Arabic for everyone who hasn't picked English", () => {
+    expect(route({ pathname: "/contact", savedLocale: "ar" })).toMatchObject({
+      action: "rewrite",
       locale: "ar",
+    });
+    // A cookie with a language the site doesn't have.
+    expect(route({ pathname: "/contact", savedLocale: "fr" })).toMatchObject({
+      action: "rewrite",
+      locale: "ar",
+    });
+  });
+
+  it("serves English addresses as they are", () => {
+    expect(route({ pathname: "/en/menu", savedLocale: "en" })).toEqual({
+      action: "next",
+      locale: "en",
       remember: undefined,
     });
   });
 
-  it("remembers Arabic when someone opens an Arabic page", () => {
-    expect(route({ pathname: "/ar/menu" })).toMatchObject({ remember: "ar" });
-    expect(route({ pathname: "/ar", savedLocale: "en" })).toMatchObject({
-      remember: "ar",
+  it("remembers English when someone opens an English page", () => {
+    expect(route({ pathname: "/en/menu" })).toMatchObject({ remember: "en" });
+    expect(route({ pathname: "/en", savedLocale: "ar" })).toMatchObject({
+      remember: "en",
     });
   });
 
-  it("gives every English page a single address", () => {
-    expect(route({ pathname: "/en/menu" })).toEqual({
+  it("gives every Arabic page a single address", () => {
+    expect(route({ pathname: "/ar/menu" })).toEqual({
       action: "redirect",
       path: "/menu",
     });
-    expect(route({ pathname: "/en" })).toEqual({
+    expect(route({ pathname: "/ar" })).toEqual({
       action: "redirect",
       path: "/",
     });
   });
 
-  it("sends people who last used Arabic to the Arabic page", () => {
-    expect(route({ pathname: "/menu", savedLocale: "ar" })).toEqual({
+  it("sends people who switched to English to the English page", () => {
+    expect(route({ pathname: "/menu", savedLocale: "en" })).toEqual({
       action: "redirect",
-      path: "/ar/menu",
+      path: "/en/menu",
     });
-    expect(route({ pathname: "/", savedLocale: "ar" })).toEqual({
+    expect(route({ pathname: "/", savedLocale: "en" })).toEqual({
       action: "redirect",
-      path: "/ar",
+      path: "/en",
     });
-  });
-
-  it("detects Arabic browsers on a first visit only", () => {
-    expect(
-      route({ pathname: "/contact", acceptLanguage: ARABIC_BROWSER }),
-    ).toEqual({ action: "redirect", path: "/ar/contact" });
-    // Picked English with the language switch: stays English.
-    expect(
-      route({
-        pathname: "/contact",
-        acceptLanguage: ARABIC_BROWSER,
-        savedLocale: "en",
-      }),
-    ).toMatchObject({ action: "rewrite", locale: "en" });
-    expect(route({ pathname: "/contact", acceptLanguage: null })).toMatchObject(
-      { action: "rewrite" },
-    );
-  });
-
-  it("ignores a cookie with an unknown language", () => {
-    expect(
-      route({ pathname: "/menu", savedLocale: "fr", acceptLanguage: null }),
-    ).toMatchObject({ action: "rewrite", locale: "en" });
   });
 
   it("never redirects server actions", () => {
     // They POST to the page that called them.
     expect(
-      route({ pathname: "/checkout", method: "POST", savedLocale: "ar" }),
-    ).toEqual({ action: "rewrite", path: "/en/checkout", locale: "en" });
+      route({ pathname: "/checkout", method: "POST", savedLocale: "en" }),
+    ).toEqual({ action: "rewrite", path: "/ar/checkout", locale: "ar" });
     expect(
-      route({ pathname: "/ar/checkout", method: "POST", savedLocale: "en" }),
-    ).toEqual({ action: "next", locale: "ar", remember: undefined });
-    expect(route({ pathname: "/en/checkout", method: "POST" })).toEqual({
+      route({ pathname: "/en/checkout", method: "POST", savedLocale: "ar" }),
+    ).toEqual({ action: "next", locale: "en", remember: undefined });
+    expect(route({ pathname: "/ar/checkout", method: "POST" })).toEqual({
       action: "next",
-      locale: "en",
+      locale: "ar",
     });
   });
 
-  it("keeps the admin dashboard in English", () => {
-    expect(route({ pathname: "/ar/admin/dashboard" })).toEqual({
-      action: "redirect",
-      path: "/admin/dashboard",
-    });
-    expect(
-      route({
-        pathname: "/admin/dashboard",
-        savedLocale: "ar",
-        acceptLanguage: ARABIC_BROWSER,
-      }),
-    ).toEqual({
+  it("keeps the admin dashboard in English at its plain address", () => {
+    expect(route({ pathname: "/admin/dashboard" })).toEqual({
       action: "rewrite",
       path: "/en/admin/dashboard",
       locale: "en",
     });
-    // Not a prefix match on unrelated pages.
-    expect(route({ pathname: "/administration", savedLocale: "ar" })).toEqual({
+    expect(
+      route({ pathname: "/admin/dashboard", savedLocale: "en" }),
+    ).toMatchObject({ action: "rewrite", locale: "en" });
+    expect(route({ pathname: "/en/admin/dashboard" })).toEqual({
       action: "redirect",
-      path: "/ar/administration",
+      path: "/admin/dashboard",
+    });
+    // Not a prefix match on unrelated pages.
+    expect(route({ pathname: "/administration" })).toMatchObject({
+      locale: "ar",
     });
   });
 
   it("treats HEAD like GET", () => {
     expect(
-      route({ pathname: "/menu", method: "HEAD", savedLocale: "ar" }),
-    ).toEqual({ action: "redirect", path: "/ar/menu" });
+      route({ pathname: "/menu", method: "HEAD", savedLocale: "en" }),
+    ).toEqual({ action: "redirect", path: "/en/menu" });
   });
 });

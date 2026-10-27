@@ -68,17 +68,17 @@ describe("auth actions", () => {
     );
 
     // The emails' language follows these addresses (src/lib/auth.ts).
-    expect(mocks.signUp.mock.calls[0][0].callbackURL).toBe("/ar/verify-email");
-    expect(mocks.signIn.mock.calls[0][0].callbackURL).toBe("/ar/verify-email");
+    expect(mocks.signUp.mock.calls[0][0].callbackURL).toBe("/verify-email");
+    expect(mocks.signIn.mock.calls[0][0].callbackURL).toBe("/verify-email");
     expect(mocks.sendVerificationEmail.mock.calls[0][0].callbackURL).toBe(
-      "/ar/verify-email",
+      "/verify-email",
     );
     expect(mocks.requestPasswordReset.mock.calls[0][0].redirectTo).toBe(
-      "/ar/reset-password",
+      "/reset-password",
     );
 
     await signUpAction(idle, signUpForm, english);
-    expect(mocks.signUp.mock.calls[1][0].callbackURL).toBe("/verify-email");
+    expect(mocks.signUp.mock.calls[1][0].callbackURL).toBe("/en/verify-email");
   });
 
   it("report back in the form's language", async () => {

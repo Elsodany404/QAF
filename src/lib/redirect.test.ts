@@ -45,15 +45,15 @@ describe("safeRedirectPath", () => {
 });
 
 it("builds an encoded sign-in link", () => {
-  expect(signInPath("/order-success/5")).toBe(
+  expect(signInPath("/order-success/5", "ar")).toBe(
     "/sign-in?next=%2Forder-success%2F5",
   );
 });
 
-it("keeps Arabic visitors on Arabic pages through sign-in", () => {
-  expect(signInPath("/checkout", "ar")).toBe(
-    "/ar/sign-in?next=%2Far%2Fcheckout",
+it("keeps English visitors on English pages through sign-in", () => {
+  expect(signInPath("/checkout", "en")).toBe(
+    "/en/sign-in?next=%2Fen%2Fcheckout",
   );
   // The way back is the page they came from, in their language.
-  expect(safeRedirectPath("/ar/checkout")).toBe("/ar/checkout");
+  expect(safeRedirectPath("/en/checkout")).toBe("/en/checkout");
 });

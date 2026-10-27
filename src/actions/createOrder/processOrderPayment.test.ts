@@ -46,7 +46,7 @@ describe("processOrderPayment", () => {
 
       expect(await processOrderPayment(77, "cash_on_delivery")).toEqual({
         success: true,
-        redirectUrl: "/order-success/77",
+        redirectUrl: "/en/order-success/77",
       });
       expect(mocks.createBostaDelivery).toHaveBeenCalledWith(77);
       expect(mocks.sendOrderConfirmation).toHaveBeenCalledWith(77, "en");
@@ -58,7 +58,7 @@ describe("processOrderPayment", () => {
 
       expect(await processOrderPayment(77, "cash_on_delivery", "ar")).toEqual({
         success: true,
-        redirectUrl: "/ar/order-success/77",
+        redirectUrl: "/order-success/77",
       });
       expect(mocks.sendOrderConfirmation).toHaveBeenCalledWith(77, "ar");
     });
@@ -68,7 +68,7 @@ describe("processOrderPayment", () => {
 
       expect(await processOrderPayment(77, "cash_on_delivery")).toEqual({
         success: true,
-        redirectUrl: "/order-success/77",
+        redirectUrl: "/en/order-success/77",
       });
       expect(mocks.sendOrderConfirmation).toHaveBeenCalledWith(77, "en");
     });

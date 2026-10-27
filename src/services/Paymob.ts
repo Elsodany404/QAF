@@ -1,4 +1,5 @@
 import "server-only";
+import crypto from "node:crypto";
 import { localizePath, type Locale } from "@/i18n/config";
 import { optionLabels } from "@/lib/orderItems";
 import { siteUrl } from "@/lib/siteUrl";
@@ -23,26 +24,54 @@ export function toCents(amount: number) {
   return Math.round(amount * 100);
 }
 
-/**
- * Paymob requires a unique special_reference per intention, so a retried
- * payment gets a suffix. The webhook only needs the leading order ID.
+/*
+ * special_reference: "<order ID>-<time>[-ar]-<signature>". Paymob needs a
+ * unique one per intention (a retried payment gets a new time), and the
+ * webhook reads the order and the checkout's language from it. Paymob's own
+ * HMAC doesn't cover this field, so it carries its own signature: without it
+ * a customer could replay their signed payment notification with another
+ * order's ID and mark that order paid.
  */
-export function parsePaymobReference(reference: unknown): number | null {
-  const orderID = Number.parseInt(String(reference ?? ""), 10);
-  return Number.isSafeInteger(orderID) && orderID > 0 ? orderID : null;
+
+function referenceSignature(base: string) {
+  const secret = process.env.PAYMOB_HMAC_KEY;
+  if (!secret) throw new Error("PAYMOB_HMAC_KEY is missing");
+  return crypto
+    .createHmac("sha256", secret)
+    .update(`special_reference:${base}`)
+    .digest("hex")
+    .slice(0, 32);
 }
 
-/** "42-1700000000000", or "42-1700000000000-ar" for an Arabic checkout. */
-function paymobReference(orderID: number, locale: Locale) {
-  return `${orderID}-${Date.now()}${locale === "ar" ? "-ar" : ""}`;
+export function paymobReference(orderID: number, locale: Locale) {
+  const base = `${orderID}-${Date.now()}${locale === "ar" ? "-ar" : ""}`;
+  return `${base}-${referenceSignature(base)}`;
 }
 
 /**
- * The checkout's language, which the reference carries to the webhook so the
- * confirmation email is in the customer's language.
+ * The order and language a reference was made for, or null when it isn't
+ * one this site signed.
  */
-export function paymobReferenceLocale(reference: unknown): Locale {
-  return String(reference ?? "").endsWith("-ar") ? "ar" : "en";
+export function readPaymobReference(
+  reference: unknown,
+): { orderID: number; locale: Locale } | null {
+  const match = /^(\d{1,15})-(\d+)(-ar)?-([0-9a-f]{32})$/.exec(
+    String(reference ?? ""),
+  );
+  if (!match) return null;
+
+  const [, id, time, arabic = "", signature] = match;
+  const expected = referenceSignature(`${id}-${time}${arabic}`);
+  if (
+    !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
+  ) {
+    return null;
+  }
+
+  const orderID = Number(id);
+  return Number.isSafeInteger(orderID) && orderID > 0
+    ? { orderID, locale: arabic ? "ar" : "en" }
+    : null;
 }
 
 /**

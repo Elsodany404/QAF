@@ -4,11 +4,7 @@ import { NextResponse } from "next/server";
 import { normalizePaymentStatus } from "@/lib/orderStatus";
 import { createBostaDelivery } from "@/services/Bosta";
 import { sendOrderConfirmation } from "@/services/OrderEmails";
-import {
-  parsePaymobReference,
-  paymobReferenceLocale,
-  toCents,
-} from "@/services/Paymob";
+import { readPaymobReference, toCents } from "@/services/Paymob";
 import supabaseAdmin from "@/supabase/admin";
 
 export const runtime = "nodejs";
@@ -127,13 +123,19 @@ export async function POST(req: Request) {
       return ack("Pending transaction ignored");
     }
 
-    const orderID = parsePaymobReference(transaction.order?.merchant_order_id);
-    if (!orderID) {
+    // The order comes from our own signed reference: Paymob's HMAC doesn't
+    // cover merchant_order_id, so it can't be trusted on its own.
+    const reference = readPaymobReference(transaction.order?.merchant_order_id);
+    if (!reference) {
+      console.error(
+        `Paymob webhook: unsigned or invalid reference for transaction ${transaction.id}`,
+      );
       return NextResponse.json(
-        { message: "Merchant order ID missing" },
+        { message: "Invalid merchant order ID" },
         { status: 400 },
       );
     }
+    const { orderID, locale } = reference;
 
     const { data: order, error: findError } = await supabaseAdmin
       .from("Order")
@@ -199,10 +201,7 @@ export async function POST(req: Request) {
 
         // The conditional update above only succeeds once per order, so the
         // customer gets exactly one confirmation, in the checkout's language.
-        await sendOrderConfirmation(
-          orderID,
-          paymobReferenceLocale(transaction.order?.merchant_order_id),
-        );
+        await sendOrderConfirmation(orderID, locale);
       }
     }
 

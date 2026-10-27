@@ -15,6 +15,8 @@ const ar: Messages = {
 
   common: {
     brand: "قهوة قاف",
+    logoTitle: "قاف",
+    logoSubtitle: "للقهوة",
     address: "C8، العاشر من رمضان، الشرقية، مصر",
     loading: "جارٍ التحميل",
     dismissNotification: "إغلاق الإشعار",

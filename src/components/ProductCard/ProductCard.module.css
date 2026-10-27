@@ -210,7 +210,11 @@
 }
 
 .weightButton {
+  min-width: 0;
+  overflow: hidden;
   padding: 0.4rem 0.7rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   border: 2px solid var(--cream-300);
   border-radius: 0.7rem;
   font-size: 0.76rem;
@@ -248,6 +252,21 @@
 
 .weightRowSingle .weightButton {
   flex: 1 1 calc(50% - 0.5rem);
+}
+
+/* A card with Size and Roast keeps each list on one line, its buttons
+   sharing it equally, so it also takes two lines. Wrapping there (the
+   sizes are wider in Arabic) left the other cards' lists with gaps. */
+@media (min-width: 501px) {
+  .weightRow:not(.weightRowSingle) {
+    display: grid;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+  }
+
+  .weightRow:not(.weightRowSingle) .weightButton {
+    padding-inline: 0.25rem;
+  }
 }
 
 .footer {
@@ -461,6 +480,12 @@
 
   .weightButton {
     flex-basis: 40%;
+  }
+
+  /* Size + Roast go two per line, filling it. */
+  .weightRow:not(.weightRowSingle) .weightButton {
+    flex-grow: 1;
+    padding-inline: 0.2rem;
   }
 
   /* Size + Roast take four lines here, so a lone list goes one per line,

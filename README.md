@@ -97,14 +97,15 @@ Paymob dashboard, or however you agreed with the customer, then set its
 payment to Refunded. A return pickup you book in Bosta's dashboard doesn't
 change the order: update its status by hand.
 
-### English and Arabic
+### Arabic and English
 
-English pages keep their addresses (`/menu`); the Arabic ones are under `/ar`
-(`/ar/menu`), right to left. All pages live in `src/app/[lang]`, and
-`src/proxy.ts` serves English addresses from the `/en` routes without showing
-the prefix. The navbar switches language and remembers the choice in the
-`NEXT_LOCALE` cookie; a first visit from a browser set to Arabic opens the
-Arabic site. The admin dashboard is English only.
+Arabic is the default: its pages have the plain addresses (`/menu`), right to
+left. The English ones are under `/en` (`/en/menu`). All pages live in
+`src/app/[lang]`, and `src/proxy.ts` serves the plain addresses from the
+`/ar` routes without showing the prefix. The navbar switches language and
+remembers the choice in the `NEXT_LOCALE` cookie, so someone who picked
+English gets English when they come back. The admin dashboard is English
+only and stays at `/admin`.
 
 - The site's text is in `src/i18n/messages/en.ts` and `ar.ts`. Both must
   have the same keys and `{placeholders}`; TypeScript and the tests check.

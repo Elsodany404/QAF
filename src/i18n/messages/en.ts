@@ -14,6 +14,9 @@ const en = {
 
   common: {
     brand: "Qaf Coffee",
+    // The wordmark in the navbar and above the account forms.
+    logoTitle: "Qaf",
+    logoSubtitle: "Coffee Co.",
     address: "C8, 10th of Ramadan, Al-Sharqya, Egypt",
     loading: "Loading",
     dismissNotification: "Dismiss notification",

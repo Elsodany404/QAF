@@ -22,6 +22,7 @@ vi.mock("@/services/OrderEmails", () => ({
 }));
 
 const { POST } = await import("./route");
+const { paymobReference } = await import("@/services/Paymob");
 const fake = () => mocks.fake!;
 
 function transaction(overrides: Record<string, unknown> = {}) {
@@ -42,7 +43,7 @@ function transaction(overrides: Record<string, unknown> = {}) {
     owner: 1,
     pending: false,
     success: true,
-    order: { id: 777, merchant_order_id: "42-1700000000000" },
+    order: { id: 777, merchant_order_id: paymobReference(42, "en") },
     source_data: { pan: "2346", sub_type: "MasterCard", type: "card" },
     ...overrides,
   };
@@ -137,7 +138,7 @@ describe("Paymob webhook", () => {
   it("emails customers who paid on the Arabic site in Arabic", async () => {
     fake().queue("Order", { data: pendingOrder }, { data: { id: 42 } });
     const tx = transaction({
-      order: { id: 777, merchant_order_id: "42-1700000000000-ar" },
+      order: { id: 777, merchant_order_id: paymobReference(42, "ar") },
     });
 
     const response = await POST(request(tx));
@@ -145,6 +146,22 @@ describe("Paymob webhook", () => {
     expect(response.status).toBe(200);
     expect(fake().updates("Order")[0].filters).toContainEqual(["eq", "id", 42]);
     expect(mocks.sendOrderConfirmation).toHaveBeenCalledWith(42, "ar");
+  });
+
+  it("refuses a signed payment replayed against another order", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    // The customer's own (signed) payment for order 42, sent again with
+    // order 43 in the field Paymob's HMAC doesn't cover.
+    const own = paymobReference(42, "en");
+    const [, time, signature] = own.split("-");
+    for (const merchant_order_id of [`43-${time}-${signature}`, "43", 43]) {
+      const response = await POST(
+        request(transaction({ order: { id: 777, merchant_order_id } })),
+      );
+      expect(response.status).toBe(400);
+    }
+    expect(fake().queries).toHaveLength(0);
+    expect(mocks.sendOrderConfirmation).not.toHaveBeenCalled();
   });
 
   it("is idempotent for retries of an already-paid order", async () => {

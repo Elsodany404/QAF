@@ -12,18 +12,19 @@ describe("sitemap", () => {
     const urls = entries.map((entry) => entry.url);
 
     expect(urls).toContain("https://shop.test/");
-    expect(urls).toContain("https://shop.test/ar");
+    expect(urls).toContain("https://shop.test/en");
     expect(urls).toContain("https://shop.test/menu");
-    expect(urls).toContain("https://shop.test/ar/menu");
+    expect(urls).toContain("https://shop.test/en/menu");
     expect(urls).toContain("https://shop.test/products/3");
-    expect(urls).toContain("https://shop.test/ar/products/3");
+    expect(urls).toContain("https://shop.test/en/products/3");
 
-    const arabicProduct = entries.find(
-      (entry) => entry.url === "https://shop.test/ar/products/3",
+    const englishProduct = entries.find(
+      (entry) => entry.url === "https://shop.test/en/products/3",
     );
-    expect(arabicProduct?.alternates?.languages).toEqual({
-      en: "https://shop.test/products/3",
-      ar: "https://shop.test/ar/products/3",
+    // Arabic, the default, is the version for everyone else.
+    expect(englishProduct?.alternates?.languages).toEqual({
+      en: "https://shop.test/en/products/3",
+      ar: "https://shop.test/products/3",
       "x-default": "https://shop.test/products/3",
     });
   });

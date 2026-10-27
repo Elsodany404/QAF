@@ -103,8 +103,7 @@ export default function Navbar() {
     <nav className={navbarClass} aria-label={t.nav.label}>
       <div className={styles.container}>
         <div className={styles.navInner}>
-          {/* The wordmark stays English, left to right, on Arabic pages too. */}
-          <Link href="/" className={styles.logoButton} lang="en" dir="ltr">
+          <Link href="/" className={styles.logoButton}>
             <div className={styles.logoMark}>
               <div className={styles.logoMarkInner} />
               <div className={styles.logoIcon}>
@@ -112,8 +111,8 @@ export default function Navbar() {
               </div>
             </div>
             <div>
-              <p className={styles.logoTitle}>Qaf</p>
-              <p className={styles.logoSubtitle}>Coffee Co.</p>
+              <p className={styles.logoTitle}>{t.common.logoTitle}</p>
+              <p className={styles.logoSubtitle}>{t.common.logoSubtitle}</p>
             </div>
           </Link>
 

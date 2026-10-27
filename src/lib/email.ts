@@ -145,7 +145,7 @@ export function linkLocale(url: string): Locale {
 export function emailLayout(
   title: string,
   bodyHtml: string,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = "en",
 ) {
   const t = getMessages(locale);
   const dir = localeDirection(locale);
@@ -191,7 +191,7 @@ export function linkEmail({
   url,
   action,
   outro,
-  locale = DEFAULT_LOCALE,
+  locale = "en",
 }: {
   to: string;
   subject: string;

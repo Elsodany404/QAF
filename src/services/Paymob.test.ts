@@ -2,12 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { makeOrder } from "@/test/fixtures";
 
-const {
-  createPaymobCheckout,
-  parsePaymobReference,
-  paymobReferenceLocale,
-  toCents,
-} = await import("./Paymob");
+const { createPaymobCheckout, paymobReference, readPaymobReference, toCents } =
+  await import("./Paymob");
 const fetchMock = vi.fn();
 
 beforeEach(() => {
@@ -32,28 +28,60 @@ it("carries the checkout's language through Paymob and back", async () => {
 
   const arabic = JSON.parse(fetchMock.mock.calls[0][1].body);
   const english = JSON.parse(fetchMock.mock.calls[1][1].body);
-  expect(arabic.redirection_url).toBe("https://shop.test/ar/order-success/42");
-  expect(english.redirection_url).toBe("https://shop.test/order-success/42");
-  // The webhook reads the language back from the reference.
-  expect(arabic.special_reference).toMatch(/^42-\d+-ar$/);
-  expect(paymobReferenceLocale(arabic.special_reference)).toBe("ar");
-  expect(paymobReferenceLocale(english.special_reference)).toBe("en");
-  expect(parsePaymobReference(arabic.special_reference)).toBe(42);
+  expect(arabic.redirection_url).toBe("https://shop.test/order-success/42");
+  expect(english.redirection_url).toBe("https://shop.test/en/order-success/42");
+  // The webhook reads the order and language back from the reference.
+  expect(arabic.special_reference).toMatch(/^42-\d+-ar-[0-9a-f]{32}$/);
+  expect(readPaymobReference(arabic.special_reference)).toEqual({
+    orderID: 42,
+    locale: "ar",
+  });
+  expect(readPaymobReference(english.special_reference)).toEqual({
+    orderID: 42,
+    locale: "en",
+  });
   // The notification address stays the same: Paymob adds ?hmac= to it.
   expect(arabic.notification_url).toBe(english.notification_url);
 });
 
-it("treats an unknown reference as English", () => {
-  expect(paymobReferenceLocale(undefined)).toBe("en");
-  expect(paymobReferenceLocale(42)).toBe("en");
-  expect(paymobReferenceLocale("42-1700000000000-fr")).toBe("en");
-});
+describe("readPaymobReference", () => {
+  it("gives a retried payment a new reference for the same order", () => {
+    vi.useFakeTimers();
+    const first = paymobReference(42, "en");
+    vi.advanceTimersByTime(5);
+    const second = paymobReference(42, "en");
+    vi.useRealTimers();
 
-it("extracts the order id from a retried special_reference", () => {
-  expect(parsePaymobReference("42-1700000000000")).toBe(42);
-  expect(parsePaymobReference(42)).toBe(42);
-  expect(parsePaymobReference("abc")).toBeNull();
-  expect(parsePaymobReference(undefined)).toBeNull();
+    expect(first).not.toBe(second);
+    expect(readPaymobReference(second)?.orderID).toBe(42);
+  });
+
+  it("rejects references this site didn't sign", () => {
+    const valid = paymobReference(42, "en");
+    const [, time, signature] = valid.split("-");
+    for (const forged of [
+      // Another order's ID with this order's signature: the replay attack.
+      `43-${time}-${signature}`,
+      // Switching the language changes what was signed too.
+      `42-${time}-ar-${signature}`,
+      `42-${time}-${"0".repeat(32)}`,
+      // Unsigned references, as created before signing.
+      "42-1700000000000",
+      "42-1700000000000-ar",
+      "42",
+      42,
+      undefined,
+    ]) {
+      expect(readPaymobReference(forged), String(forged)).toBeNull();
+    }
+  });
+
+  it("depends on the secret key", () => {
+    const reference = paymobReference(42, "en");
+    vi.stubEnv("PAYMOB_HMAC_KEY", "another-key");
+    expect(readPaymobReference(reference)).toBeNull();
+    vi.unstubAllEnvs();
+  });
 });
 
 describe("createPaymobCheckout", () => {
@@ -71,7 +99,7 @@ describe("createPaymobCheckout", () => {
       0,
     );
     expect(sum).toBe(46000);
-    expect(body.special_reference).toMatch(/^42-\d+$/);
+    expect(body.special_reference).toMatch(/^42-\d+-[0-9a-f]{32}$/);
     expect(body.billing_data).toMatchObject({
       first_name: "Sara",
       last_name: "Ahmed",

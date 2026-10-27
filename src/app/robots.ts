@@ -24,8 +24,8 @@ export default function robots(): MetadataRoute.Robots {
         "/admin",
         "/api/",
         ...PRIVATE_PAGES,
-        // The same pages in Arabic.
-        ...PRIVATE_PAGES.map((path) => localizePath("ar", path)),
+        // The same pages in English.
+        ...PRIVATE_PAGES.map((path) => localizePath("en", path)),
       ],
     },
     sitemap: siteUrl("/sitemap.xml"),

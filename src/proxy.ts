@@ -14,7 +14,6 @@ export function proxy(request: NextRequest) {
     pathname: request.nextUrl.pathname,
     method: request.method,
     savedLocale: request.cookies.get(LOCALE_COOKIE)?.value,
-    acceptLanguage: request.headers.get("accept-language"),
   });
 
   if (decision.action === "redirect") {

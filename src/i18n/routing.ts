@@ -1,9 +1,8 @@
 import {
+  DEFAULT_LOCALE,
   isEnglishOnly,
-  isLocale,
   localizePath,
   pathLocale,
-  preferredLocale,
   routePath,
   stripLocale,
   type Locale,
@@ -12,12 +11,12 @@ import {
 /*
  * Which page a request is served by (see src/proxy.ts). Every page lives
  * under app/[lang]:
- *   /ar/...  Arabic, served as it is
- *   /...     English, served by /en/... without showing that prefix
- *   /en/...  redirected to /..., so each English page has one address
- * Someone whose last visit was in Arabic (the cookie), or whose browser
- * prefers Arabic on a first visit, is sent from an English address to the
- * Arabic one. The admin dashboard only exists in English.
+ *   /...     Arabic, the default, served by /ar/... without showing it
+ *   /en/...  English, served as it is
+ *   /ar/...  redirected to /..., so each Arabic page has one address
+ * Someone who switched to English (the cookie) is sent from a plain address
+ * to the English one. The admin dashboard only exists in English, at its
+ * plain address.
  */
 
 export type RouteDecision =
@@ -33,46 +32,47 @@ export type RouteRequest = {
   method: string;
   /** The language cookie, if set. */
   savedLocale?: string;
-  acceptLanguage: string | null;
 };
 
 export function routeRequest({
   pathname,
   method,
   savedLocale,
-  acceptLanguage,
 }: RouteRequest): RouteDecision {
   // Only page loads move people around: server actions POST to the page
   // they were called from and must reach it.
   const isPageLoad = method === "GET" || method === "HEAD";
   const prefix = pathLocale(pathname);
   const path = stripLocale(pathname);
-  // Remembers the language of an Arabic page someone opens, so the home
-  // page they type in next time opens in Arabic too.
-  const remember = (locale: Locale) =>
-    isPageLoad && savedLocale !== locale ? locale : undefined;
 
-  if (prefix === "en") {
+  if (prefix === DEFAULT_LOCALE) {
     return isPageLoad
       ? { action: "redirect", path }
-      : { action: "next", locale: "en" };
+      : { action: "next", locale: DEFAULT_LOCALE };
   }
 
-  if (prefix === "ar") {
+  if (prefix) {
     if (isEnglishOnly(path) && isPageLoad) {
       return { action: "redirect", path };
     }
-    return { action: "next", locale: "ar", remember: remember("ar") };
+    // Remembers the language of an English page someone opens, so the home
+    // page they type in next time opens in English too.
+    const remember =
+      isPageLoad && savedLocale !== prefix ? prefix : undefined;
+    return { action: "next", locale: prefix, remember };
   }
 
-  if (isPageLoad && !isEnglishOnly(path)) {
-    const wanted = isLocale(savedLocale)
-      ? savedLocale
-      : preferredLocale(acceptLanguage);
-    if (wanted === "ar") {
-      return { action: "redirect", path: localizePath("ar", pathname) };
-    }
+  if (isEnglishOnly(path)) {
+    return { action: "rewrite", path: routePath("en", pathname), locale: "en" };
   }
 
-  return { action: "rewrite", path: routePath("en", pathname), locale: "en" };
+  if (isPageLoad && savedLocale === "en") {
+    return { action: "redirect", path: localizePath("en", pathname) };
+  }
+
+  return {
+    action: "rewrite",
+    path: routePath(DEFAULT_LOCALE, pathname),
+    locale: DEFAULT_LOCALE,
+  };
 }

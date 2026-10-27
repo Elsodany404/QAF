@@ -273,29 +273,29 @@ describe("linkLocale", () => {
   it("reads the language of the page the link returns to", () => {
     expect(
       linkLocale(
-        "https://shop.test/api/auth/verify-email?token=t&callbackURL=%2Far%2Fverify-email",
+        "https://shop.test/api/auth/verify-email?token=t&callbackURL=%2Fen%2Fverify-email",
       ),
-    ).toBe("ar");
+    ).toBe("en");
     expect(
       linkLocale(
-        "https://shop.test/api/auth/reset-password/abc?callbackURL=%2Far%2Freset-password",
+        "https://shop.test/api/auth/reset-password/abc?callbackURL=%2Fen%2Freset-password",
       ),
-    ).toBe("ar");
+    ).toBe("en");
     expect(
       linkLocale(
         "https://shop.test/api/auth/verify-email?token=t&callbackURL=%2Fverify-email",
       ),
-    ).toBe("en");
+    ).toBe("ar");
   });
 
-  it("falls back to English", () => {
+  it("falls back to Arabic, the default", () => {
     expect(linkLocale("https://shop.test/api/auth/verify-email?token=t")).toBe(
-      "en",
+      "ar",
     );
-    expect(linkLocale("not a url")).toBe("en");
+    expect(linkLocale("not a url")).toBe("ar");
     expect(
-      linkLocale("https://shop.test/x?callbackURL=%2Farchive%2Fverify-email"),
-    ).toBe("en");
+      linkLocale("https://shop.test/x?callbackURL=%2Fenglish%2Fverify-email"),
+    ).toBe("ar");
   });
 });
 

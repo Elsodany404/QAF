@@ -2,7 +2,7 @@ import "server-only";
 import { headers } from "next/headers";
 import { unstable_rethrow } from "next/navigation";
 
-import { DEFAULT_LOCALE, isLocale, LOCALE_HEADER, type Locale } from "./config";
+import { isLocale, LOCALE_HEADER, type Locale } from "./config";
 import { getMessages } from "./messages";
 
 /**
@@ -13,11 +13,12 @@ import { getMessages } from "./messages";
 export async function getRequestLocale(): Promise<Locale> {
   try {
     const value = (await headers()).get(LOCALE_HEADER);
-    return isLocale(value) ? value : DEFAULT_LOCALE;
+    // Every page request goes through the proxy; without the header this
+    // runs outside one (tests, scripts), where English is the safer bet.
+    return isLocale(value) ? value : "en";
   } catch (error) {
     unstable_rethrow(error);
-    // Called outside a request (tests, scripts).
-    return DEFAULT_LOCALE;
+    return "en";
   }
 }
 

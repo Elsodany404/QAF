@@ -8,7 +8,7 @@ import type { ClientMessages } from "./messages";
 type I18n = {
   locale: Locale;
   t: ClientMessages;
-  /** A site path in the page's language: "/menu" → "/ar/menu". */
+  /** A site path in the page's language: "/menu" → "/en/menu". */
   href: (path: string) => string;
 };
 
