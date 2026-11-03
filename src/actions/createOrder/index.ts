@@ -4,6 +4,7 @@ import { redirect, RedirectType } from "next/navigation";
 
 import { getRequestMessages } from "@/i18n/request";
 import { getCurrentSession } from "@/lib/adminAccess";
+import { IS_TEST_BUILD } from "@/lib/testBuild";
 
 import { createOrder, type CreateOrderFailure } from "./createOrder";
 import { parseCreateOrderForm } from "./parseCreateOrderForm";
@@ -24,6 +25,11 @@ export default async function index(
       success: false,
       error: m.signInToOrder,
     };
+  }
+
+  // The test build lets anyone reach the checkout, never place an order.
+  if (IS_TEST_BUILD) {
+    return { success: false, error: m.ordersDisabled };
   }
 
   const inputResult = parseCreateOrderForm(formData, locale);

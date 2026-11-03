@@ -12,6 +12,7 @@
     "clear-cache": "rm -rf .next",
     "update-types": "supabase gen types typescript --project-id bdksjsmaqssxasrlyzci > src/supabase/database.types.ts",
     "update-bosta-locations": "node scripts/update-bosta-locations.mjs",
+    "create-test-user": "node scripts/create-test-user.mjs",
     "check": "npx tsc --noEmit && npm run lint && npm test",
     "test": "vitest run",
     "test:watch": "vitest",

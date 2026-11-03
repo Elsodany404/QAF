@@ -4,6 +4,7 @@ import { getRequestMessages } from "@/i18n/request";
 import { errorMessage, isValidOrderID } from "@/lib/actionHelpers";
 import { getCurrentSession } from "@/lib/adminAccess";
 import { canPayOrder } from "@/lib/orderStatus";
+import { IS_TEST_BUILD } from "@/lib/testBuild";
 import { getOrderWithItems } from "@/services/Order";
 import { createPaymobCheckout } from "@/services/Paymob";
 import type { ActionReturnType } from "@/types/customTypes";
@@ -18,6 +19,9 @@ export async function payOrder(orderID: number): Promise<ActionReturnType> {
     const session = await getCurrentSession();
     if (!session?.user) {
       return { success: false, error: m.signInToPay };
+    }
+    if (IS_TEST_BUILD) {
+      return { success: false, error: m.ordersDisabled };
     }
     if (!isValidOrderID(orderID)) {
       return { success: false, error: m.invalidOrder };

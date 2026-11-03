@@ -32,6 +32,7 @@ const CLIENT_NAMESPACES = [
   "sidebar",
   "orderActions",
   "auth",
+  "testBuild",
   "errorPage",
 ] as const satisfies readonly (keyof Messages)[];
 

@@ -4,6 +4,8 @@ import { useActionState, useEffect, useState, useTransition } from "react";
 import { Eye, EyeOff, LogIn } from "lucide-react";
 import styles from "./SignInForm.module.css";
 import AuthBrand from "@/components/PasswordReset/AuthBrand";
+import TestBuildNotice from "@/components/TestBuildNotice/TestBuildNotice";
+import { TEST_ACCOUNT } from "@/lib/testBuild";
 import { useI18n } from "@/i18n/I18nProvider";
 import Link from "@/i18n/Link";
 import {
@@ -45,8 +47,14 @@ export default function SignInForm({ redirectTo }: { redirectTo: string }) {
     register,
     handleSubmit,
     getValues,
+    setValue,
     formState: { errors },
   } = useForm<SignInFields>();
+
+  const fillTestAccount = () => {
+    setValue("email", TEST_ACCOUNT.email, { shouldValidate: true });
+    setValue("password", TEST_ACCOUNT.password, { shouldValidate: true });
+  };
 
   // Only runs once RHF validation passes
   const onValid = (data: SignInFields) => {
@@ -78,6 +86,8 @@ export default function SignInForm({ redirectTo }: { redirectTo: string }) {
 
         <h1 className={styles.heading}>{text.signIn.heading}</h1>
         <p className={styles.subheading}>{text.signIn.subheading}</p>
+
+        <TestBuildNotice variant="auth" onUseAccount={fillTestAccount} />
 
         <form
           onSubmit={handleSubmit(onValid)}

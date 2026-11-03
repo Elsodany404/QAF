@@ -580,6 +580,18 @@ const en = {
     pay: "Complete payment",
   },
 
+  testBuild: {
+    title: "Test build",
+    authText:
+      "This is a demo of the store. You don't need your own account: sign in with the test account below to try everything up to the checkout.",
+    checkoutText:
+      "This is a test build. You can fill in the checkout to try it, but placing orders and payments are turned off.",
+    email: "Email",
+    password: "Password",
+    useAccount: "Use the test account",
+    ordersDisabled: "Ordering is disabled in the test build",
+  },
+
   auth: {
     metaTitle: "Account",
     emailLabel: "Email address",
@@ -713,6 +725,9 @@ const en = {
     unexpected: "Unexpected error happened",
     signedOut: "Signed out successfully",
     signInToOrder: "Please sign in to place your order",
+    ordersDisabled:
+      "This is a test build, so orders and payments are turned off.",
+    testAccountLocked: "The test account can't be changed.",
     signInToManageOrders: "Please sign in to manage your orders",
     signInToPay: "Please sign in to pay for your order",
     invalidOrderForm: "Invalid order form data",
