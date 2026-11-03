@@ -1,0 +1,65 @@
+.notice {
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.1rem;
+  border: 1px dashed var(--gold-500);
+  border-radius: 1rem;
+  background: var(--gold-50);
+  color: var(--espresso-800);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+  color: var(--gold-800);
+}
+
+.body {
+  margin: 0;
+}
+
+.credentials {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.75rem 0 0;
+  padding: 0.65rem 0.8rem;
+  border-radius: 0.7rem;
+  background: white;
+}
+
+.credentials div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.credentials dt {
+  color: var(--charcoal-600);
+}
+
+.credentials dd {
+  margin: 0;
+  font-weight: 700;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  word-break: break-all;
+}
+
+.useButton {
+  margin-top: 0.75rem;
+  width: 100%;
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--gold-600);
+  border-radius: 0.7rem;
+  background: transparent;
+  color: var(--gold-800);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.useButton:hover {
+  background: var(--gold-100);
+}

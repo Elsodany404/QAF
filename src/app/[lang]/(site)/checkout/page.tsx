@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 
 import Form from "@/components/Form/Form";
 import OrderSummary from "@/components/OrderSummary/OrderSummary";
+import TestBuildNotice from "@/components/TestBuildNotice/TestBuildNotice";
 import { getI18n } from "@/i18n/server";
 import { getCurrentSession } from "@/lib/adminAccess";
 import { signInPath } from "@/lib/redirect";
@@ -33,6 +34,8 @@ export default async function Checkout() {
         </Link>
 
         <h1 className={styles.title}>{t.checkout.title}</h1>
+
+        <TestBuildNotice variant="checkout" />
 
         <div className={styles.grid}>
           <OrderSummary />

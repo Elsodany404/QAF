@@ -28,6 +28,7 @@ import {
 } from "@/lib/bostaLocations";
 import { isFullName } from "@/lib/fullName";
 import { isOnlinePayment } from "@/lib/orderStatus";
+import { IS_TEST_BUILD } from "@/lib/testBuild";
 import type { FormValues, PaymentOptionsT } from "@/types/customTypes";
 import { toSecureCart } from "@/utils/cart";
 import { formatCurrency } from "@/utils/helper";
@@ -131,6 +132,7 @@ function Form() {
   const codTooHigh = !online && total > MAX_COD_AMOUNT;
   // Only place an order against a real shipping quote.
   const blocked =
+    IS_TEST_BUILD ||
     isPending ||
     shippingFeesLoading ||
     Boolean(shippingFeesError) ||
@@ -170,7 +172,9 @@ function Form() {
     return null;
   }
 
-  const submitLabel = isPending
+  const submitLabel = IS_TEST_BUILD
+    ? t.testBuild.ordersDisabled
+    : isPending
     ? text.placing
     : shippingFeesLoading
       ? text.calculatingShipping

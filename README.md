@@ -116,6 +116,22 @@ only and stays at `/admin`.
 - Emails go out in the language the customer used: sign-up, password reset
   and order confirmations.
 
+### Test build
+
+Set `NEXT_PUBLIC_TEST_BUILD=true` on the host (at build time, like every
+`NEXT_PUBLIC_*` value) to run the site as a public demo:
+
+- The sign-in and sign-up pages show a "Test build" notice with a shared test
+  account (`tester@qafcoffee.test` / `QafTest2026`); the sign-in page has a
+  button that fills it in.
+- Anyone can browse and reach the checkout, which shows the same notice.
+- Placing orders and paying are refused, on the page and in the server
+  actions, and the test account's name can't be changed.
+
+Create the account once (or reset its password) with
+`npm run create-test-user`; it reads `SUPABASE_CONNECTION_STRING` from
+`.env.local`. Remove the variable to turn the test build off.
+
 ### Notes
 
 - Product images must be **public** URLs from this project's Supabase storage

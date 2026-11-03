@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState, useTransition } from "react";
 import { Eye, EyeOff, UserPlus } from "lucide-react";
 import styles from "./SignUpForm.module.css";
 import AuthBrand from "@/components/PasswordReset/AuthBrand";
+import TestBuildNotice from "@/components/TestBuildNotice/TestBuildNotice";
 import { useI18n } from "@/i18n/I18nProvider";
 import Link from "@/i18n/Link";
 import {
@@ -76,6 +77,8 @@ export default function SignUpForm() {
 
         <h1 className={styles.heading}>{text.signUp.heading}</h1>
         <p className={styles.subheading}>{text.signUp.subheading}</p>
+
+        <TestBuildNotice variant="auth" />
 
         <form
           onSubmit={handleSubmit(onValid)}
